@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaLock } from 'react-icons/fa';
 import api from '../services/api';
 import '../styles/Login.css';
+import { setRole } from '../utils/secureStorage';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -19,6 +19,7 @@ const Login = () => {
                 password,
             });
             localStorage.setItem('token', response.data.token);
+            setRole(response.data.role);
             navigate('/dashboard');
         } catch (err) {
             const msg = err.response?.data?.message ||
@@ -36,9 +37,7 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="da-login-form">
                     <div className="da-input-group">
-                        <label>
-                            <FaUser className="da-label-icon" /> Username
-                        </label>
+                        <label>Username</label>
                         <input
                             type="email"
                             value={email}
@@ -48,9 +47,7 @@ const Login = () => {
                     </div>
 
                     <div className="da-input-group">
-                        <label>
-                            <FaLock className="da-label-icon" /> Password
-                        </label>
+                        <label>Password</label>
                         <input
                             type="password"
                             value={password}

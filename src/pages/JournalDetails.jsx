@@ -1,0 +1,383 @@
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Tabs, Form, Input, Button, Select, Upload, message, Spin, Typography } from 'antd';
+import { Formik, Field, FieldArray } from 'formik';
+import * as Yup from 'yup';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+import { FaPlus, FaTrash, FaSave, FaPencilAlt, FaTimes } from 'react-icons/fa';
+import EditorialBoard from '../components/EditorialBoard';
+import BackButton from '../components/BackButton';
+import { journalApi } from '../services/api';
+
+const { TabPane } = Tabs;
+const { Option } = Select;
+const { Title, Text, Paragraph } = Typography;
+
+const JournalSchema = Yup.object().shape({
+    title: Yup.string().required('Required'),
+    printIssn: Yup.string().required('Required'),
+    eIssn: Yup.string().required('Required'),
+    editors: Yup.string().required('Required'),
+    frequency: Yup.string().required('Required'),
+    indexation: Yup.string().required('Required'),
+    startYear: Yup.number().required('Required'),
+    endYear: Yup.number().required('Required'),
+    mission: Yup.string().required('Required'),
+    aimsScope: Yup.string().required('Required'),
+    areasCovered: Yup.array().of(Yup.string().required('Required')).min(1, 'At least one area is required'),
+    // image validation is optional on edit
+});
+
+const JournalDetails = () => {
+    const { id } = useParams();
+    const [editors, setEditors] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [initialValues, setInitialValues] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [activeTab, setActiveTab] = useState('1');
+
+    const fetchJournalDetails = async () => {
+        try {
+            const response = await journalApi.getById(id);
+            const data = response.data;
+
+            setInitialValues({
+                title: data.title,
+                printIssn: data.print_issn,
+                eIssn: data.e_issn,
+                editors: data.editors || '',
+                frequency: data.frequency,
+                indexation: data.indexation || '',
+                startYear: data.start_year,
+                endYear: data.end_year,
+                mission: data.mission || '',
+                aimsScope: data.aims_scope || '',
+                areasCovered: data.areas_covered || [],
+                image: null, // Reset image field
+            });
+            setEditors(data.editorial_board || []);
+
+            if (data.image) {
+                // Construct server URL for image
+                setImagePreview(`http://localhost:5000/uploads/${data.image}`);
+            }
+        } catch (error) {
+            message.error('Failed to fetch journal details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchJournalDetails();
+    }, [id]);
+
+    const handleUpdate = async (values, currentEditors) => {
+        try {
+            const formData = new FormData();
+
+            // Append simple fields
+            formData.append('title', values.title);
+            formData.append('print_issn', values.printIssn);
+            formData.append('e_issn', values.eIssn);
+            formData.append('editors', values.editors);
+            formData.append('frequency', values.frequency);
+            formData.append('indexation', values.indexation);
+            formData.append('start_year', values.startYear);
+            formData.append('end_year', values.endYear);
+            formData.append('mission', values.mission);
+            formData.append('aims_scope', values.aimsScope);
+
+            // Append array fields
+            if (values.areasCovered) {
+                values.areasCovered.forEach(area => formData.append('areas_covered[]', area));
+            }
+
+            // Append image if it's a File (new upload)
+            if (values.image instanceof File) {
+                formData.append('image', values.image);
+            }
+
+            await journalApi.update(id, formData);
+            message.success('Journal updated successfully');
+            setIsEditing(false); // Exit edit mode on success
+            fetchJournalDetails(); // Refresh data
+        } catch (error) {
+            message.error('Failed to update journal');
+        }
+    };
+
+    const handleSaveInfo = (values) => {
+        handleUpdate(values, editors);
+    };
+
+    const handleAddEditor = async (editor) => {
+        try {
+            await journalApi.addEditor(id, editor);
+            message.success('Editor added successfully');
+            fetchJournalDetails(); // Refresh list from server
+        } catch (error) {
+            message.error('Failed to add editor');
+        }
+    };
+
+    const handleDeleteEditor = async (editorId) => {
+        try {
+            await journalApi.deleteEditor(id, editorId);
+            message.success('Editor removed successfully');
+            fetchJournalDetails();
+        } catch (error) {
+            message.error('Failed to remove editor');
+        }
+    };
+
+    const handleSaveEditors = (values) => {
+        handleUpdate(values, editors);
+    };
+
+    if (loading) return <Spin className="flex justify-center mt-10" />;
+    if (!initialValues) return <div>Error loading data</div>;
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">Journal Details: {initialValues.title}</h1>
+                <div className="flex gap-2">
+                    {activeTab === '1' && (
+                        !isEditing ? (
+                            <Button type="primary" icon={<FaPencilAlt />} onClick={() => setIsEditing(true)}>
+                                Edit Journal
+                            </Button>
+                        ) : (
+                            <Button danger icon={<FaTimes />} onClick={() => setIsEditing(false)}>
+                                Cancel Edit
+                            </Button>
+                        )
+                    )}
+                    <BackButton />
+                </div>
+            </div>
+
+            <Formik
+                initialValues={initialValues}
+                validationSchema={JournalSchema}
+                onSubmit={handleSaveInfo}
+                enableReinitialize
+            >
+                {({ values, errors, touched, handleChange, handleBlur, handleSubmit, setFieldValue }) => (
+                    <Tabs defaultActiveKey="1" onChange={setActiveTab}>
+                        <TabPane tab="Journal Information" key="1">
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Journal Title</label>
+                                        {isEditing ? (
+                                            <>
+                                                <Input name="title" value={values.title} onChange={handleChange} onBlur={handleBlur} status={touched.title && errors.title ? 'error' : ''} />
+                                                {touched.title && errors.title && <div className="text-red-500 text-xs">{errors.title}</div>}
+                                            </>
+                                        ) : (
+                                            <Text strong>{values.title}</Text>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Print ISSN</label>
+                                        {isEditing ? (
+                                            <>
+                                                <Input name="printIssn" value={values.printIssn} onChange={handleChange} onBlur={handleBlur} status={touched.printIssn && errors.printIssn ? 'error' : ''} />
+                                                {touched.printIssn && errors.printIssn && <div className="text-red-500 text-xs">{errors.printIssn}</div>}
+                                            </>
+                                        ) : (
+                                            <Text>{values.printIssn}</Text>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">E ISSN</label>
+                                        {isEditing ? (
+                                            <>
+                                                <Input name="eIssn" value={values.eIssn} onChange={handleChange} onBlur={handleBlur} status={touched.eIssn && errors.eIssn ? 'error' : ''} />
+                                                {touched.eIssn && errors.eIssn && <div className="text-red-500 text-xs">{errors.eIssn}</div>}
+                                            </>
+                                        ) : (
+                                            <Text>{values.eIssn}</Text>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Editors</label>
+                                        {isEditing ? (
+                                            <>
+                                                <Input name="editors" value={values.editors} onChange={handleChange} onBlur={handleBlur} status={touched.editors && errors.editors ? 'error' : ''} />
+                                                {touched.editors && errors.editors && <div className="text-red-500 text-xs">{errors.editors}</div>}
+                                            </>
+                                        ) : (
+                                            <Text>{values.editors}</Text>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Frequency</label>
+                                        {isEditing ? (
+                                            <Select
+                                                name="frequency"
+                                                value={values.frequency}
+                                                onChange={(value) => setFieldValue('frequency', value)}
+                                                className="w-full"
+                                            >
+                                                {['Annual', 'Bi-annual', 'Tri-annual', 'Quarterly', 'Monthly', 'Bi-monthly'].map(freq => (
+                                                    <Option key={freq} value={freq}>{freq}</Option>
+                                                ))}
+                                            </Select>
+                                        ) : (
+                                            <Text>{values.frequency}</Text>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Indexation</label>
+                                        {isEditing ? (
+                                            <>
+                                                <Input.TextArea name="indexation" value={values.indexation} onChange={handleChange} onBlur={handleBlur} />
+                                                {touched.indexation && errors.indexation && <div className="text-red-500 text-xs">{errors.indexation}</div>}
+                                            </>
+                                        ) : (
+                                            <Text>{values.indexation}</Text>
+                                        )}
+                                    </div>
+                                    <div className="flex space-x-2">
+                                        <div className="w-1/2">
+                                            <label className="block text-sm font-medium text-gray-700">From Year</label>
+                                            {isEditing ? (
+                                                <Input type="number" name="startYear" value={values.startYear} onChange={handleChange} />
+                                            ) : (
+                                                <Text>{values.startYear}</Text>
+                                            )}
+                                        </div>
+                                        <div className="w-1/2">
+                                            <label className="block text-sm font-medium text-gray-700">To Year</label>
+                                            {isEditing ? (
+                                                <Input type="number" name="endYear" value={values.endYear} onChange={handleChange} />
+                                            ) : (
+                                                <Text>{values.endYear}</Text>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Mission</label>
+                                    {isEditing ? (
+                                        <>
+                                            <ReactQuill theme="snow" value={values.mission} onChange={(content) => setFieldValue('mission', content)} />
+                                            {touched.mission && errors.mission && <div className="text-red-500 text-xs">{errors.mission}</div>}
+                                        </>
+                                    ) : (
+                                        <div dangerouslySetInnerHTML={{ __html: values.mission }} className="border p-2 rounded bg-gray-50" />
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Aims & Scope</label>
+                                    {isEditing ? (
+                                        <>
+                                            <ReactQuill theme="snow" value={values.aimsScope} onChange={(content) => setFieldValue('aimsScope', content)} />
+                                            {touched.aimsScope && errors.aimsScope && <div className="text-red-500 text-xs">{errors.aimsScope}</div>}
+                                        </>
+                                    ) : (
+                                        <div dangerouslySetInnerHTML={{ __html: values.aimsScope }} className="border p-2 rounded bg-gray-50" />
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Areas Covered</label>
+                                    {isEditing ? (
+                                        <FieldArray name="areasCovered">
+                                            {({ push, remove }) => (
+                                                <div>
+                                                    {values.areasCovered.map((area, index) => (
+                                                        <div key={index} className="flex space-x-2 mb-2">
+                                                            <Input
+                                                                name={`areasCovered.${index}`}
+                                                                value={area}
+                                                                onChange={handleChange}
+                                                            />
+                                                            <Button type="dashed" danger icon={<FaTrash />} onClick={() => remove(index)} />
+                                                        </div>
+                                                    ))}
+                                                    <Button type="dashed" icon={<FaPlus />} onClick={() => push('')} block>
+                                                        Add Area
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </FieldArray>
+                                    ) : (
+                                        <ul className="list-disc list-inside">
+                                            {values.areasCovered.map((area, index) => (
+                                                <li key={index}>{area}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Journal Image</label>
+                                    {isEditing ? (
+                                        <Upload
+                                            beforeUpload={(file) => {
+                                                setFieldValue('image', file);
+                                                // Create local preview
+                                                const reader = new FileReader();
+                                                reader.onload = (e) => {
+                                                    setImagePreview(e.target.result);
+                                                };
+                                                reader.readAsDataURL(file);
+                                                return false;
+                                            }}
+                                            onRemove={() => {
+                                                setFieldValue('image', null);
+                                                setImagePreview(null);
+                                            }}
+                                            maxCount={1}
+                                            listType="picture"
+                                            showUploadList={false}
+                                        >
+                                            <Button icon={<FaPlus />}>Upload New Image</Button>
+                                        </Upload>
+                                    ) : null}
+                                    {imagePreview && (
+                                        <div className="mt-4">
+                                            <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
+                                            <img
+                                                src={imagePreview}
+                                                alt="Journal Preview"
+                                                className="max-w-xs h-auto rounded shadow-md border"
+                                                onError={(e) => {
+                                                    e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {isEditing && (
+                                    <div className="flex justify-end mt-4">
+                                        <Button type="primary" htmlType="submit" icon={<FaSave />}>Save Changes</Button>
+                                    </div>
+                                )}
+                            </form>
+                        </TabPane>
+                        <TabPane tab="Editorial Board" key="2">
+                            <EditorialBoard
+                                editors={editors}
+                                onAddEditor={handleAddEditor}
+                                onDeleteEditor={handleDeleteEditor}
+                                readOnly={!isEditing}
+                            />
+                        </TabPane>
+                    </Tabs>
+                )}
+            </Formik>
+        </div >
+    );
+};
+
+export default JournalDetails;
