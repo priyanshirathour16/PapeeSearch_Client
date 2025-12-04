@@ -1,4 +1,4 @@
-import { FaBook, FaEye } from 'react-icons/fa';
+import { FaBook, FaEye, FaNewspaper } from 'react-icons/fa';
 
 export const sidebarData = [
     {
@@ -10,6 +10,11 @@ export const sidebarData = [
                 title: 'View Journals',
                 path: '/dashboard/view-journal',
                 icon: FaEye,
+            },
+            {
+                title: 'View Journal Issues',
+                path: '/dashboard/journal-issues',
+                icon: FaNewspaper,
             }
         ]
     }

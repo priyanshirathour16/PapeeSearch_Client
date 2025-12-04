@@ -9,6 +9,9 @@ const Login = lazy(() => import('./pages/Login'));
 const DashboardLayout = lazy(() => import('./components/DashboardLayout'));
 const ViewJournal = lazy(() => import('./pages/ViewJournal'));
 const JournalDetails = lazy(() => import('./pages/JournalDetails'));
+const ViewJournalIssues = lazy(() => import('./pages/ViewJournalIssues'));
+const AddJournalIssue = lazy(() => import('./pages/AddJournalIssue'));
+const JournalIssueDetails = lazy(() => import('./pages/JournalIssueDetails'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 
 function App() {
@@ -28,6 +31,9 @@ function App() {
               <Route index element={<div className="p-4">Welcome to Dashboard</div>} />
               <Route path="view-journal" element={<ViewJournal />} />
               <Route path="view-journal/:id" element={<JournalDetails />} />
+              <Route path="journal-issues" element={<ViewJournalIssues />} />
+              <Route path="journal-issues/add" element={<AddJournalIssue />} />
+              <Route path="journal-issues/:id" element={<JournalIssueDetails />} />
             </Route>
           </Route>
 

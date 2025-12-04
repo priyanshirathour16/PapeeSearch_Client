@@ -49,4 +49,12 @@ export const journalApi = {
     deleteEditor: (journalId, editorId) => api.delete(`/journals/${journalId}/editors/${editorId}`),
 };
 
+export const journalIssueApi = {
+    getAll: () => api.get('/journal-issues'),
+    getById: (id) => api.get(`/journal-issues/${id}`),
+    create: (data) => api.post('/journal-issues', data),
+    update: (id, data) => api.put(`/journal-issues/${id}`, data),
+    delete: (id) => api.delete(`/journal-issues/${id}`),
+};
+
 export default api;
