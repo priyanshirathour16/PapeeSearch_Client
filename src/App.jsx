@@ -37,6 +37,7 @@ const Resources = lazy(() => import('./pages/Website/Resources'));
 const JournalIndexing = lazy(() => import('./pages/Website/JournalIndexing'));
 const PublicEthicAndMalPractices = lazy(() => import('./pages/Website/PublicEthicAndMalPractices'));
 const Journals = lazy(() => import('./pages/Website/Journals'));
+const PageNotFound = lazy(() => import('./pages/Website/PageNotFound'));
 
 function App() {
   return (
@@ -67,6 +68,8 @@ function App() {
             <Route path="/journal-indexing" element={<JournalIndexing />} />
             <Route path="/publication-ethics-and-malpractice-statement" element={<PublicEthicAndMalPractices />} />
             <Route path="/journals" element={<Journals />} />
+            {/* 404 Page (within layout) */}
+            <Route path="*" element={<PageNotFound />} />
           </Route>
 
           <Route element={<PublicRoute />}>
@@ -86,9 +89,8 @@ function App() {
             </Route>
           </Route>
 
-          {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Default Redirect (Login) - redundant if catch-all is above, but keeping for logic separation if needed or specific redirects */}
+          {/* <Route path="/" element={<Navigate to="/login" replace />} /> */}
         </Routes>
       </Suspense>
     </Router>
