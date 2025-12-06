@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { FaHandPointer, FaFileAlt } from 'react-icons/fa';
 
 const WhyPublishWithUs = () => {
@@ -73,9 +74,9 @@ const WhyPublishWithUs = () => {
                             <div>
                                 <strong className="block text-sm font-bold text-[#555] mb-2">Simple, quick and free submission</strong>
                                 <div className="flex items-start gap-4">
-                                    <a href="#" className="inline-flex items-center gap-2 bg-[#204066] text-white px-4 py-2 text-xs font-bold uppercase hover:bg-[#1a3352] flex-shrink-0">
+                                    <Link to="/submit-manuscript" className="inline-flex items-center gap-2 bg-[#204066] text-white px-4 py-2 text-xs font-bold uppercase hover:bg-[#1a3352] flex-shrink-0">
                                         Submit an Article <FaFileAlt />
-                                    </a>
+                                    </Link>
                                     <p className="text-justify text-sm text-[#555]">
                                         A simple online submission form seeks brief details, consuming just a minute. You are not entitled for any submission or withdrawal charges for your manuscript.
                                     </p>
@@ -128,7 +129,7 @@ const WhyPublishWithUs = () => {
                 </div>
 
                 <div className="w-full lg:w-1/4 mt-8 lg:mt-0 text-right">
-                    <a href="#" className="text-[#204066] text-[11px] hover:underline">Tweets by @ElkJournals</a>
+                    <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-[11px] hover:underline">Tweets by @ElkJournals</a>
                 </div>
             </div>
         </div>

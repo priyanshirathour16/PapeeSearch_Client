@@ -23,14 +23,14 @@ const JournalSlider = () => {
 
                     <div className="flex flex-col md:flex-row justify-center gap-6">
                         <Link
-                            to="submit-your-manuscript.php"
+                            to="/submit-manuscript"
                             style={{ background: 'linear-gradient(to bottom, #08c495 0%, #00644b 100%)' }}
                             className="text-white hover:!text-white text-sm md:text-base font-bold py-3 px-8 rounded-full uppercase inline-flex items-center justify-center gap-2 transition-colors duration-300 btn jrnl-btn hover:opacity-90"
                         >
                             Submit Your Manuscript <FaArrowRight />
                         </Link>
                         <Link
-                            to="authors-guidelines.php"
+                            to="/authors-guidelines"
                             style={{ background: 'linear-gradient(to bottom, #08c495 0%, #00644b 100%)' }}
                             className="text-white hover:!text-white text-sm md:text-base font-bold py-3 px-8 rounded-full uppercase inline-flex items-center justify-center gap-2 transition-colors duration-300 btn jrnl-btn hover:opacity-90"
                         >

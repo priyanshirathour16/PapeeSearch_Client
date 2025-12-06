@@ -301,23 +301,23 @@ const Header = () => {
                                 >
                                     <div className="grid grid-cols-3 gap-4">
                                         {/* Row 1 */}
-                                        <a href="/browse-journals" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
+                                        <Link to="/browse-journals" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
                                             <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Browse Journals</span>
-                                        </a>
-                                        <a href="/authors-guidelines" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
+                                        </Link>
+                                        <Link to="/authors-guidelines" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
                                             <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Author's Guidelines</span>
-                                        </a>
-                                        <a href="/resources" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
+                                        </Link>
+                                        <Link to="/resources" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
                                             <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Resources</span>
-                                        </a>
+                                        </Link>
 
                                         {/* Row 2 */}
-                                        <a href="/view-call-for-papers" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
+                                        <Link to="/view-call-for-papers" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
                                             <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">View Call for Papers</span>
-                                        </a>
-                                        <a href="/article-processing-charges" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
+                                        </Link>
+                                        <Link to="/article-processing-charges" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
                                             <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Article Processing Charges</span>
-                                        </a>
+                                        </Link>
                                     </div>
                                 </div>
                             </li>
@@ -331,9 +331,9 @@ const Header = () => {
                         <div className="lg:hidden bg-[#2c4a6e] border-t border-gray-600 pb-4">
                             <ul className="space-y-2 mt-4">
                                 <li>
-                                    <a href="/" className="block px-4 py-2 text-white hover:bg-[#3a5a8e]">
+                                    <Link to="/" className="block px-4 py-2 text-white hover:bg-[#3a5a8e]">
                                         HOME
-                                    </a>
+                                    </Link>
                                 </li>
 
                                 {/* Mobile About ELK */}
@@ -347,24 +347,24 @@ const Header = () => {
                                     </button>
                                     {activeDropdown === 'about' && (
                                         <div className="bg-[#3a5a8e] px-6 py-2 space-y-2">
-                                            <a href="/meet-our-team" className="block py-1 text-gray-200 hover:text-white">
+                                            <Link to="/meet-our-team" className="block py-1 text-gray-200 hover:text-white">
                                                 Meet our team
-                                            </a>
-                                            <a href="/why-publish-with-us" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/why-publish-with-us" className="block py-1 text-gray-200 hover:text-white">
                                                 Why publish with us?
-                                            </a>
-                                            <a href="/open-access-and-licencing" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/open-access-and-licencing" className="block py-1 text-gray-200 hover:text-white">
                                                 Open Access &amp; Licencing
-                                            </a>
-                                            <a href="/ethical-guidelines" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/ethical-guidelines" className="block py-1 text-gray-200 hover:text-white">
                                                 Ethical Guidelines
-                                            </a>
-                                            <a href="/impact-factor" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/impact-factor" className="block py-1 text-gray-200 hover:text-white">
                                                 Impact Factor
-                                            </a>
-                                            <a href="/journal-indexing" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/journal-indexing" className="block py-1 text-gray-200 hover:text-white">
                                                 Journal Indexing
-                                            </a>
+                                            </Link>
                                         </div>
                                     )}
                                 </li>
@@ -380,45 +380,45 @@ const Header = () => {
                                     </button>
                                     {activeDropdown === 'journals' && (
                                         <div className="bg-[#3a5a8e] px-6 py-2 space-y-2 max-h-64 overflow-y-auto">
-                                            <a href="/journal-of-marketing" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            <Link to="/journal-of-marketing" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Marketing and Retail Management
-                                            </a>
-                                            <a href="/journal-of-finance" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/journal-of-finance" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Finance and Risk Management
-                                            </a>
-                                            <a href="/social-sciences" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/social-sciences" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Social Sciences
-                                            </a>
-                                            <a href="/hr-management-and-organizational-behaviour" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/hr-management-and-organizational-behaviour" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 HR Management and Organizational Behaviour
-                                            </a>
-                                            <a href="/computer-science-and-information-systems" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/computer-science-and-information-systems" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Computer Science and Information Systems
-                                            </a>
-                                            <a href="/leadership-and-innovation-management" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/leadership-and-innovation-management" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Leadership and Innovation Management
-                                            </a>
-                                            <a href="/civil-engineering-and-structural-development" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/civil-engineering-and-structural-development" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Civil Engineering and Structural Development
-                                            </a>
-                                            <a href="/mechanical-engineering-research" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/mechanical-engineering-research" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Mechanical Engineering Research
-                                            </a>
-                                            <a href="/applied-thermal-engineering" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/applied-thermal-engineering" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Applied Thermal Engineering
-                                            </a>
-                                            <a href="/electronics-and-communication-technology" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/electronics-and-communication-technology" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Electronics and Communication Technology
-                                            </a>
-                                            <a href="/library-management-and-information-technology" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/library-management-and-information-technology" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Library Management and Information Technology
-                                            </a>
-                                            <a href="/project-management-and-control" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/project-management-and-control" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Project Management and Control
-                                            </a>
-                                            <a href="/manufacturing-science-and-engineering" className="block py-1 text-gray-200 hover:text-white text-sm">
+                                            </Link>
+                                            <Link to="/manufacturing-science-and-engineering" className="block py-1 text-gray-200 hover:text-white text-sm">
                                                 Manufacturing Science and Engineering
-                                            </a>
+                                            </Link>
                                         </div>
                                     )}
                                 </li>
@@ -434,29 +434,29 @@ const Header = () => {
                                     </button>
                                     {activeDropdown === 'authors' && (
                                         <div className="bg-[#3a5a8e] px-6 py-2 space-y-2">
-                                            <a href="/browse-journals" className="block py-1 text-gray-200 hover:text-white">
+                                            <Link to="/browse-journals" className="block py-1 text-gray-200 hover:text-white">
                                                 Browse Journals
-                                            </a>
-                                            <a href="/view-call-for-papers" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/view-call-for-papers" className="block py-1 text-gray-200 hover:text-white">
                                                 View Call for Papers
-                                            </a>
-                                            <a href="/authors-guidelines" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/authors-guidelines" className="block py-1 text-gray-200 hover:text-white">
                                                 Author's Guidelines
-                                            </a>
-                                            <a href="/article-processing-charges" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/article-processing-charges" className="block py-1 text-gray-200 hover:text-white">
                                                 Article Processing Charges
-                                            </a>
-                                            <a href="/resources" className="block py-1 text-gray-200 hover:text-white">
+                                            </Link>
+                                            <Link to="/resources" className="block py-1 text-gray-200 hover:text-white">
                                                 Resources
-                                            </a>
+                                            </Link>
                                         </div>
                                     )}
                                 </li>
 
                                 <li>
-                                    <a href="/become-an-editor" className="block px-4 py-2 text-white hover:bg-[#3a5a8e]">
+                                    <Link to="/become-an-editor" className="block px-4 py-2 text-white hover:bg-[#3a5a8e]">
                                         Become An Editor
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </div>

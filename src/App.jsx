@@ -56,18 +56,18 @@ function App() {
             <Route path="/sitemap" element={<SiteMap />} />
             <Route path="/contact-us" element={<Contact />} />
             <Route path="/open-access-and-licencing" element={<OpenAccessAndLicencing />} />
-            <Route path="/impact-factors" element={<ImpactFactors />} />
+            <Route path="/impact-factor" element={<ImpactFactors />} />
             <Route path="/ethical-guidelines" element={<EthicalGuidLine />} />
             <Route path="/meet-our-team" element={<MeetOurTeam />} />
             <Route path="/why-publish-with-us" element={<WhyPublishWithUs />} />
-            <Route path="/list-of-journals" element={<BrowseOfJournals />} />
-            <Route path="/author-guidelines" element={<AuthorGuidlinens />} />
+            <Route path="/browse-journals" element={<BrowseOfJournals />} />
+            <Route path="/authors-guidelines" element={<AuthorGuidlinens />} />
             <Route path="/call-for-papers" element={<ViewCallForPaper />} />
             <Route path="/article-processing-charges" element={<ArticleProcessingCharges />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/journal-indexing" element={<JournalIndexing />} />
             <Route path="/publication-ethics-and-malpractice-statement" element={<PublicEthicAndMalPractices />} />
-            <Route path="/journals" element={<Journals />} />
+            <Route path="/journals/:id" element={<Journals />} />
             {/* 404 Page (within layout) */}
             <Route path="*" element={<PageNotFound />} />
           </Route>

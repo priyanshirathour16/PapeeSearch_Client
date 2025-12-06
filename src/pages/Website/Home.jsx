@@ -24,7 +24,7 @@ const Home = () => {
                                 </Link>
 
                                 <Link
-                                    to="/submit-your-manuscript"
+                                    to="/submit-manuscript"
                                     className="inline-flex items-center justify-center px-8 py-2 text-lg uppercase text-white hover:text-white font-light rounded-full bg-gradient-to-b from-[#08c495] to-[#00644b] hover:from-[#0a9773] hover:to-[#00644b] transition-all duration-300"
                                 >
                                     Submit Your Manuscript

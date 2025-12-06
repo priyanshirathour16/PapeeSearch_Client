@@ -45,7 +45,7 @@ const SiteMap = () => {
                 { label: "Browse Journals", to: "/browse-journals" },
                 { label: "View Call for Papers", to: "/call-for-papers" },
                 { label: "Author's Guidelines", to: "/authors-guidelines" },
-                { label: "Article Processing Charges", to: "/apc" },
+                { label: "Article Processing Charges", to: "/article-processing-charges" },
                 { label: "Resources", to: "/resources" },
             ]
         },
@@ -121,7 +121,7 @@ const SiteMap = () => {
 
                     <div className="lg:col-span-1">
                         <div className="text-right">
-                            <a href="#" className="text-[#204066] text-xs hover:underline">Tweets by @ElkJournals</a>
+                            <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-xs hover:underline">Tweets by @ElkJournals</a>
                         </div>
                     </div>
                 </div>

@@ -120,9 +120,7 @@ const Contact = () => {
                     </div>
 
                     <div className="lg:col-span-1">
-                        <div className="text-right pt-2">
-                            <a href="#" className="text-[#204066] text-[11px] hover:underline">Tweets by @ElkJournals</a>
-                        </div>
+                        <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-[11px] hover:underline">Tweets by @ElkJournals</a>
                     </div>
                 </div>
             </div>
