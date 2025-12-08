@@ -68,4 +68,14 @@ export const applicationApi = {
     }
 };
 
+export const authorApi = {
+    getAll: () => api.get('/authors'),
+    getById: (id) => api.get(`/authors/${id}`)
+};
+
+export const editorApplicationApi = {
+    getAll: () => api.get('/editor-applications'),
+    getById: (id) => api.get(`/editor-applications/${id}`)
+};
+
 export default api;

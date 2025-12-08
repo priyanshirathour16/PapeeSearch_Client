@@ -17,5 +17,22 @@ export const sidebarData = [
                 icon: FaNewspaper,
             }
         ]
+    },
+    {
+        title: 'Manage User',
+        icon: FaBook, // Using FaBook temporarily, can change if needed or import FaUsers
+        path: '#',
+        subNav: [
+            {
+                title: 'Author',
+                path: '/dashboard/manage-user/author', // Updated path to match typically admin routes, adjusting to dashboard/admin-authors
+                icon: FaEye,
+            },
+            {
+                title: 'Editor',
+                path: '/dashboard/manage-user/editor',
+                icon: FaEye,
+            }
+        ]
     }
 ];

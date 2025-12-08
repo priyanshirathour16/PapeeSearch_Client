@@ -37,7 +37,10 @@ const Resources = lazy(() => import('./pages/Website/Resources'));
 const JournalIndexing = lazy(() => import('./pages/Website/JournalIndexing'));
 const PublicEthicAndMalPractices = lazy(() => import('./pages/Website/PublicEthicAndMalPractices'));
 const Journals = lazy(() => import('./pages/Website/Journals'));
+
 const PageNotFound = lazy(() => import('./pages/Website/PageNotFound'));
+const AdminAuthorList = lazy(() => import('./pages/Admin/AdminAuthorList'));
+const AdminEditorList = lazy(() => import('./pages/Admin/AdminEditorList'));
 
 function App() {
   return (
@@ -86,6 +89,9 @@ function App() {
               <Route path="journal-issues" element={<ViewJournalIssues />} />
               <Route path="journal-issues/add" element={<AddJournalIssue />} />
               <Route path="journal-issues/:id" element={<JournalIssueDetails />} />
+
+              <Route path="manage-user/author" element={<AdminAuthorList />} />
+              <Route path="manage-user/editor" element={<AdminEditorList />} />
             </Route>
           </Route>
 
