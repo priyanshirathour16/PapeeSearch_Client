@@ -43,7 +43,7 @@ const SiteMap = () => {
             title: "Authors",
             links: [
                 { label: "Browse Journals", to: "/browse-journals" },
-                { label: "View Call for Papers", to: "/call-for-papers" },
+                { label: "View Call for Papers", to: "/view-call-for-papers" },
                 { label: "Author's Guidelines", to: "/authors-guidelines" },
                 { label: "Article Processing Charges", to: "/article-processing-charges" },
                 { label: "Resources", to: "/resources" },

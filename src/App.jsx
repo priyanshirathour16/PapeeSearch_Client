@@ -62,7 +62,7 @@ function App() {
             <Route path="/why-publish-with-us" element={<WhyPublishWithUs />} />
             <Route path="/browse-journals" element={<BrowseOfJournals />} />
             <Route path="/authors-guidelines" element={<AuthorGuidlinens />} />
-            <Route path="/call-for-papers" element={<ViewCallForPaper />} />
+            <Route path="/view-call-for-papers" element={<ViewCallForPaper />} />
             <Route path="/article-processing-charges" element={<ArticleProcessingCharges />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/journal-indexing" element={<JournalIndexing />} />

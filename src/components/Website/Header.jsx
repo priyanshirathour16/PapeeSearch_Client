@@ -28,8 +28,6 @@ const Header = () => {
     const timeoutRef = useRef(null);
 
     const toggleDropdown = (dropdownName) => {
-        // If clicking the same one, toggle it. If different, switch.
-        // If clicking "null" (which shouldn't happen via click usually, but logic holds), close.
         if (activeDropdown === dropdownName) {
             setActiveDropdown(null);
         } else {
@@ -47,10 +45,9 @@ const Header = () => {
     const handleMouseLeave = () => {
         timeoutRef.current = setTimeout(() => {
             setActiveDropdown(null);
-        }, 200); // 200ms delay to allow bridging the gap
+        }, 200);
     };
 
-    // Cleanup timeout on unmount
     useEffect(() => {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -151,6 +148,70 @@ const Header = () => {
         }
     ];
 
+    const menuItems = [
+        {
+            id: "home",
+            label: "HOME",
+            link: "/",
+            type: "link"
+        },
+        {
+            id: "about",
+            label: "ABOUT ELK",
+            type: "dropdown",
+            layout: "about",
+            data: {
+                main: [
+                    {
+                        title: "PUBLISHING POLICIES",
+                        links: [
+                            { label: "Open Access & Licencing", to: "/open-access-and-licencing" },
+                            { label: "Ethical Guidelines", to: "/ethical-guidelines" }
+                        ]
+                    },
+                    {
+                        title: "IMPACT FACTOR SCORE",
+                        links: [
+                            { label: "Impact Factor", to: "/impact-factor" },
+                            { label: "Journal Indexing", to: "/journal-indexing" }
+                        ]
+                    }
+                ],
+                side: [
+                    { label: "MEET OUR TEAM", to: "/meet-our-team" },
+                    { label: "WHY PUBLISH WITH US?", to: "/why-publish-with-us" }
+                ]
+            }
+        },
+        {
+            id: "journals",
+            label: "JOURNALS WE PUBLISH",
+            type: "dropdown",
+            layout: "journals",
+            data: journalData
+        },
+        {
+            id: "authors",
+            label: "AUTHORS AREA",
+            type: "dropdown",
+            layout: "simple",
+            data: [
+                { label: "Browse Journals", to: "/browse-journals" },
+                { label: "Author's Guidelines", to: "/authors-guidelines" },
+                { label: "Resources", to: "/resources" },
+                { label: "View Call for Papers", to: "/view-call-for-papers" },
+                { label: "Article Processing Charges", to: "/article-processing-charges" }
+            ]
+        },
+        {
+            id: "editor",
+            label: "Become An Editor",
+            link: "/become-an-editor",
+            type: "link",
+            mobileOnly: true // Rendered separately on desktop top bar
+        }
+    ];
+
     return (
         <header className="bg-[#2c4a6e] shadow-md z-50">
             <div className="w-full px-[15px] mx-auto min-h-full sm:w-[750px] md:w-[970px] lg:w-[1170px] relative">
@@ -188,282 +249,165 @@ const Header = () => {
 
                         {/* Main Navigation */}
                         <ul className="flex space-x-6">
-                            <li>
-                                <Link to="/" className="text-white hover:text-gray-200 font-medium uppercase text-sm">
-                                    HOME
-                                </Link>
-                            </li>
-
-                            {/* About ELK Dropdown */}
-                            <li className="group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-                                <button
-                                    onClick={() => toggleDropdown("about")}
-                                    className={`font-medium flex items-center gap-1 uppercase text-sm focus:outline-none focus:ring-0 shadow-none hover:shadow-none bg-transparent ${activeDropdown === "about" ? "text-[#45cbb2]" : "text-white"}`}
+                            {menuItems.filter(item => !item.mobileOnly).map((item) => (
+                                <li key={item.id} className={item.type === 'dropdown' ? 'group' : ''}
+                                    onMouseEnter={item.type === 'dropdown' ? handleMouseEnter : undefined}
+                                    onMouseLeave={item.type === 'dropdown' ? handleMouseLeave : undefined}
                                 >
-                                    ABOUT ELK <FaChevronDown className="text-xs" />
-                                </button>
-                                {/* Full-width dropdown container */}
-                                <div style={{ marginTop: "30px" }}
-                                    className={`absolute left-0 top-full w-full bg-white shadow-lg transition-all duration-200 z-50 max-h-[80vh] overflow-y-auto ${activeDropdown === "about" ? "opacity-100 visible" : "opacity-0 invisible"}`}
-                                >
-                                    {/* Content */}
-                                    <div className="flex">
-                                        {/* Main Content Area (2/3 width) */}
-                                        <div className="w-2/3 p-8 grid grid-cols-2 gap-8">
-                                            {/* Publishing Policies Section */}
-                                            <div>
-                                                <h3 className="font-bold text-[#1e3a5f] mb-4 uppercase text-sm tracking-wide">PUBLISHING POLICIES</h3>
-                                                <div className="space-y-2">
-                                                    <Link to="/open-access-and-licencing" className="block bg-[#e0e0e0] hover:bg-[#2c4a6e] hover:text-white px-4 py-3 transition-colors text-sm text-[#1e3a5f]">
-                                                        Open Access & Licencing
-                                                    </Link>
-                                                    <Link to="/ethical-guidelines" className="block bg-[#e0e0e0] hover:bg-[#2c4a6e] hover:text-white px-4 py-3 transition-colors text-sm text-[#1e3a5f]">
-                                                        Ethical Guidelines
-                                                    </Link>
-                                                </div>
-                                            </div>
+                                    {item.type === 'link' ? (
+                                        <Link to={item.link} className="text-white hover:text-gray-200 font-medium uppercase text-sm">
+                                            {item.label}
+                                        </Link>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => toggleDropdown(item.id)}
+                                                className={`font-medium flex items-center gap-1 uppercase text-sm focus:outline-none focus:ring-0 shadow-none hover:shadow-none bg-transparent ${activeDropdown === item.id ? (item.id === "about" ? "text-[#45cbb2]" : "text-gray-200") : "text-white"}`}
+                                            >
+                                                {item.label} <FaChevronDown className="text-xs" />
+                                            </button>
 
-                                            {/* Impact Factor Score Section */}
-                                            <div>
-                                                <h3 className="font-bold text-[#1e3a5f] mb-4 uppercase text-sm tracking-wide">IMPACT FACTOR SCORE</h3>
-                                                <div className="space-y-2">
-                                                    <Link to="/impact-factor" className="block bg-[#e0e0e0] hover:bg-[#2c4a6e] hover:text-white px-4 py-3 transition-colors text-sm text-[#1e3a5f]">
-                                                        Impact Factor
-                                                    </Link>
-                                                    <Link to="/journal-indexing" className="block bg-[#e0e0e0] hover:bg-[#2c4a6e] hover:text-white px-4 py-3 transition-colors text-sm text-[#1e3a5f]">
-                                                        Journal Indexing
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Right Green Panel (1/3 width) */}
-                                        <div className="w-1/3 bg-[#45cbb2] p-8 flex flex-col justify-center space-y-4">
-                                            <Link to="/meet-our-team" className="block bg-[#1e3a5f] hover:bg-[#152943] text-white px-4 py-3 transition-colors shadow-md group/btn">
-                                                <div className="flex items-center justify-between uppercase text-sm font-medium">
-                                                    <span>MEET OUR TEAM</span>
-                                                    <FaLongArrowAltRight className="text-lg group-hover/btn:translate-x-1 transition-transform" />
-                                                </div>
-                                            </Link>
-                                            <Link to="/why-publish-with-us" className="block bg-[#1e3a5f] hover:bg-[#152943] text-white px-4 py-3 transition-colors shadow-md group/btn">
-                                                <div className="flex items-center justify-between uppercase text-sm font-medium">
-                                                    <span>WHY PUBLISH WITH US?</span>
-                                                    <FaLongArrowAltRight className="text-lg group-hover/btn:translate-x-1 transition-transform" />
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-
-                            {/* Journals Dropdown */}
-                            <li className="group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-                                <button
-                                    onClick={() => toggleDropdown("journals")}
-                                    className={`font-medium flex items-center gap-1 uppercase text-sm focus:outline-none focus:ring-0 shadow-none hover:shadow-none bg-transparent ${activeDropdown === "journals" ? "text-gray-200" : "text-white"}`}
-                                >
-                                    JOURNALS WE PUBLISH <FaChevronDown className="text-xs" />
-                                </button>
-                                {/* Full-width dropdown */}
-                                <div style={{ marginTop: "30px" }}
-                                    className={`absolute left-0 top-full w-full bg-white shadow-lg transition-all duration-200 p-8 z-50 max-h-[80vh] overflow-y-auto ${activeDropdown === "journals" ? "opacity-100 visible" : "opacity-0 invisible"}`}
-                                >
-                                    <div className="grid grid-cols-3 gap-6">
-                                        {journalData.map((journal, index) => (
-                                            <div key={index} className="bg-[#e0e0e0] p-4 rounded shadow-sm hover:shadow-md transition-all group/journal hover:bg-[#2c4a6e]">
-                                                <Link to={journal.link} className="block">
-                                                    <div className="flex items-start gap-3">
-                                                        <span className="text-xl text-gray-700 mt-1 group-hover/journal:text-white transition-colors">{journal.icon}</span>
-                                                        <div>
-                                                            <strong className="text-[#204066] text-sm block mb-1 group-hover/journal:text-white transition-colors">{journal.title}</strong>
-                                                            <div className="text-xs text-gray-600 group-hover/journal:text-gray-200 transition-colors">ISSN No: {journal.issn}</div>
-                                                            <div className="text-xs text-gray-600 group-hover/journal:text-gray-200 transition-colors">JD Impact factor: {journal.impactFactor}</div>
+                                            {/* Dropdown Content */}
+                                            <div style={{ marginTop: "30px" }}
+                                                className={`absolute left-0 top-full w-full bg-white shadow-lg transition-all duration-200 z-50 max-h-[80vh] overflow-y-auto ${activeDropdown === item.id ? "opacity-100 visible" : "opacity-0 invisible"}`}
+                                            >
+                                                {/* LAYOUT: ABOUT */}
+                                                {item.layout === 'about' && (
+                                                    <div className="flex">
+                                                        <div className="w-2/3 p-8 grid grid-cols-2 gap-8">
+                                                            {item.data.main.map((section, idx) => (
+                                                                <div key={idx}>
+                                                                    <h3 className="font-bold text-[#1e3a5f] mb-4 uppercase text-sm tracking-wide">{section.title}</h3>
+                                                                    <div className="space-y-2">
+                                                                        {section.links.map((link, lIdx) => (
+                                                                            <Link key={lIdx} to={link.to} className="block bg-[#e0e0e0] hover:bg-[#2c4a6e] hover:text-white px-4 py-3 transition-colors text-sm text-[#1e3a5f]">
+                                                                                {link.label}
+                                                                            </Link>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <div className="w-1/3 bg-[#45cbb2] p-8 flex flex-col justify-center space-y-4">
+                                                            {item.data.side.map((link, idx) => (
+                                                                <Link key={idx} to={link.to} className="block bg-[#1e3a5f] hover:bg-[#152943] text-white px-4 py-3 transition-colors shadow-md group/btn">
+                                                                    <div className="flex items-center justify-between uppercase text-sm font-medium">
+                                                                        <span>{link.label}</span>
+                                                                        <FaLongArrowAltRight className="text-lg group-hover/btn:translate-x-1 transition-transform" />
+                                                                    </div>
+                                                                </Link>
+                                                            ))}
                                                         </div>
                                                     </div>
-                                                </Link>
+                                                )}
+
+                                                {/* LAYOUT: JOURNALS */}
+                                                {item.layout === 'journals' && (
+                                                    <div className="p-8">
+                                                        <div className="grid grid-cols-3 gap-6">
+                                                            {item.data.map((journal, index) => (
+                                                                <div key={index} className="bg-[#e0e0e0] p-4 rounded shadow-sm hover:shadow-md transition-all group/journal hover:bg-[#2c4a6e]">
+                                                                    <Link to={journal.link} className="block">
+                                                                        <div className="flex items-start gap-3">
+                                                                            <span className="text-xl text-gray-700 mt-1 group-hover/journal:text-white transition-colors">{journal.icon}</span>
+                                                                            <div>
+                                                                                <strong className="text-[#204066] text-sm block mb-1 group-hover/journal:text-white transition-colors">{journal.title}</strong>
+                                                                                <div className="text-xs text-gray-600 group-hover/journal:text-gray-200 transition-colors">ISSN No: {journal.issn}</div>
+                                                                                <div className="text-xs text-gray-600 group-hover/journal:text-gray-200 transition-colors">JD Impact factor: {journal.impactFactor}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </Link>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* LAYOUT: SIMPLE (Authors Area) */}
+                                                {item.layout === 'simple' && (
+                                                    <div className="p-8">
+                                                        <div className="grid grid-cols-3 gap-4">
+                                                            {item.data.map((link, idx) => (
+                                                                <Link key={idx} to={link.to} className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
+                                                                    <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">{link.label}</span>
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </li>
-
-                            {/* Authors Area Dropdown */}
-                            <li className="group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-                                <button
-                                    onClick={() => toggleDropdown("authors")}
-                                    className={`font-medium flex items-center gap-1 uppercase text-sm focus:outline-none focus:ring-0 shadow-none hover:shadow-none bg-transparent ${activeDropdown === "authors" ? "text-gray-200" : "text-white"}`}
-                                >
-                                    AUTHORS AREA <FaChevronDown className="text-xs" />
-                                </button>
-                                {/* Full-width dropdown */}
-                                <div style={{ marginTop: "30px" }}
-                                    className={`absolute left-0 top-full w-full bg-white shadow-lg transition-all duration-200 p-8 z-50 max-h-[80vh] overflow-y-auto ${activeDropdown === "authors" ? "opacity-100 visible" : "opacity-0 invisible"}`}
-                                >
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {/* Row 1 */}
-                                        <Link to="/browse-journals" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
-                                            <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Browse Journals</span>
-                                        </Link>
-                                        <Link to="/authors-guidelines" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
-                                            <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Author's Guidelines</span>
-                                        </Link>
-                                        <Link to="/resources" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
-                                            <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Resources</span>
-                                        </Link>
-
-                                        {/* Row 2 */}
-                                        <Link to="/view-call-for-papers" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
-                                            <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">View Call for Papers</span>
-                                        </Link>
-                                        <Link to="/article-processing-charges" className="block bg-gray-200 hover:bg-[#2c4a6e] px-6 py-4 rounded transition-colors text-center group/author">
-                                            <span className="text-gray-800 text-sm font-medium group-hover/author:text-white transition-colors">Article Processing Charges</span>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul >
-                    </div >
-                </nav >
+                                        </>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </nav>
 
                 {/* Mobile Menu */}
-                {
-                    mobileMenuOpen && (
-                        <div className="lg:hidden bg-[#2c4a6e] border-t border-gray-600 pb-4">
-                            <ul className="space-y-2 mt-4">
-                                <li>
-                                    <Link to="/" className="block px-4 py-2 text-white hover:bg-[#3a5a8e]">
-                                        HOME
-                                    </Link>
-                                </li>
+                {mobileMenuOpen && (
+                    <div className="lg:hidden bg-[#2c4a6e] border-t border-gray-600 pb-4">
+                        <ul className="space-y-2 mt-4">
+                            {menuItems.map((item) => (
+                                <li key={item.id}>
+                                    {item.type === 'link' ? (
+                                        <Link to={item.link} className="block px-4 py-2 text-white hover:bg-[#3a5a8e]">
+                                            {item.label}
+                                        </Link>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => toggleDropdown(item.id)}
+                                                className="w-full text-left px-4 py-2 text-white hover:bg-[#3a5a8e] flex items-center justify-between"
+                                            >
+                                                {item.label}
+                                                <FaChevronDown className={`text-xs transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+                                            </button>
 
-                                {/* Mobile About ELK */}
-                                <li>
-                                    <button
-                                        onClick={() => toggleDropdown('about')}
-                                        className="w-full text-left px-4 py-2 text-white hover:bg-[#3a5a8e] flex items-center justify-between"
-                                    >
-                                        ABOUT ELK
-                                        <FaChevronDown className={`text-xs transition-transform ${activeDropdown === 'about' ? 'rotate-180' : ''}`} />
-                                    </button>
-                                    {activeDropdown === 'about' && (
-                                        <div className="bg-[#3a5a8e] px-6 py-2 space-y-2">
-                                            <Link to="/meet-our-team" className="block py-1 text-gray-200 hover:text-white">
-                                                Meet our team
-                                            </Link>
-                                            <Link to="/why-publish-with-us" className="block py-1 text-gray-200 hover:text-white">
-                                                Why publish with us?
-                                            </Link>
-                                            <Link to="/open-access-and-licencing" className="block py-1 text-gray-200 hover:text-white">
-                                                Open Access &amp; Licencing
-                                            </Link>
-                                            <Link to="/ethical-guidelines" className="block py-1 text-gray-200 hover:text-white">
-                                                Ethical Guidelines
-                                            </Link>
-                                            <Link to="/impact-factor" className="block py-1 text-gray-200 hover:text-white">
-                                                Impact Factor
-                                            </Link>
-                                            <Link to="/journal-indexing" className="block py-1 text-gray-200 hover:text-white">
-                                                Journal Indexing
-                                            </Link>
-                                        </div>
+                                            {activeDropdown === item.id && (
+                                                <div className="bg-[#3a5a8e] px-6 py-2 space-y-2 max-h-64 overflow-y-auto">
+                                                    {/* MOBILE LAYOUT: ABOUT */}
+                                                    {item.layout === 'about' && (
+                                                        <>
+                                                            {item.data.side.map((link, idx) => (
+                                                                <Link key={`side-${idx}`} to={link.to} className="block py-1 text-gray-200 hover:text-white">{link.label}</Link>
+                                                            ))}
+                                                            {item.data.main.map((section, idx) => (
+                                                                <React.Fragment key={`main-${idx}`}>
+                                                                    {section.links.map((link, lIdx) => (
+                                                                        <Link key={lIdx} to={link.to} className="block py-1 text-gray-200 hover:text-white">{link.label}</Link>
+                                                                    ))}
+                                                                </React.Fragment>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                    {/* MOBILE LAYOUT: JOURNALS */}
+                                                    {item.layout === 'journals' && (
+                                                        item.data.map((journal, idx) => (
+                                                            <Link key={idx} to={journal.link} className="block py-1 text-gray-200 hover:text-white text-sm">
+                                                                {journal.title}
+                                                            </Link>
+                                                        ))
+                                                    )}
+                                                    {/* MOBILE LAYOUT: SIMPLE */}
+                                                    {item.layout === 'simple' && (
+                                                        item.data.map((link, idx) => (
+                                                            <Link key={idx} to={link.to} className="block py-1 text-gray-200 hover:text-white">
+                                                                {link.label}
+                                                            </Link>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </li>
-
-                                {/* Mobile Journals */}
-                                <li>
-                                    <button
-                                        onClick={() => toggleDropdown('journals')}
-                                        className="w-full text-left px-4 py-2 text-white hover:bg-[#3a5a8e] flex items-center justify-between"
-                                    >
-                                        JOURNALS WE PUBLISH
-                                        <FaChevronDown className={`text-xs transition-transform ${activeDropdown === 'journals' ? 'rotate-180' : ''}`} />
-                                    </button>
-                                    {activeDropdown === 'journals' && (
-                                        <div className="bg-[#3a5a8e] px-6 py-2 space-y-2 max-h-64 overflow-y-auto">
-                                            <Link to="/journal-of-marketing" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Marketing and Retail Management
-                                            </Link>
-                                            <Link to="/journal-of-finance" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Finance and Risk Management
-                                            </Link>
-                                            <Link to="/social-sciences" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Social Sciences
-                                            </Link>
-                                            <Link to="/hr-management-and-organizational-behaviour" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                HR Management and Organizational Behaviour
-                                            </Link>
-                                            <Link to="/computer-science-and-information-systems" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Computer Science and Information Systems
-                                            </Link>
-                                            <Link to="/leadership-and-innovation-management" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Leadership and Innovation Management
-                                            </Link>
-                                            <Link to="/civil-engineering-and-structural-development" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Civil Engineering and Structural Development
-                                            </Link>
-                                            <Link to="/mechanical-engineering-research" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Mechanical Engineering Research
-                                            </Link>
-                                            <Link to="/applied-thermal-engineering" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Applied Thermal Engineering
-                                            </Link>
-                                            <Link to="/electronics-and-communication-technology" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Electronics and Communication Technology
-                                            </Link>
-                                            <Link to="/library-management-and-information-technology" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Library Management and Information Technology
-                                            </Link>
-                                            <Link to="/project-management-and-control" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Project Management and Control
-                                            </Link>
-                                            <Link to="/manufacturing-science-and-engineering" className="block py-1 text-gray-200 hover:text-white text-sm">
-                                                Manufacturing Science and Engineering
-                                            </Link>
-                                        </div>
-                                    )}
-                                </li>
-
-                                {/* Mobile Authors Area */}
-                                <li>
-                                    <button
-                                        onClick={() => toggleDropdown('authors')}
-                                        className="w-full text-left px-4 py-2 text-white hover:bg-[#3a5a8e] flex items-center justify-between"
-                                    >
-                                        AUTHORS AREA
-                                        <FaChevronDown className={`text-xs transition-transform ${activeDropdown === 'authors' ? 'rotate-180' : ''}`} />
-                                    </button>
-                                    {activeDropdown === 'authors' && (
-                                        <div className="bg-[#3a5a8e] px-6 py-2 space-y-2">
-                                            <Link to="/browse-journals" className="block py-1 text-gray-200 hover:text-white">
-                                                Browse Journals
-                                            </Link>
-                                            <Link to="/view-call-for-papers" className="block py-1 text-gray-200 hover:text-white">
-                                                View Call for Papers
-                                            </Link>
-                                            <Link to="/authors-guidelines" className="block py-1 text-gray-200 hover:text-white">
-                                                Author's Guidelines
-                                            </Link>
-                                            <Link to="/article-processing-charges" className="block py-1 text-gray-200 hover:text-white">
-                                                Article Processing Charges
-                                            </Link>
-                                            <Link to="/resources" className="block py-1 text-gray-200 hover:text-white">
-                                                Resources
-                                            </Link>
-                                        </div>
-                                    )}
-                                </li>
-
-                                <li>
-                                    <Link to="/become-an-editor" className="block px-4 py-2 text-white hover:bg-[#3a5a8e]">
-                                        Become An Editor
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
-                    )
-                }
-            </div >
-        </header >
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        </header>
     );
 };
 
