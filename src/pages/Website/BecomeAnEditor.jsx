@@ -1,33 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaListOl, FaTh, FaFileImage, FaFileAlt, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaLock, FaGlobe, FaCloudUploadAlt } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { countries, specializations, journalOptions } from '../../data/signUpData';
-import Footer from '../../components/Website/Footer';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { message } from 'antd';
+import { authApi, applicationApi } from '../../services/api';
+
 
 // Reusable Components matching ManuscriptForm style
-const IconInput = ({ icon: Icon, ...props }) => (
-    <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-        <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300 p-3">
-            <Icon className="text-sm" />
+const IconInput = ({ icon: Icon, error, touched, ...props }) => (
+    <div className="flex flex-col w-full">
+        <div className={`flex bg-gray-100 border ${error && touched ? 'border-red-500' : 'border-gray-300'} rounded overflow-hidden`}>
+            <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300 p-3">
+                <Icon className="text-sm" />
+            </div>
+            <input
+                {...props}
+                className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
+            />
         </div>
-        <input
-            {...props}
-            className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
-        />
+        {error && touched && <div className="text-red-500 text-xs mt-1">{error}</div>}
     </div>
 );
 
-const SelectInput = ({ icon: Icon, options, ...props }) => (
-    <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-        <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300 p-3">
-            <Icon className="text-sm" />
+const SelectInput = ({ icon: Icon, options, error, touched, children, ...props }) => (
+    <div className="flex flex-col w-full">
+        <div className={`flex bg-gray-100 border ${error && touched ? 'border-red-500' : 'border-gray-300'} rounded overflow-hidden`}>
+            <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300 p-3">
+                <Icon className="text-sm" />
+            </div>
+            <select
+                {...props}
+                className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
+            >
+                {children}
+            </select>
         </div>
-        <select
-            {...props}
-            className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
-        >
-            {props.children}
-        </select>
+        {error && touched && <div className="text-red-500 text-xs mt-1">{error}</div>}
     </div>
 );
 
@@ -43,6 +53,154 @@ const FormSection = ({ title, children }) => (
 const BecomeAnEditor = () => {
     const [activeTab, setActiveTab] = useState('author');
     const [captcha, setCaptcha] = useState(Math.floor(1000 + Math.random() * 9000));
+    const fileInputRef = useRef(null);
+
+    // Validation Schemas
+    // Common validation for shared fields
+    const commonValidation = {
+        firstName: Yup.string()
+            .matches(/^[a-zA-Z\s]+$/, 'Name cannot contain numbers')
+            .required('First Name is required'),
+        lastName: Yup.string()
+            .matches(/^[a-zA-Z\s]+$/, 'Name cannot contain numbers')
+            .required('Last Name is required'),
+        email: Yup.string().email('Invalid email').required('Email is required'),
+        confirmEmail: Yup.string()
+            .oneOf([Yup.ref('email'), null], 'Emails must match')
+            .required('Confirm Email is required'),
+        password: Yup.string().min(6, 'Password too short').required('Password is required'),
+        confirmPassword: Yup.string()
+            .oneOf([Yup.ref('password'), null], 'Passwords must match')
+            .required('Confirm Password is required'),
+        qualification: Yup.string().required('Qualification is required'),
+        specialization: Yup.string(),
+        institute: Yup.string().required('Institute/University is required'),
+        captchaInput: Yup.string()
+            .required('Please enter the security code')
+            .test('captcha-match', 'Incorrect code', function (value) {
+                return String(value) === String(captcha);
+            })
+    };
+
+    const authorSchema = Yup.object().shape({
+        ...commonValidation,
+        address: Yup.string().required('Address is required'),
+        city: Yup.string().required('City is required'),
+        state: Yup.string().required('State is required'),
+        country: Yup.string().required('Country is required'),
+        pincode: Yup.string()
+            .required('Pincode is required')
+            .matches(/^[0-9]+$/, 'Pincode must be digits only')
+            .min(6, 'Pincode must be 6 digits')
+            .max(6, 'Pincode must be 6 digits'),
+        organization: Yup.string().required('Organization Name is required'),
+        contactNumber: Yup.string()
+            .matches(/^[0-9]*$/, 'Contact number must be numbers only')
+            .min(10, 'Must be at least 10 digits')
+            .max(15, 'Must be at most 15 digits'),
+        altContactNumber: Yup.string()
+            .matches(/^[0-9]*$/, 'Alternative contact number must be numbers only')
+            .nullable()
+    });
+
+    const editorSchema = Yup.object().shape({
+        ...commonValidation,
+        journal: Yup.string().required('Please select a journal'),
+        title: Yup.string(),
+        file: Yup.mixed()
+            .required('CV is required')
+            .test('fileFormat', 'Unsupported Format. Only PDF and Word allowed', (value) => {
+                if (!value) return false;
+                return ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(value.type);
+            })
+    });
+
+    const authorFormik = useFormik({
+        initialValues: {
+            firstName: '', lastName: '', email: '', confirmEmail: '',
+            password: '', confirmPassword: '',
+            address: '', city: '', state: '', landMark: '', pincode: '', country: '',
+            isd: '', contactNumber: '', altContactNumber: '',
+            qualification: '', specialization: '', institute: '',
+            jobTitle: '', organization: '', orgType: '',
+            captchaInput: ''
+        },
+        validationSchema: authorSchema,
+        onSubmit: async (values, { setSubmitting, resetForm }) => {
+            try {
+                // Prepare data for API - adjust fields as needed by backend
+                const payload = {
+                    ...values,
+                    role: 'author'
+                };
+                await authApi.register(payload);
+                message.success('Author registration successful!');
+                resetForm();
+                setCaptcha(Math.floor(1000 + Math.random() * 9000));
+            } catch (error) {
+                console.error(error);
+                if (error.response && error.response.status === 409) {
+                    message.error('Author already exists');
+                } else {
+                    message.error('Registration failed. Please try again.');
+                }
+            } finally {
+                setSubmitting(false);
+            }
+        },
+    });
+
+    const editorFormik = useFormik({
+        initialValues: {
+            journal: '', title: 'Dr.',
+            firstName: '', lastName: '', email: '', confirmEmail: '',
+            password: '', confirmPassword: '',
+            qualification: '', specialization: '', institute: '',
+            file: null,
+            captchaInput: ''
+        },
+        validationSchema: editorSchema,
+        onSubmit: async (values, { setSubmitting, resetForm }) => {
+            try {
+                const formData = new FormData();
+                Object.keys(values).forEach(key => {
+                    if (key === 'file') {
+                        formData.append('file', values.file);
+                    } else {
+                        formData.append(key, values[key]);
+                    }
+                });
+
+                await applicationApi.becomeEditor(formData);
+                message.success('Editor application submitted successfully!');
+                resetForm();
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                setCaptcha(Math.floor(1000 + Math.random() * 9000));
+            } catch (error) {
+                console.error(error);
+                if (error.response && error.response.status === 409) {
+                    message.error('Editor application already submitted or email exists');
+                } else {
+                    message.error('Application failed. Please try again.');
+                }
+            } finally {
+                setSubmitting(false);
+            }
+        },
+    });
+
+    const handleAuthorSubmit = (e) => {
+        e.preventDefault();
+        authorFormik.handleSubmit();
+    };
+
+    const handleEditorSubmit = (e) => {
+        e.preventDefault();
+        editorFormik.handleSubmit();
+    };
+
 
     return (
         <div className="py-8 bg-white min-h-screen">
@@ -98,60 +256,64 @@ const BecomeAnEditor = () => {
                                         <p>Please fill in the asked details below. In case of any doubts or inconvenience, you can drop an email at <a href="mailto:support@elkjournals.com" className="text-blue-600 hover:underline">support@elkjournals.com</a>.</p>
                                     </div>
 
-                                    <form className="space-y-6">
+                                    <form className="space-y-6" onSubmit={handleAuthorSubmit}>
                                         <FormSection title="Personal Details:">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <IconInput icon={FaUser} type="text" placeholder="First Name *" />
-                                                <IconInput icon={FaUser} type="text" placeholder="Last Name *" />
-                                                <IconInput icon={FaEnvelope} type="email" placeholder="Email ID *" />
-                                                <IconInput icon={FaEnvelope} type="email" placeholder="Confirm Email ID *" />
-                                                <IconInput icon={FaLock} type="password" placeholder="Password *" />
-                                                <IconInput icon={FaLock} type="password" placeholder="Confirm Password *" />
+                                                <IconInput icon={FaUser} type="text" placeholder="First Name *" {...authorFormik.getFieldProps('firstName')} error={authorFormik.errors.firstName} touched={authorFormik.touched.firstName} />
+                                                <IconInput icon={FaUser} type="text" placeholder="Last Name *" {...authorFormik.getFieldProps('lastName')} error={authorFormik.errors.lastName} touched={authorFormik.touched.lastName} />
+                                                <IconInput icon={FaEnvelope} type="email" placeholder="Email ID *" {...authorFormik.getFieldProps('email')} error={authorFormik.errors.email} touched={authorFormik.touched.email} />
+                                                <IconInput icon={FaEnvelope} type="email" placeholder="Confirm Email ID *" {...authorFormik.getFieldProps('confirmEmail')} error={authorFormik.errors.confirmEmail} touched={authorFormik.touched.confirmEmail} />
+                                                <IconInput icon={FaLock} type="password" placeholder="Password *" {...authorFormik.getFieldProps('password')} error={authorFormik.errors.password} touched={authorFormik.touched.password} />
+                                                <IconInput icon={FaLock} type="password" placeholder="Confirm Password *" {...authorFormik.getFieldProps('confirmPassword')} error={authorFormik.errors.confirmPassword} touched={authorFormik.touched.confirmPassword} />
                                             </div>
                                         </FormSection>
 
                                         <FormSection title="Contact Details:">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="bg-gray-100 border border-gray-300 rounded overflow-hidden flex">
-                                                    <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
-                                                        <FaMapMarkerAlt className="text-sm" />
+                                                <div className="flex flex-col w-full">
+                                                    <div className={`bg-gray-100 border ${authorFormik.errors.address && authorFormik.touched.address ? 'border-red-500' : 'border-gray-300'} rounded overflow-hidden flex`}>
+                                                        <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                                            <FaMapMarkerAlt className="text-sm" />
+                                                        </div>
+                                                        <textarea placeholder="Address *"
+                                                            {...authorFormik.getFieldProps('address')}
+                                                            className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 h-10 resize-none pt-2"></textarea>
                                                     </div>
-                                                    <textarea placeholder="Address *" className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 h-10 resize-none pt-2"></textarea>
+                                                    {authorFormik.errors.address && authorFormik.touched.address && <div className="text-red-500 text-xs mt-1">{authorFormik.errors.address}</div>}
                                                 </div>
-                                                <IconInput icon={MdLocationOn} type="text" placeholder="City *" />
-                                                <IconInput icon={FaMapMarkerAlt} type="text" placeholder="State *" />
-                                                <IconInput icon={FaMapMarkerAlt} type="text" placeholder="Near Land Mark *" />
-                                                <IconInput icon={FaMapMarkerAlt} type="text" placeholder="Pincode *" />
-                                                <SelectInput icon={FaGlobe} placeholder="Select Country">
+                                                <IconInput icon={MdLocationOn} type="text" placeholder="City *" {...authorFormik.getFieldProps('city')} error={authorFormik.errors.city} touched={authorFormik.touched.city} />
+                                                <IconInput icon={FaMapMarkerAlt} type="text" placeholder="State *" {...authorFormik.getFieldProps('state')} error={authorFormik.errors.state} touched={authorFormik.touched.state} />
+                                                <IconInput icon={FaMapMarkerAlt} type="text" placeholder="Near Land Mark *" {...authorFormik.getFieldProps('landMark')} />
+                                                <IconInput icon={FaMapMarkerAlt} type="text" placeholder="Pincode *" {...authorFormik.getFieldProps('pincode')} error={authorFormik.errors.pincode} touched={authorFormik.touched.pincode} />
+                                                <SelectInput icon={FaGlobe} placeholder="Select Country" {...authorFormik.getFieldProps('country')} error={authorFormik.errors.country} touched={authorFormik.touched.country}>
                                                     <option value="">Please Select</option>
                                                     {countries.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
                                                 </SelectInput>
-                                                <IconInput icon={FaPhone} type="text" placeholder="ISD" readOnly className="w-1/3" />
-                                                {/* Note: The design had split ISD/Phone, simplistic merging here or keeping separate */}
-                                                <IconInput icon={FaPhone} type="text" placeholder="Contact Number" />
-                                                <IconInput icon={FaPhone} type="text" placeholder="Alternative Contact Number" />
+                                                <IconInput icon={FaPhone} type="text" placeholder="ISD" readOnly className="w-1/3" {...authorFormik.getFieldProps('isd')} />
+                                                <IconInput icon={FaPhone} type="text" placeholder="Contact Number" {...authorFormik.getFieldProps('contactNumber')} error={authorFormik.errors.contactNumber} touched={authorFormik.touched.contactNumber} />
+                                                <IconInput icon={FaPhone} type="text" placeholder="Alternative Contact Number" {...authorFormik.getFieldProps('altContactNumber')} />
                                             </div>
                                         </FormSection>
 
                                         <FormSection title="Educational Details:">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <IconInput icon={MdSchool} type="text" placeholder="Educational Qualification *" />
-                                                <SelectInput icon={FaListOl}>
+                                                <IconInput icon={MdSchool} type="text" placeholder="Educational Qualification *" {...authorFormik.getFieldProps('qualification')} error={authorFormik.errors.qualification} touched={authorFormik.touched.qualification} />
+                                                <SelectInput icon={FaListOl} {...authorFormik.getFieldProps('specialization')} error={authorFormik.errors.specialization} touched={authorFormik.touched.specialization}>
                                                     <option value="">Please Select Area of Specialisation</option>
                                                     {specializations.map((s, i) => <option key={i} value={s}>{s}</option>)}
                                                 </SelectInput>
                                                 <div className="md:col-span-2">
-                                                    <IconInput icon={FaUniversity} type="text" placeholder="Institute/ University *" />
+                                                    <IconInput icon={FaUniversity} type="text" placeholder="Institute/ University *" {...authorFormik.getFieldProps('institute')} error={authorFormik.errors.institute} touched={authorFormik.touched.institute} />
                                                 </div>
                                             </div>
                                         </FormSection>
 
                                         <FormSection title="Your organization, role and field of interest:">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <IconInput icon={FaUser} type="text" placeholder="Job Title" />
-                                                <IconInput icon={FaBuilding} type="text" placeholder="Organization Name *" />
+                                                <IconInput icon={FaUser} type="text" placeholder="Job Title" {...authorFormik.getFieldProps('jobTitle')} />
+                                                <IconInput icon={FaBuilding} type="text" placeholder="Organization Name *" {...authorFormik.getFieldProps('organization')} error={authorFormik.errors.organization} touched={authorFormik.touched.organization} />
                                                 <div className="md:col-span-2">
-                                                    <SelectInput icon={FaListOl}>
+                                                    <SelectInput icon={FaListOl} {...authorFormik.getFieldProps('orgType')}>
                                                         <option value="">Select your organization type</option>
                                                         <option value="Corporate">Corporate</option>
                                                         <option value="University">University</option>
@@ -164,10 +326,15 @@ const BecomeAnEditor = () => {
 
                                         <div className="flex flex-col md:flex-row items-center gap-4 mt-6">
                                             <div className="flex items-center gap-2">
-                                                <div className="flex gap-2">
-                                                    {[1, 2, 3, 4].map((_, i) => (
-                                                        <input key={i} type="text" maxLength="1" className="w-10 h-10 border border-gray-400 text-center text-lg focus:outline-none focus:border-[#12b48b]" />
-                                                    ))}
+                                                <div className="flex flex-col">
+                                                    <input
+                                                        type="text"
+                                                        maxLength="4"
+                                                        placeholder="Code"
+                                                        {...authorFormik.getFieldProps('captchaInput')}
+                                                        className={`w-32 h-10 border ${authorFormik.errors.captchaInput && authorFormik.touched.captchaInput ? 'border-red-500' : 'border-gray-400'} text-center text-lg focus:outline-none focus:border-[#12b48b]`}
+                                                    />
+                                                    {authorFormik.errors.captchaInput && authorFormik.touched.captchaInput && <div className="text-red-500 text-xs mt-1">{authorFormik.errors.captchaInput}</div>}
                                                 </div>
                                                 <div className="bg-[#567a9a] text-white px-4 py-2 font-bold text-lg tracking-widest">
                                                     {captcha}
@@ -185,8 +352,8 @@ const BecomeAnEditor = () => {
                                                 <span>|</span>
                                                 <a href="#" className="flex items-center gap-1 hover:text-[#12b48b]"><FaLock className="text-gray-400" /> Login</a>
                                             </div>
-                                            <button type="submit" className="bg-[#12b48b] text-white px-10 py-2 rounded-full shadow hover:bg-[#0e9f7a] flex items-center gap-2 font-bold transition-colors">
-                                                SUBMIT <FaLongArrowAltRight />
+                                            <button type="submit" disabled={authorFormik.isSubmitting} className="bg-[#12b48b] text-white px-10 py-2 rounded-full shadow hover:bg-[#0e9f7a] flex items-center gap-2 font-bold transition-colors disabled:opacity-50">
+                                                {authorFormik.isSubmitting ? 'SUBMITTING...' : 'SUBMIT'} <FaLongArrowAltRight />
                                             </button>
                                         </div>
                                     </form>
@@ -195,10 +362,10 @@ const BecomeAnEditor = () => {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-6">Your public profile at ELK Asia Pacific Journals will speak for your contributions to the research community. So, be our valuable resource and solicit your achievements on our editorial board.<br /><br />Just spend a minute in filling the details below to create your account with us.</p>
 
-                                    <form className="space-y-6">
+                                    <form className="space-y-6" onSubmit={handleEditorSubmit}>
                                         <FormSection title="Personal Details:">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <SelectInput icon={FaFileAlt}>
+                                                <SelectInput icon={FaFileAlt} {...editorFormik.getFieldProps('journal')} error={editorFormik.errors.journal} touched={editorFormik.touched.journal} >
                                                     <option value="">Select Journal</option>
                                                     {journalOptions.map((group, i) => (
                                                         <optgroup key={i} label={group.label}>
@@ -208,38 +375,49 @@ const BecomeAnEditor = () => {
                                                         </optgroup>
                                                     ))}
                                                 </SelectInput>
-                                                <SelectInput icon={FaUser}>
+                                                <SelectInput icon={FaUser} {...editorFormik.getFieldProps('title')} >
                                                     <option value="Dr.">Dr</option>
                                                     <option value="Prof.">Prof</option>
                                                     <option value="Er.">Er</option>
                                                 </SelectInput>
-                                                <IconInput icon={FaUser} type="text" placeholder="First Name *" />
-                                                <IconInput icon={FaUser} type="text" placeholder="Last Name *" />
-                                                <IconInput icon={FaEnvelope} type="email" placeholder="Email ID *" />
-                                                <IconInput icon={FaEnvelope} type="email" placeholder="Confirm Email ID *" />
-                                                <IconInput icon={FaLock} type="password" placeholder="Password *" />
-                                                <IconInput icon={FaLock} type="password" placeholder="Confirm Password *" />
+                                                <IconInput icon={FaUser} type="text" placeholder="First Name *" {...editorFormik.getFieldProps('firstName')} error={editorFormik.errors.firstName} touched={editorFormik.touched.firstName} />
+                                                <IconInput icon={FaUser} type="text" placeholder="Last Name *" {...editorFormik.getFieldProps('lastName')} error={editorFormik.errors.lastName} touched={editorFormik.touched.lastName} />
+                                                <IconInput icon={FaEnvelope} type="email" placeholder="Email ID *" {...editorFormik.getFieldProps('email')} error={editorFormik.errors.email} touched={editorFormik.touched.email} />
+                                                <IconInput icon={FaEnvelope} type="email" placeholder="Confirm Email ID *" {...editorFormik.getFieldProps('confirmEmail')} error={editorFormik.errors.confirmEmail} touched={editorFormik.touched.confirmEmail} />
+                                                <IconInput icon={FaLock} type="password" placeholder="Password *" {...editorFormik.getFieldProps('password')} error={editorFormik.errors.password} touched={editorFormik.touched.password} />
+                                                <IconInput icon={FaLock} type="password" placeholder="Confirm Password *" {...editorFormik.getFieldProps('confirmPassword')} error={editorFormik.errors.confirmPassword} touched={editorFormik.touched.confirmPassword} />
                                             </div>
                                         </FormSection>
 
                                         <FormSection title="Educational Details:">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <IconInput icon={MdSchool} type="text" placeholder="Educational Qualification *" />
-                                                <SelectInput icon={FaListOl}>
+                                                <IconInput icon={MdSchool} type="text" placeholder="Educational Qualification *" {...editorFormik.getFieldProps('qualification')} error={editorFormik.errors.qualification} touched={editorFormik.touched.qualification} />
+                                                <SelectInput icon={FaListOl} {...editorFormik.getFieldProps('specialization')}>
                                                     <option value="">Please Select</option>
                                                     {specializations.map((s, i) => <option key={i} value={s}>{s}</option>)}
                                                 </SelectInput>
                                                 <div className="md:col-span-2">
-                                                    <IconInput icon={FaUniversity} type="text" placeholder="Institute/ University *" />
+                                                    <IconInput icon={FaUniversity} type="text" placeholder="Institute/ University *" {...editorFormik.getFieldProps('institute')} error={editorFormik.errors.institute} touched={editorFormik.touched.institute} />
                                                 </div>
                                                 <div className="md:col-span-2">
-                                                    <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-                                                        <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
-                                                            <FaCloudUploadAlt className="text-sm" />
+                                                    <div className={`flex flex-col w-full`}>
+                                                        <div className={`flex bg-gray-100 border ${editorFormik.errors.file && editorFormik.touched.file ? 'border-red-500' : 'border-gray-300'} rounded overflow-hidden`}>
+                                                            <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                                                <FaCloudUploadAlt className="text-sm" />
+                                                            </div>
+                                                            <div className="flex-1 px-3 py-2 bg-gray-100 flex items-center justify-between">
+                                                                <input
+                                                                    type="file"
+                                                                    accept=".pdf,.doc,.docx"
+                                                                    ref={fileInputRef}
+                                                                    className="text-sm text-gray-600 w-full"
+                                                                    onChange={(event) => {
+                                                                        editorFormik.setFieldValue("file", event.currentTarget.files[0]);
+                                                                    }}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <div className="flex-1 px-3 py-2 bg-gray-100 flex items-center justify-between">
-                                                            <input type="file" className="text-sm text-gray-600 w-full" />
-                                                        </div>
+                                                        {editorFormik.errors.file && editorFormik.touched.file && <div className="text-red-500 text-xs mt-1">{editorFormik.errors.file}</div>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -249,10 +427,15 @@ const BecomeAnEditor = () => {
 
                                         <div className="flex flex-col md:flex-row items-center gap-4 mt-6">
                                             <div className="flex items-center gap-2">
-                                                <div className="flex gap-2">
-                                                    {[1, 2, 3, 4].map((_, i) => (
-                                                        <input key={i} type="text" maxLength="1" className="w-10 h-10 border border-gray-400 text-center text-lg focus:outline-none focus:border-[#12b48b]" />
-                                                    ))}
+                                                <div className="flex flex-col">
+                                                    <input
+                                                        type="text"
+                                                        maxLength="4"
+                                                        placeholder="Code"
+                                                        {...editorFormik.getFieldProps('captchaInput')}
+                                                        className={`w-32 h-10 border ${editorFormik.errors.captchaInput && editorFormik.touched.captchaInput ? 'border-red-500' : 'border-gray-400'} text-center text-lg focus:outline-none focus:border-[#12b48b]`}
+                                                    />
+                                                    {editorFormik.errors.captchaInput && editorFormik.touched.captchaInput && <div className="text-red-500 text-xs mt-1">{editorFormik.errors.captchaInput}</div>}
                                                 </div>
                                                 <div className="bg-[#567a9a] text-white px-4 py-2 font-bold text-lg tracking-widest">
                                                     {captcha}
@@ -272,8 +455,8 @@ const BecomeAnEditor = () => {
                                                 <span>|</span>
                                                 <a href="#" className="flex items-center gap-1 hover:text-[#12b48b]"><FaLock className="text-gray-400" /> Login</a>
                                             </div>
-                                            <button type="submit" className="bg-[#12b48b] text-white px-10 py-2 rounded-full shadow hover:bg-[#0e9f7a] flex items-center gap-2 font-bold transition-colors">
-                                                SUBMIT <FaLongArrowAltRight />
+                                            <button type="submit" disabled={editorFormik.isSubmitting} className="bg-[#12b48b] text-white px-10 py-2 rounded-full shadow hover:bg-[#0e9f7a] flex items-center gap-2 font-bold transition-colors disabled:opacity-50">
+                                                {editorFormik.isSubmitting ? 'SUBMITTING...' : 'SUBMIT'} <FaLongArrowAltRight />
                                             </button>
                                         </div>
                                     </form>

@@ -57,4 +57,15 @@ export const journalIssueApi = {
     delete: (id) => api.delete(`/journal-issues/${id}`),
 };
 
+export const authApi = {
+    register: (data) => api.post('/auth/register', data),
+};
+
+export const applicationApi = {
+    becomeEditor: (data) => {
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return api.post('/editor-applications', data, { headers });
+    }
+};
+
 export default api;
