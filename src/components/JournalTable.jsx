@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Button, Space, Tooltip } from 'antd';
-import { FaEye, FaEdit } from 'react-icons/fa';
+import { FaEye } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const JournalTable = ({ journals }) => {
@@ -43,7 +43,12 @@ const JournalTable = ({ journals }) => {
                 <Space size="middle">
                     <Tooltip title="View Details">
                         <Link to={`/dashboard/view-journal/${record.encryptedId}`}>
-                            <Button type="text" icon={<FaEye className="text-blue-500 text-lg" />} />
+                            <Button
+                                type="text"
+                                icon={<FaEye className="text-[#12b48b]" />}
+                                shape="circle"
+                                className="hover:bg-green-50"
+                            />
                         </Link>
                     </Tooltip>
                 </Space>

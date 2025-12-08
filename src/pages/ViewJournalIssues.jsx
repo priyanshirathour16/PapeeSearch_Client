@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Popconfirm, message, Space, Typography } from 'antd';
+import { Table, Button, Popconfirm, message, Space } from 'antd';
 import { FaPlus, FaEye, FaTrash } from 'react-icons/fa';
 import { journalIssueApi } from '../services/api';
-
-const { Title } = Typography;
 
 const ViewJournalIssues = () => {
     const [issues, setIssues] = useState([]);
@@ -94,56 +92,57 @@ const ViewJournalIssues = () => {
                         cancelText="No"
                         placement="left"
                     >
-                        <span
-
-                        > <FaTrash color='red' />  </span>
+                        <Button
+                            type="text"
+                            icon={<FaTrash className="text-red-500" />}
+                            shape="circle"
+                            className="hover:bg-red-50"
+                        />
                     </Popconfirm>
-                    <span
-                        type="primary"
-
+                    <Button
+                        type="text"
+                        icon={<FaEye className="text-[#12b48b]" />}
                         onClick={() => navigate(`/dashboard/journal-issues/${record.id}`)}
-                        className="bg-blue-500 hover:bg-blue-600  cursor-pointer"
-                    >
-                        <FaEye color='blue' />
-                    </span>
-
+                        shape="circle"
+                        className="hover:bg-green-50"
+                    />
                 </Space>
             ),
         },
     ];
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-                <Title level={2} className="!mb-0 text-gray-800">
+                <h1 className="text-2xl font-bold text-gray-800">
                     Journal Issues
-                </Title>
+                </h1>
                 <Button
                     type="primary"
                     icon={<FaPlus />}
                     onClick={() => navigate('/dashboard/journal-issues/add')}
-                    size="large"
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-0 shadow-lg"
+                    className="bg-blue-600 hover:bg-blue-700"
                 >
                     Add New Issue
                 </Button>
             </div>
 
-            <Table
-                columns={columns}
-                dataSource={issues}
-                rowKey="id"
-                loading={loading}
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} issues`,
-                    pageSizeOptions: ['10', '20', '50', '100'],
-                }}
-                bordered
-                className="shadow-sm"
-                scroll={{ x: 800 }}
-            />
+            <div className="bg-white rounded-lg shadow overflow-hidden p-4">
+                <Table
+                    columns={columns}
+                    dataSource={issues}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Total ${total} issues`,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                    }}
+                    className="shadow-sm"
+                    scroll={{ x: 800 }}
+                />
+            </div>
         </div>
     );
 };
