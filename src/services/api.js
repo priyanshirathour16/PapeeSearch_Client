@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+
 const api = axios.create({
     baseURL: 'http://localhost:5000/api',
 });
@@ -47,6 +48,7 @@ export const journalApi = {
     delete: (id) => api.delete(`/journals/${id}`),
     addEditor: (id, editorData) => api.post(`/journals/${id}/editors`, editorData),
     deleteEditor: (journalId, editorId) => api.delete(`/journals/${journalId}/editors/${editorId}`),
+    getDetailsByCategory: (route) => api.post('/journals/details-by-category', { route }),
 };
 
 export const journalIssueApi = {

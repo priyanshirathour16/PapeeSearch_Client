@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { editorApplicationApi } from '../../services/api';
 import { Table, Modal, Button, Tag, Space, message, Popconfirm } from 'antd';
 import { FaEye, FaFileDownload, FaTrash } from 'react-icons/fa';
+import { ImageURl } from '../../services/serviceApi';
 
 const AdminEditorList = () => {
     const [editors, setEditors] = useState([]);
@@ -182,7 +183,7 @@ const AdminEditorList = () => {
                             <span className="text-gray-600 text-sm">Curriculum Vitae</span>
                             {selectedEditor.cvFile ? (
                                 <a
-                                    href={`http://localhost:5000/${selectedEditor.cvFile}`}
+                                    href={`${ImageURl}/${selectedEditor.cvFile}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-blue-600 hover:underline text-sm font-medium"

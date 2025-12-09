@@ -66,12 +66,12 @@ const Header = () => {
                     response.data.forEach(cat => {
                         if (cat.journals && Array.isArray(cat.journals)) {
                             cat.journals.forEach(journal => {
-                                const route = journal.route || journal.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+                                const route = cat.route || journal.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
                                 journals.push({
-                                    title: journal.title,
+                                    title: cat.title, // Use category title as per request
                                     issn: journal.print_issn || journal.e_issn || 'N/A',
                                     impactFactor: "N/A", // Not provided in API
-                                    link: `/journals/${route}`,
+                                    link: `/journals/${route}`, // Use category route
                                     icon: <FaBook />
                                 });
                             });

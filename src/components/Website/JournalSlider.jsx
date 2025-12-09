@@ -3,7 +3,7 @@ import SliderImage from "../../assets/images/jm-eapjmrm.jpg";
 import { FaArrowRight } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 
-const JournalSlider = () => {
+const JournalSlider = ({ journalData }) => {
     return (
         <section className="slider relative w-full font-roboto">
             <div className="relative w-full">
@@ -16,7 +16,7 @@ const JournalSlider = () => {
                 {/* Overlay Box */}
                 <div className="absolute !top-1/4 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 w-[90%] md:w-[85%] lg:w-[80%] !bg-black/85 rounded-lg !p-6 md: text-center " style={{ marginTop: "4rem" }}>
                     <div className="heading text-white text-xl md:text-3xl font-normal  leading-tight mb-5">
-                        ELK's International Journal of Marketing (EAPJMRM)
+                        {journalData?.title}
                     </div>
 
 

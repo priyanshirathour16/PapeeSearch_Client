@@ -9,6 +9,7 @@ import { FaPlus, FaTrash, FaSave, FaPencilAlt, FaTimes } from 'react-icons/fa';
 import EditorialBoard from '../components/EditorialBoard';
 import BackButton from '../components/BackButton';
 import { journalApi, journalCategoryApi } from '../services/api';
+import { ImageURl } from '../services/serviceApi';
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -73,7 +74,7 @@ const JournalDetails = () => {
 
             if (data.image) {
                 // Construct server URL for image
-                setImagePreview(`http://localhost:5000/uploads/${data.image}`);
+                setImagePreview(`${ImageURl}${data.image}`);
             }
         } catch (error) {
             message.error('Failed to fetch journal details');

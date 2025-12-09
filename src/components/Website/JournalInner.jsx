@@ -9,6 +9,7 @@ import Image4 from "../../assets/images/13.png";
 import Image5 from "../../assets/images/17.png";
 import Image6 from "../../assets/images/14.jpg";
 import Image7 from "../../assets/images/15.jpg";
+import { ImageURl } from '../../services/serviceApi';
 
 
 const JournalInner = ({ journalData }) => {
@@ -41,7 +42,7 @@ const JournalInner = ({ journalData }) => {
                                 <FaUnlockAlt /> Open Access
                             </div>
                             <div className="p-4 flex justify-center">
-                                <img src={journalData.coverImage} alt={journalData.title} className="max-w-full h-auto shadow-md" />
+                                <img src={`${ImageURl}${journalData.coverImage}`} alt={journalData.title} className="max-w-full h-auto shadow-md" />
                             </div>
                         </div>
 
