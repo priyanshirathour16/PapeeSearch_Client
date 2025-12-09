@@ -8,7 +8,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { FaPlus, FaTrash, FaSave, FaPencilAlt, FaTimes } from 'react-icons/fa';
 import EditorialBoard from '../components/EditorialBoard';
 import BackButton from '../components/BackButton';
-import { journalApi } from '../services/api';
+import { journalApi, journalCategoryApi } from '../services/api';
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -16,6 +16,7 @@ const { Title, Text, Paragraph } = Typography;
 
 const JournalSchema = Yup.object().shape({
     title: Yup.string().required('Required'),
+    categoryId: Yup.string().required('Required'),
     printIssn: Yup.string().required('Required'),
     eIssn: Yup.string().required('Required'),
     editors: Yup.string().required('Required'),
@@ -32,11 +33,21 @@ const JournalSchema = Yup.object().shape({
 const JournalDetails = () => {
     const { id } = useParams();
     const [editors, setEditors] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [initialValues, setInitialValues] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [activeTab, setActiveTab] = useState('1');
+
+    const fetchCategories = async () => {
+        try {
+            const response = await journalCategoryApi.getAll();
+            setCategories(response.data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
 
     const fetchJournalDetails = async () => {
         try {
@@ -45,6 +56,7 @@ const JournalDetails = () => {
 
             setInitialValues({
                 title: data.title,
+                categoryId: data.category_id || '', // Map backend snake_case to camelCase
                 printIssn: data.print_issn,
                 eIssn: data.e_issn,
                 editors: data.editors || '',
@@ -71,6 +83,7 @@ const JournalDetails = () => {
     };
 
     useEffect(() => {
+        fetchCategories();
         fetchJournalDetails();
     }, [id]);
 
@@ -80,6 +93,7 @@ const JournalDetails = () => {
 
             // Append simple fields
             formData.append('title', values.title);
+            formData.append('category_id', values.categoryId);
             formData.append('print_issn', values.printIssn);
             formData.append('e_issn', values.eIssn);
             formData.append('editors', values.editors);
@@ -137,6 +151,11 @@ const JournalDetails = () => {
         handleUpdate(values, editors);
     };
 
+    const getCategoryName = (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        return category ? category.title : 'N/A';
+    };
+
     if (loading) return <Spin className="flex justify-center mt-10" />;
     if (!initialValues) return <div>Error loading data</div>;
 
@@ -180,6 +199,27 @@ const JournalDetails = () => {
                                             </>
                                         ) : (
                                             <Text strong>{values.title}</Text>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Journal Category</label>
+                                        {isEditing ? (
+                                            <>
+                                                <Select
+                                                    name="categoryId"
+                                                    value={values.categoryId}
+                                                    onChange={(value) => setFieldValue('categoryId', value)}
+                                                    className="w-full"
+                                                    status={touched.categoryId && errors.categoryId ? 'error' : ''}
+                                                >
+                                                    {categories.map(category => (
+                                                        <Option key={category.id} value={category.id}>{category.title}</Option>
+                                                    ))}
+                                                </Select>
+                                                {touched.categoryId && errors.categoryId && <div className="text-red-500 text-xs">{errors.categoryId}</div>}
+                                            </>
+                                        ) : (
+                                            <Text>{getCategoryName(values.categoryId)}</Text>
                                         )}
                                     </div>
                                     <div>

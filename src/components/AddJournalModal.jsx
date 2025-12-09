@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Input, Select, Button, Form, Upload, message } from 'antd';
 import { Formik, Field, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { FaPlus, FaTrash } from 'react-icons/fa';
+import { journalCategoryApi } from '../services/api';
 
 const { Option } = Select;
 
 const JournalSchema = Yup.object().shape({
     title: Yup.string().required('Required'),
+    categoryId: Yup.string().required('Required'),
     printIssn: Yup.string().required('Required'),
     eIssn: Yup.string().required('Required'),
     editors: Yup.string().required('Required'),
@@ -24,6 +26,24 @@ const JournalSchema = Yup.object().shape({
 });
 
 const AddJournalModal = ({ visible, onClose, onSubmit }) => {
+    const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        if (visible) {
+            fetchCategories();
+        }
+    }, [visible]);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await journalCategoryApi.getAll();
+            setCategories(response.data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            message.error('Failed to load journal categories');
+        }
+    };
+
     return (
         <Modal
             title="Add New Journal"
@@ -36,6 +56,7 @@ const AddJournalModal = ({ visible, onClose, onSubmit }) => {
             <Formik
                 initialValues={{
                     title: '',
+                    categoryId: '',
                     printIssn: '',
                     eIssn: '',
                     editors: '',
@@ -50,6 +71,11 @@ const AddJournalModal = ({ visible, onClose, onSubmit }) => {
                 }}
                 validationSchema={JournalSchema}
                 onSubmit={(values, { resetForm }) => {
+                    // Map categoryId to snake_case if needed by parent onSubmit or handle it there. 
+                    // Usually onSubmit here just passes values. The parent likely handles API call.
+                    // But wait, the previous code passed values directly to onSubmit prop.
+                    // The user said "send the category id with the request body".
+                    // I'll ensure categoryId is in values.
                     onSubmit(values);
                     resetForm();
                     onClose();
@@ -62,6 +88,22 @@ const AddJournalModal = ({ visible, onClose, onSubmit }) => {
                                 <label className="block text-sm font-medium text-gray-700">Journal Title</label>
                                 <Input name="title" value={values.title} onChange={handleChange} onBlur={handleBlur} status={touched.title && errors.title ? 'error' : ''} />
                                 {touched.title && errors.title && <div className="text-red-500 text-xs">{errors.title}</div>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Journal Category</label>
+                                <Select
+                                    name="categoryId"
+                                    value={values.categoryId}
+                                    onChange={(value) => setFieldValue('categoryId', value)}
+                                    className="w-full"
+                                    status={touched.categoryId && errors.categoryId ? 'error' : ''}
+                                    placeholder="Select a category"
+                                >
+                                    {categories.map(category => (
+                                        <Option key={category.id} value={category.id}>{category.title}</Option>
+                                    ))}
+                                </Select>
+                                {touched.categoryId && errors.categoryId && <div className="text-red-500 text-xs">{errors.categoryId}</div>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Print ISSN</label>

@@ -51,6 +51,7 @@ const ViewJournal = () => {
             // I will construct FormData with snake_case keys.
             const apiData = new FormData();
             apiData.append('title', values.title);
+            apiData.append('category_id', values.categoryId);
             apiData.append('print_issn', values.printIssn);
             apiData.append('e_issn', values.eIssn);
             apiData.append('editors', values.editors);
