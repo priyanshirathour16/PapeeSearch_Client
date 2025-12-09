@@ -88,4 +88,10 @@ export const journalCategoryApi = {
     delete: (id) => api.delete(`/journal-categories/${id}`),
 };
 
+export const impactFactorApi = {
+    add: (data) => api.post('/journal-impact-factors', data),
+    getByJournal: (journalId) => api.get(`/journal-impact-factors/${journalId}`),
+    delete: (id) => api.delete(`/journal-impact-factors/${id}`),
+};
+
 export default api;

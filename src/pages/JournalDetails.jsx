@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Tabs, Form, Input, Button, Select, Upload, message, Spin, Typography } from 'antd';
+import { Tabs, Form, Input, Button, Select, Upload, message, Spin, Typography, Modal, Popconfirm } from 'antd';
 import { Formik, Field, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import ReactQuill from 'react-quill-new';
@@ -8,7 +8,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { FaPlus, FaTrash, FaSave, FaPencilAlt, FaTimes } from 'react-icons/fa';
 import EditorialBoard from '../components/EditorialBoard';
 import BackButton from '../components/BackButton';
-import { journalApi, journalCategoryApi } from '../services/api';
+import { journalApi, journalCategoryApi, impactFactorApi } from '../services/api';
 import { ImageURl } from '../services/serviceApi';
 
 const { TabPane } = Tabs;
@@ -33,12 +33,15 @@ const JournalSchema = Yup.object().shape({
 
 const JournalDetails = () => {
     const { id } = useParams();
+    const [journalId, setJournalId] = useState(null);
     const [editors, setEditors] = useState([]);
+    const [impactFactors, setImpactFactors] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [initialValues, setInitialValues] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isImpactModalOpen, setIsImpactModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('1');
 
     const fetchCategories = async () => {
@@ -50,10 +53,21 @@ const JournalDetails = () => {
         }
     };
 
+    const fetchImpactFactors = async () => {
+        if (!journalId) return;
+        try {
+            const response = await impactFactorApi.getByJournal(journalId);
+            setImpactFactors(response.data);
+        } catch (error) {
+            console.error('Error fetching impact factors:', error);
+        }
+    };
+
     const fetchJournalDetails = async () => {
         try {
             const response = await journalApi.getById(id);
             const data = response.data;
+            setJournalId(data.id);
 
             setInitialValues({
                 title: data.title,
@@ -87,6 +101,12 @@ const JournalDetails = () => {
         fetchCategories();
         fetchJournalDetails();
     }, [id]);
+
+    useEffect(() => {
+        if (journalId) {
+            fetchImpactFactors();
+        }
+    }, [journalId]);
 
     const handleUpdate = async (values, currentEditors) => {
         try {
@@ -150,6 +170,32 @@ const JournalDetails = () => {
 
     const handleSaveEditors = (values) => {
         handleUpdate(values, editors);
+    };
+
+    const handleAddImpactFactor = async (values, { resetForm }) => {
+        try {
+            await impactFactorApi.add({
+                journal_id: journalId,
+                factors: values.factors
+            });
+            message.success('Impact factors added successfully');
+            resetForm();
+            setIsImpactModalOpen(false);
+            fetchImpactFactors();
+        } catch (error) {
+            console.error(error);
+            message.error('Failed to add impact factors');
+        }
+    };
+
+    const handleDeleteImpactFactor = async (factorId) => {
+        try {
+            await impactFactorApi.delete(factorId);
+            message.success('Impact factor deleted');
+            fetchImpactFactors();
+        } catch (error) {
+            message.error('Failed to delete impact factor');
+        }
     };
 
     const getCategoryName = (categoryId) => {
@@ -413,6 +459,134 @@ const JournalDetails = () => {
                                 onDeleteEditor={handleDeleteEditor}
                                 readOnly={!isEditing}
                             />
+                        </TabPane>
+                        <TabPane tab="Impact Factor" key="3">
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded border">
+                                    <h3 className="font-bold text-gray-700 m-0">Impact Factor History</h3>
+                                    <Button type="primary" icon={<FaPlus />} onClick={() => setIsImpactModalOpen(true)}>
+                                        Add Impact Factor
+                                    </Button>
+                                </div>
+
+                                <div>
+                                    {impactFactors.length === 0 ? (
+                                        <div className="text-gray-500 italic text-center p-8 bg-gray-50 rounded">No impact factors recorded.</div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {impactFactors.map((item) => (
+                                                <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded shadow-sm border border-l-4 border-l-[#12b48b] hover:shadow-md transition-shadow">
+                                                    <div>
+                                                        <div className="text-sm text-gray-500">Year: <span className="font-bold text-[#204066] text-lg">{item.year}</span></div>
+                                                        <div className="text-sm text-gray-500">Factor: <span className="text-[#12b48b] font-bold text-lg">{item.impact_factor}</span></div>
+                                                    </div>
+                                                    <Popconfirm
+                                                        title="Are you sure you want to delete this impact factor?"
+                                                        onConfirm={() => handleDeleteImpactFactor(item.id)}
+                                                        okText="Yes"
+                                                        cancelText="No"
+                                                    >
+                                                        <Button type="text" danger icon={<FaTrash />} className="hover:bg-red-50" />
+                                                    </Popconfirm>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Add Impact Factor Modal */}
+                            <Modal
+                                title="Add Impact Factors"
+                                open={isImpactModalOpen}
+                                onCancel={() => setIsImpactModalOpen(false)}
+                                footer={null}
+                                width={600}
+                            >
+                                <Formik
+                                    initialValues={{ factors: [{ year: new Date().getFullYear(), impact_factor: '' }] }}
+                                    validationSchema={Yup.object({
+                                        factors: Yup.array().of(
+                                            Yup.object().shape({
+                                                year: Yup.number().required('Required').min(2011).max(2031),
+                                                impact_factor: Yup.number().required('Required')
+                                            })
+                                        )
+                                    })}
+                                    onSubmit={handleAddImpactFactor}
+                                >
+                                    {({ values, handleChange, handleSubmit, errors, touched, setFieldValue }) => (
+                                        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                                            <FieldArray name="factors">
+                                                {({ push, remove }) => (
+                                                    <div className="space-y-4">
+                                                        {values.factors.map((factor, index) => (
+                                                            <div key={index} className="flex gap-4 items-start bg-gray-50 p-3 rounded border">
+                                                                <div className="flex-1">
+                                                                    <label className="block text-xs font-bold text-gray-500 mb-1">Year</label>
+                                                                    <Select
+                                                                        value={factor.year}
+                                                                        onChange={(val) => setFieldValue(`factors.${index}.year`, val)}
+                                                                        className="w-full"
+                                                                        status={touched.factors?.[index]?.year && errors.factors?.[index]?.year ? 'error' : ''}
+                                                                    >
+                                                                        {Array.from({ length: 21 }, (_, i) => 2011 + i).map(year => (
+                                                                            <Option key={year} value={year}>{year}</Option>
+                                                                        ))}
+                                                                    </Select>
+                                                                    {touched.factors?.[index]?.year && errors.factors?.[index]?.year && (
+                                                                        <div className="text-red-500 text-xs mt-1">{errors.factors[index].year}</div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <label className="block text-xs font-bold text-gray-500 mb-1">Impact Factor</label>
+                                                                    <Input
+                                                                        name={`factors.${index}.impact_factor`}
+                                                                        placeholder="e.g. 2.5"
+                                                                        value={factor.impact_factor}
+                                                                        onChange={handleChange}
+                                                                        status={touched.factors?.[index]?.impact_factor && errors.factors?.[index]?.impact_factor ? 'error' : ''}
+                                                                    />
+                                                                    {touched.factors?.[index]?.impact_factor && errors.factors?.[index]?.impact_factor && (
+                                                                        <div className="text-red-500 text-xs mt-1">{errors.factors[index].impact_factor}</div>
+                                                                    )}
+                                                                </div>
+                                                                {values.factors.length > 1 && (
+                                                                    <div className="mt-6">
+                                                                        <Button type="text" danger icon={<FaTrash />} onClick={() => remove(index)} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+
+                                                        <Button
+                                                            type="dashed"
+                                                            block
+                                                            icon={<FaPlus />}
+                                                            onClick={() => {
+                                                                // Simple check to ensure last row has data before adding new
+                                                                const lastRow = values.factors[values.factors.length - 1];
+                                                                if (lastRow.year && lastRow.impact_factor) {
+                                                                    push({ year: '', impact_factor: '' });
+                                                                } else {
+                                                                    message.warning('Please fill the current row before adding more.');
+                                                                }
+                                                            }}
+                                                        >
+                                                            Add Another Year
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </FieldArray>
+
+                                            <div className="flex justify-end gap-2 pt-4 border-t">
+                                                <Button onClick={() => setIsImpactModalOpen(false)}>Cancel</Button>
+                                                <Button type="primary" htmlType="submit">Save Impact Factors</Button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </Formik>
+                            </Modal>
                         </TabPane>
                     </Tabs>
                 )}
