@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUnlockAlt, FaCheck, FaCalendarAlt, FaBookOpen, FaUserTie, FaTwitter, FaPrint, FaGlobe } from 'react-icons/fa';
+import { FaUnlockAlt, FaCheck, FaCalendarAlt, FaBookOpen, FaUserTie, FaTwitter, FaPrint, FaGlobe, FaEnvelope } from 'react-icons/fa';
 
 import Image1 from "../../assets/images/6.png";
 import Image2 from "../../assets/images/11.png";
@@ -55,9 +55,11 @@ const JournalInner = ({ journalData }) => {
                             <button onClick={() => navigate('/publication-ethics-and-malpractice-statement')} className="w-full bg-[#12b48b] text-white py-3 px-4 uppercase font-bold text-sm tracking-wide text-left flex justify-between items-center hover:bg-[#0e9673] transition-colors shadow-md border-l-4 border-l-[#204066] relative overflow-hidden group">
                                 <span className="relative z-10">Publication Ethics <br />& Malpractice Statement</span>
                             </button>
-                            <button className="w-full bg-[#204066] text-white py-3 px-4 uppercase font-bold text-sm tracking-wide text-left flex justify-between items-center hover:bg-[#1a3352] transition-colors shadow-md border-l-4 border-l-[#12b48b] relative overflow-hidden group">
-                                <span className="relative z-10">Contact Editorial Office</span>
-                                <FaCheck className="relative z-10" />
+                            <button className="w-full bg-gradient-to-r from-[#0d2a4f] to-[#1a3a63] text-white py-3 px-4 uppercase font-bold text-sm tracking-wide text-center hover:from-[#112233] hover:to-[#1a3352] transition-colors shadow-md relative overflow-hidden group">
+                                <Link to="mailto:info@elkjournals.com" className="flex items-center justify-center gap-2">
+                                    <span className="relative z-10 text-white">Contact Editorial Office</span>
+                                    <FaEnvelope className="relative z-10 text-white text-lg" />
+                                </Link>
                             </button>
                         </div>
 
@@ -139,23 +141,23 @@ const JournalInner = ({ journalData }) => {
                             {activeTab === 'editorial' && (
                                 <div className="space-y-8">
                                     {/* Chief Editor */}
-                                    <div>
+                                    {journalData?.editorialBoard?.chiefEditor?.title && <div>
                                         <h3 className="bg-[#204066] text-white p-2 font-bold text-sm uppercase mb-0">Chief Editor</h3>
                                         <div className="overflow-x-auto">
                                             <table className="w-full border-collapse border border-gray-200 text-sm">
                                                 <tbody>
                                                     <tr className="bg-gray-50">
-                                                        <td className="border p-3 font-bold text-[#204066] w-[10%]">{journalData.editorialBoard.chiefEditor.title}</td>
-                                                        <td className="border p-3 font-bold text-[#12b48b] w-[25%]">{journalData.editorialBoard.chiefEditor.name}</td>
-                                                        <td className="border p-3 text-gray-700 w-[45%]">{journalData.editorialBoard.chiefEditor.affiliation}</td>
+                                                        <td className="border p-3 font-bold text-[#204066] w-[10%]">{journalData?.editorialBoard?.chiefEditor?.title}</td>
+                                                        <td className="border p-3 font-bold text-[#12b48b] w-[25%]">{journalData?.editorialBoard?.chiefEditor?.name}</td>
+                                                        <td className="border p-3 text-gray-700 w-[45%]">{journalData?.editorialBoard?.chiefEditor?.affiliation}</td>
                                                         <td className="border p-3 text-center w-[20%]">
-                                                            <a href={journalData.editorialBoard.chiefEditor.profileLink} className="text-[#204066] hover:text-[#12b48b] underline font-medium text-xs">View Profile</a>
+                                                            <a href={journalData?.editorialBoard?.chiefEditor?.profileLink} className="text-[#204066] hover:text-[#12b48b] underline font-medium text-xs">View Profile</a>
                                                         </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
-                                    </div>
+                                    </div>}
 
                                     {/* Members */}
                                     <div>
@@ -165,11 +167,11 @@ const JournalInner = ({ journalData }) => {
                                                 <tbody>
                                                     {journalData.editorialBoard.members.map((member, idx) => (
                                                         <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                                                            <td className="border p-3 font-bold text-[#204066] w-[10%]">{member.title}</td>
-                                                            <td className="border p-3 font-bold text-gray-800 w-[25%]">{member.name}</td>
-                                                            <td className="border p-3 text-gray-600 w-[45%]">{member.affiliation}</td>
+                                                            <td className="border p-3 font-bold text-[#204066] w-[10%]">{member?.title}</td>
+                                                            <td className="border p-3 font-bold text-gray-800 w-[25%]">{member?.name}</td>
+                                                            <td className="border p-3 text-gray-600 w-[45%]">{member?.affiliation}</td>
                                                             <td className="border p-3 text-center w-[20%]">
-                                                                <a href={member.profileLink} className="text-[#204066] hover:text-[#12b48b] underline font-medium text-xs">View Profile</a>
+                                                                <a href={member?.profileLink} className="text-[#204066] hover:text-[#12b48b] underline font-medium text-xs">View Profile</a>
                                                             </td>
                                                         </tr>
                                                     ))}
