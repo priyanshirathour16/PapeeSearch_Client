@@ -94,4 +94,11 @@ export const impactFactorApi = {
     delete: (id) => api.delete(`/journal-impact-factors/${id}`),
 };
 
+export const manuscriptApi = {
+    submit: (data) => {
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return api.post('/manuscripts', data, { headers });
+    }
+};
+
 export default api;

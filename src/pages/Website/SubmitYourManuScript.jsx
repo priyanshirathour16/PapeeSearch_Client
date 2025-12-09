@@ -1,7 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ManuscriptForm from '../../components/Website/ManuscriptForm';
+import { journalCategoryApi } from '../../services/api';
 
 const SubmitYourManuScript = () => {
+    const [fetchedJournalOptions, setFetchedJournalOptions] = useState([]);
+
+    useEffect(() => {
+        const fetchJournalOptions = async () => {
+            try {
+                const response = await journalCategoryApi.getWithJournals();
+                if (response.data && Array.isArray(response.data)) {
+                    const options = response.data
+                        .filter(cat => cat.journals && cat.journals.length > 0)
+                        .map(cat => ({
+                            label: cat.title,
+                            options: cat.journals.map(journal => ({
+                                value: journal.id,
+                                label: journal.title
+                            }))
+                        }));
+                    setFetchedJournalOptions(options);
+                }
+            } catch (error) {
+                console.error("Failed to fetch journal options", error);
+                message.error("Failed to load journal options");
+            }
+        };
+        fetchJournalOptions();
+    }, []);
+
     return (
         <div className=" bg-white">
             <div className="container mx-auto px-4">
@@ -15,7 +42,7 @@ const SubmitYourManuScript = () => {
                                 {/* <span className="absolute bottom-0 left-0 w-12 h-1 bg-[#12b48b] -mb-2"></span> */}
                             </h1>
 
-                            <ManuscriptForm />
+                            <ManuscriptForm fetchedJournalOptions={fetchedJournalOptions} />
                         </div>
                     </div>
 
