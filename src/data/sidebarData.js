@@ -15,6 +15,11 @@ export const sidebarData = [
                 title: 'View Journal Issues',
                 path: '/dashboard/journal-issues',
                 icon: FaNewspaper,
+            },
+            {
+                title: 'Journal Categories',
+                path: '/dashboard/journal-categories',
+                icon: FaBook,
             }
         ]
     },

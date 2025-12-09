@@ -78,4 +78,10 @@ export const editorApplicationApi = {
     getById: (id) => api.get(`/editor-applications/${id}`)
 };
 
+export const journalCategoryApi = {
+    getAll: () => api.get('/journal-categories'),
+    create: (data) => api.post('/journal-categories', data),
+    delete: (id) => api.delete(`/journal-categories/${id}`),
+};
+
 export default api;

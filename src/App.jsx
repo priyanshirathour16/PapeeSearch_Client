@@ -41,6 +41,7 @@ const Journals = lazy(() => import('./pages/Website/Journals'));
 const PageNotFound = lazy(() => import('./pages/Website/PageNotFound'));
 const AdminAuthorList = lazy(() => import('./pages/Admin/AdminAuthorList'));
 const AdminEditorList = lazy(() => import('./pages/Admin/AdminEditorList'));
+const JournalCategories = lazy(() => import('./pages/Admin/JournalCategories'));
 
 function App() {
   return (
@@ -92,6 +93,7 @@ function App() {
 
               <Route path="manage-user/author" element={<AdminAuthorList />} />
               <Route path="manage-user/editor" element={<AdminEditorList />} />
+              <Route path="journal-categories" element={<JournalCategories />} />
             </Route>
           </Route>
 
