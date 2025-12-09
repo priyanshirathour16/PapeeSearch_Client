@@ -71,7 +71,7 @@ function App() {
             <Route path="/resources" element={<Resources />} />
             <Route path="/journal-indexing" element={<JournalIndexing />} />
             <Route path="/publication-ethics-and-malpractice-statement" element={<PublicEthicAndMalPractices />} />
-            <Route path="/journals/:id" element={<Journals />} />
+            <Route path="/journals/:route" element={<Journals />} />
             {/* 404 Page (within layout) */}
             <Route path="*" element={<PageNotFound />} />
           </Route>

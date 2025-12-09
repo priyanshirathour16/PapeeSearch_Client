@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { journalCategoryApi } from "../../services/api";
 import {
     FaChevronCircleRight,
     FaLongArrowAltRight,
@@ -54,99 +55,36 @@ const Header = () => {
         };
     }, []);
 
-    const journalData = [
-        {
-            title: "Marketing and Retail Management",
-            issn: "2349-2317",
-            impactFactor: "3.99",
-            link: "/journal-of-marketing",
-            icon: <FaChartLine />
-        },
-        {
-            title: "Finance and Risk Management",
-            issn: "2349-2325",
-            impactFactor: "3.456",
-            link: "/journal-of-finance",
-            icon: <FaMoneyBillWave />
-        },
-        {
-            title: "Electronics and Communication Technology",
-            issn: "2394-935X",
-            impactFactor: "2.002",
-            link: "/electronics-and-communication-technology",
-            icon: <FaMicrochip />
-        },
-        {
-            title: "Social Sciences",
-            issn: "2394-9392",
-            impactFactor: "2.546",
-            link: "/social-sciences",
-            icon: <FaUsers />
-        },
-        {
-            title: "Civil Engineering and Structural Development",
-            issn: "2394-9341",
-            impactFactor: "2.399",
-            link: "/civil-engineering-and-structural-development",
-            icon: <FaBuilding />
-        },
-        {
-            title: "Library Management and Information Technology",
-            issn: "2394-9384",
-            impactFactor: "1.039",
-            link: "/library-management-and-information-technology",
-            icon: <FaBook />
-        },
-        {
-            title: "HR Management and Organizational Behaviour",
-            issn: "2394-0409",
-            impactFactor: "2.096",
-            link: "/hr-management-and-organizational-behaviour",
-            icon: <FaSitemap />
-        },
-        {
-            title: "Mechanical Engineering Research",
-            issn: "2394-9368",
-            impactFactor: "2.586",
-            link: "/mechanical-engineering-research",
-            icon: <FaCogs />
-        },
-        {
-            title: "Project Management and Control",
-            issn: "2394-9376",
-            impactFactor: "1.156",
-            link: "/project-management-and-control",
-            icon: <FaProjectDiagram />
-        },
-        {
-            title: "Computer Science and Information Systems",
-            issn: "2394-0409",
-            impactFactor: "2.026",
-            link: "/computer-science-and-information-systems",
-            icon: <FaLaptopCode />
-        },
-        {
-            title: "Applied Thermal Engineering",
-            issn: "2394-0433",
-            impactFactor: "1.098",
-            link: "/applied-thermal-engineering",
-            icon: <FaThermometerHalf />
-        },
-        {
-            title: "Manufacturing Science and Engineering",
-            issn: "2394-0425",
-            impactFactor: "1.219",
-            link: "/manufacturing-science-and-engineering",
-            icon: <FaIndustry />
-        },
-        {
-            title: "Leadership and Innovation Management",
-            issn: "2394-0417",
-            impactFactor: "1.789",
-            link: "/leadership-and-innovation-management",
-            icon: <FaLightbulb />
-        }
-    ];
+    const [headerJournals, setHeaderJournals] = useState([]);
+
+    useEffect(() => {
+        const fetchHeaderJournals = async () => {
+            try {
+                const response = await journalCategoryApi.getWithJournals();
+                if (response.data && Array.isArray(response.data)) {
+                    const journals = [];
+                    response.data.forEach(cat => {
+                        if (cat.journals && Array.isArray(cat.journals)) {
+                            cat.journals.forEach(journal => {
+                                const route = journal.route || journal.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+                                journals.push({
+                                    title: journal.title,
+                                    issn: journal.print_issn || journal.e_issn || 'N/A',
+                                    impactFactor: "N/A", // Not provided in API
+                                    link: `/journals/${route}`,
+                                    icon: <FaBook />
+                                });
+                            });
+                        }
+                    });
+                    setHeaderJournals(journals);
+                }
+            } catch (error) {
+                console.error("Failed to fetch header journals", error);
+            }
+        };
+        fetchHeaderJournals();
+    }, []);
 
     const menuItems = [
         {
@@ -188,7 +126,7 @@ const Header = () => {
             label: "JOURNALS WE PUBLISH",
             type: "dropdown",
             layout: "journals",
-            data: journalData
+            data: headerJournals
         },
         {
             id: "authors",
