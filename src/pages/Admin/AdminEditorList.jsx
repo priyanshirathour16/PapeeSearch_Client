@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { editorApplicationApi } from '../../services/api';
-import { FaEye, FaFileDownload } from 'react-icons/fa';
-import { Table, Modal, Button, Tag, Space } from 'antd';
+import { Table, Modal, Button, Tag, Space, message, Popconfirm } from 'antd';
+import { FaEye, FaFileDownload, FaTrash } from 'react-icons/fa';
 
 const AdminEditorList = () => {
     const [editors, setEditors] = useState([]);
@@ -32,6 +32,16 @@ const AdminEditorList = () => {
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedEditor(null);
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await editorApplicationApi.delete(id);
+            message.success('Application deleted successfully');
+            fetchEditors();
+        } catch (error) {
+            message.error('Failed to delete application');
+        }
     };
 
     const columns = [
@@ -70,17 +80,55 @@ const AdminEditorList = () => {
         //     },
         // },
         {
+            title: 'Status',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status) => {
+                let color = 'gold';
+                let text = 'PENDING';
+                if (status === 'active' || status === 'approved' || status === 'pending') {
+                    color = 'green';
+                    text = 'ACTIVE';
+                } else if (status === 'inactive' || status === 'rejected') {
+                    color = 'red';
+                    text = 'INACTIVE';
+                }
+
+                return (
+                    <Tag color={color} className="uppercase">
+                        {text}
+                    </Tag>
+                );
+            },
+        },
+        {
             title: 'Action',
             key: 'action',
             align: 'center',
             render: (_text, record) => (
-                <Button
-                    type="text"
-                    icon={<FaEye className="text-[#12b48b]" />}
-                    onClick={() => handleView(record)}
-                    shape="circle"
-                    className="hover:bg-green-50"
-                />
+                <Space>
+                    <Button
+                        type="text"
+                        icon={<FaEye className="text-[#12b48b]" />}
+                        onClick={() => handleView(record)}
+                        shape="circle"
+                        className="hover:bg-green-50"
+                    />
+                    <Popconfirm
+                        title="Delete Application"
+                        description="Are you sure you want to delete this application?"
+                        onConfirm={() => handleDelete(record.id)}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FaTrash className="text-red-500" />}
+                            shape="circle"
+                            className="hover:bg-red-50"
+                        />
+                    </Popconfirm>
+                </Space>
             ),
         },
     ];

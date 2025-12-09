@@ -75,7 +75,8 @@ export const authorApi = {
 
 export const editorApplicationApi = {
     getAll: () => api.get('/editor-applications'),
-    getById: (id) => api.get(`/editor-applications/${id}`)
+    getById: (id) => api.get(`/editor-applications/${id}`),
+    delete: (id) => api.delete(`/editor-applications/${id}`),
 };
 
 export const journalCategoryApi = {
