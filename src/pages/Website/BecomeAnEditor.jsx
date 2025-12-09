@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaListOl, FaTh, FaFileImage, FaFileAlt, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaLock, FaGlobe, FaCloudUploadAlt } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { countries, specializations, journalOptions } from '../../data/signUpData';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { message } from 'antd';
-import { authApi, applicationApi } from '../../services/api';
+import { authApi, applicationApi, journalCategoryApi } from '../../services/api';
 
 
 // Reusable Components matching ManuscriptForm style
@@ -53,7 +53,32 @@ const FormSection = ({ title, children }) => (
 const BecomeAnEditor = () => {
     const [activeTab, setActiveTab] = useState('author');
     const [captcha, setCaptcha] = useState(Math.floor(1000 + Math.random() * 9000));
+    const [fetchedJournalOptions, setFetchedJournalOptions] = useState([]);
     const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        const fetchJournalOptions = async () => {
+            try {
+                const response = await journalCategoryApi.getWithJournals();
+                if (response.data && Array.isArray(response.data)) {
+                    const options = response.data
+                        .filter(cat => cat.journals && cat.journals.length > 0)
+                        .map(cat => ({
+                            label: cat.title,
+                            options: cat.journals.map(journal => ({
+                                value: journal.id,
+                                label: journal.title
+                            }))
+                        }));
+                    setFetchedJournalOptions(options);
+                }
+            } catch (error) {
+                console.error("Failed to fetch journal options", error);
+                message.error("Failed to load journal options");
+            }
+        };
+        fetchJournalOptions();
+    }, []);
 
     // Validation Schemas
     // Common validation for shared fields
@@ -367,7 +392,7 @@ const BecomeAnEditor = () => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <SelectInput icon={FaFileAlt} {...editorFormik.getFieldProps('journal')} error={editorFormik.errors.journal} touched={editorFormik.touched.journal} >
                                                     <option value="">Select Journal</option>
-                                                    {journalOptions.map((group, i) => (
+                                                    {fetchedJournalOptions.map((group, i) => (
                                                         <optgroup key={i} label={group.label}>
                                                             {group.options.map((opt, j) => (
                                                                 <option key={j} value={opt.value}>{opt.label}</option>
