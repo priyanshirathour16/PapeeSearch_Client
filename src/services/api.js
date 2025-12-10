@@ -98,7 +98,9 @@ export const manuscriptApi = {
     submit: (data) => {
         const headers = { 'Content-Type': 'multipart/form-data' };
         return api.post('/manuscripts', data, { headers });
-    }
+    },
+    getAll: () => api.get('/manuscripts'),
+    getById: (id) => api.get(`/manuscripts/${id}`),
 };
 
 export default api;

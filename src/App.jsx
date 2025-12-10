@@ -42,6 +42,8 @@ const PageNotFound = lazy(() => import('./pages/Website/PageNotFound'));
 const AdminAuthorList = lazy(() => import('./pages/Admin/AdminAuthorList'));
 const AdminEditorList = lazy(() => import('./pages/Admin/AdminEditorList'));
 const JournalCategories = lazy(() => import('./pages/Admin/JournalCategories'));
+const ManuscriptList = lazy(() => import('./pages/Admin/ManuscriptList'));
+const ManuscriptDetails = lazy(() => import('./pages/Admin/ManuscriptDetails'));
 
 function App() {
   return (
@@ -94,6 +96,9 @@ function App() {
               <Route path="manage-user/author" element={<AdminAuthorList />} />
               <Route path="manage-user/editor" element={<AdminEditorList />} />
               <Route path="journal-categories" element={<JournalCategories />} />
+
+              <Route path="manuscripts" element={<ManuscriptList />} />
+              <Route path="manuscripts/:id" element={<ManuscriptDetails />} />
             </Route>
           </Route>
 
