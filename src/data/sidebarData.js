@@ -21,11 +21,7 @@ export const sidebarData = [
                 path: '/dashboard/journal-categories',
                 icon: FaBook,
             },
-            {
-                title: 'Manuscripts',
-                path: '/dashboard/manuscripts',
-                icon: FaFileAlt,
-            }
+
         ]
     },
     {
@@ -44,5 +40,10 @@ export const sidebarData = [
                 icon: FaEye,
             }
         ]
+    },
+    {
+        title: 'Submitter Manuscript',
+        icon: FaFileAlt,
+        path: '/dashboard/manuscripts',
     }
 ];

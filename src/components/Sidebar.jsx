@@ -38,22 +38,47 @@ const Sidebar = () => {
                         const hasSubNav = item.subNav && item.subNav.length > 0;
                         const isOpen = openSubMenu[index];
 
+                        const commonClasses = `flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-700 border-l-4 border-blue-500' : 'text-white'}`;
+                        const content = (
+                            <>
+                                <div className="flex items-center space-x-3">
+                                    {item.icon && <item.icon className="text-xl" />}
+                                    <span className="font-medium">{item.title}</span>
+                                </div>
+                                {hasSubNav && (
+                                    <div>
+                                        {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                    </div>
+                                )}
+                            </>
+                        );
+
                         return (
                             <li key={index} className="mb-1">
-                                <div
-                                    className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-700 border-l-4 border-blue-500' : ''}`}
-                                    onClick={() => hasSubNav && toggleSubMenu(index)}
-                                >
-                                    <div className="flex items-center space-x-3">
-                                        {item.icon && <item.icon className="text-xl" />}
-                                        <span className="font-medium">{item.title}</span>
-                                    </div>
-                                    {hasSubNav && (
+                                {hasSubNav ? (
+                                    <div
+                                        className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-700 border-l-4 border-blue-500' : ''}`}
+                                        onClick={() => toggleSubMenu(index)}
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            {item.icon && <item.icon className="text-xl" />}
+                                            <span className="font-medium">{item.title}</span>
+                                        </div>
                                         <div>
                                             {isOpen ? <FaChevronUp /> : <FaChevronDown />}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    <Link
+                                        to={item.path}
+                                        className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-900  text-blue-400 dark:text-sky-400' : 'text-white'}`}
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            {item.icon && <item.icon className="text-xl" />}
+                                            <span className="font-medium">{item.title}</span>
+                                        </div>
+                                    </Link>
+                                )}
                                 {hasSubNav && isOpen && (
                                     <ul className="bg-gray-900">
                                         {item.subNav.map((subItem, subIndex) => {
@@ -77,7 +102,7 @@ const Sidebar = () => {
                     })}
                 </ul>
             </nav>
-        </div>
+        </div >
     );
 };
 
