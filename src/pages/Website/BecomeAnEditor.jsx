@@ -8,6 +8,7 @@ import * as Yup from 'yup';
 import { message } from 'antd';
 import Swal from 'sweetalert2';
 import { authApi, applicationApi, journalCategoryApi } from '../../services/api';
+import CodeEntryInput from '../../components/CodeEntryInput';
 
 
 // Reusable Components matching ManuscriptForm style
@@ -52,69 +53,7 @@ const FormSection = ({ title, children }) => (
     </fieldset>
 );
 
-const CodeEntryInput = ({ value, onChange, onBlur, error, touched }) => {
-    const inputs = useRef([]);
 
-    const handleChange = (index, e) => {
-        const val = e.target.value;
-        if (/[^0-9]/.test(val)) return;
-
-        const chars = (value || '').split('');
-        chars[index] = val.slice(-1);
-        const newValue = chars.join('');
-
-        onChange(newValue);
-
-        // Auto move to next
-        if (val && index < 3) {
-            inputs.current[index + 1].focus();
-        }
-    };
-
-    const handleKeyDown = (index, e) => {
-        if (e.key === 'Backspace' && !['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
-            // If current is empty, move back and delete
-            if (!value[index] && index > 0) {
-                inputs.current[index - 1].focus();
-                // Optionally delete previous
-            } else if (value[index]) {
-                // just delete current (handled by default input behavior usually, but since we control value...)
-                // Actually since we use value[index], standard backspace works on the focused input for clearing it.
-            }
-        }
-    };
-
-    // Better Backspace handling for controlled inputs moving focus
-    const handleKeyUp = (index, e) => {
-        if (e.key === 'Backspace' && index > 0 && !value[index]) {
-            inputs.current[index - 1].focus();
-        }
-    }
-
-    return (
-        <div className="flex flex-col">
-            <div className="flex gap-2">
-                {[0, 1, 2, 3].map((index) => (
-                    <input
-                        key={index}
-                        ref={el => inputs.current[index] = el}
-                        type="text"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        maxLength="1"
-                        value={value?.[index] || ''}
-                        onChange={(e) => handleChange(index, e)}
-                        onKeyUp={(e) => handleKeyUp(index, e)}
-                        onBlur={onBlur} // This marks touched on blur of any box
-                        className={`w-12 h-12 border ${error && touched ? 'border-red-500' : 'border-black'} text-center text-xl focus:outline-none focus:border-[#12b48b] bg-white`}
-                    />
-                ))}
-            </div>
-            {error && touched && <div className="text-red-500 text-xs mt-1">{error}</div>}
-            <div className="mt-1 text-sm text-gray-600">Enter Code As Seen</div>
-        </div>
-    );
-};
 
 const BecomeAnEditor = () => {
     const [activeTab, setActiveTab] = useState('author');
@@ -429,11 +368,19 @@ const BecomeAnEditor = () => {
                                         <div className="flex flex-col md:flex-row items-center gap-4 mt-6">
                                             <div className="flex items-center gap-4">
                                                 <CodeEntryInput
-                                                    value={authorFormik.values.captchaInput}
+                                                    length={4}
+                                                    value={authorFormik.values.captchaInput} // Note: Shared component might need updating to accept 'value' prop for controlled input if it manages its own state. 
+                                                    // The shared component currently manages its own state and calls onChange. Passing value back in might cause conflict if not handled.
+                                                    // Let's check shared component implementation. It uses local state. It does NOT accept 'value' prop to sync from parent. 
+                                                    // However, Since Formik doesn't change the value externally except on reset, it might be fine, or we need to update shared component to be fully controlled.
+                                                    // For now, let's just pass onChange. If resetting form, we might need to reset the component. 
+                                                    // The shared component defined in step 218 initializes with empty array. It doesn't seem to support controlled value from prop easily without useEffect sync.
+                                                    // But wait, the shared component uses `onChange(code.join(''))`.
+                                                    // In `BecomeAnEditor`, formik manages state.
+                                                    // If we want to clear it on reset, we might need a key or ref.
+                                                    // Let's use `key={captcha}` to force re-mount on captcha refresh! Smart.
+                                                    key={captcha}
                                                     onChange={(val) => authorFormik.setFieldValue('captchaInput', val)}
-                                                    onBlur={() => authorFormik.setFieldTouched('captchaInput', true)}
-                                                    error={authorFormik.errors.captchaInput}
-                                                    touched={authorFormik.touched.captchaInput}
                                                 />
                                                 <div className="bg-[#567a9a] text-white px-4 py-3 font-bold text-xl tracking-widest rounded self-start h-12 flex items-center">
                                                     {captcha}
@@ -524,11 +471,9 @@ const BecomeAnEditor = () => {
                                         <div className="flex flex-col md:flex-row items-center gap-4 mt-6">
                                             <div className="flex items-center gap-4">
                                                 <CodeEntryInput
-                                                    value={editorFormik.values.captchaInput}
+                                                    length={4}
+                                                    key={captcha}
                                                     onChange={(val) => editorFormik.setFieldValue('captchaInput', val)}
-                                                    onBlur={() => editorFormik.setFieldTouched('captchaInput', true)}
-                                                    error={editorFormik.errors.captchaInput}
-                                                    touched={editorFormik.touched.captchaInput}
                                                 />
                                                 <div className="bg-[#567a9a] text-white px-4 py-3 font-bold text-xl tracking-widest rounded self-start h-12 flex items-center">
                                                     {captcha}

@@ -1,4 +1,4 @@
-import { FaBook, FaEye, FaNewspaper, FaFileAlt } from 'react-icons/fa';
+import { FaBook, FaEye, FaNewspaper, FaFileAlt, FaEnvelope } from 'react-icons/fa';
 
 export const sidebarData = [
     {
@@ -45,5 +45,10 @@ export const sidebarData = [
         title: 'Submitter Manuscript',
         icon: FaFileAlt,
         path: '/dashboard/manuscripts',
+    },
+    {
+        title: 'Contact Us Inquiries',
+        icon: FaEnvelope,
+        path: '/dashboard/contact-us',
     }
 ];

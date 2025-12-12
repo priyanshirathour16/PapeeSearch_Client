@@ -45,6 +45,7 @@ const AdminEditorList = lazy(() => import('./pages/Admin/AdminEditorList'));
 const JournalCategories = lazy(() => import('./pages/Admin/JournalCategories'));
 const ManuscriptList = lazy(() => import('./pages/Admin/ManuscriptList'));
 const ManuscriptDetails = lazy(() => import('./pages/Admin/ManuscriptDetails'));
+const AdminContactList = lazy(() => import('./pages/Admin/AdminContactList'));
 
 function App() {
   return (
@@ -101,6 +102,7 @@ function App() {
 
               <Route path="manuscripts" element={<ManuscriptList />} />
               <Route path="manuscripts/:id" element={<ManuscriptDetails />} />
+              <Route path="contact-us" element={<AdminContactList />} />
             </Route>
           </Route>
 
