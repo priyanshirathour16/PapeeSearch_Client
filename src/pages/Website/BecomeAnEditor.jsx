@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaListOl, FaTh, FaFileImage, FaFileAlt, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaLock, FaGlobe, FaCloudUploadAlt } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { countries, specializations, journalOptions } from '../../data/signUpData';
@@ -50,11 +51,76 @@ const FormSection = ({ title, children }) => (
     </fieldset>
 );
 
+const CodeEntryInput = ({ value, onChange, onBlur, error, touched }) => {
+    const inputs = useRef([]);
+
+    const handleChange = (index, e) => {
+        const val = e.target.value;
+        if (/[^0-9]/.test(val)) return;
+
+        const chars = (value || '').split('');
+        chars[index] = val.slice(-1);
+        const newValue = chars.join('');
+
+        onChange(newValue);
+
+        // Auto move to next
+        if (val && index < 3) {
+            inputs.current[index + 1].focus();
+        }
+    };
+
+    const handleKeyDown = (index, e) => {
+        if (e.key === 'Backspace' && !['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
+            // If current is empty, move back and delete
+            if (!value[index] && index > 0) {
+                inputs.current[index - 1].focus();
+                // Optionally delete previous
+            } else if (value[index]) {
+                // just delete current (handled by default input behavior usually, but since we control value...)
+                // Actually since we use value[index], standard backspace works on the focused input for clearing it.
+            }
+        }
+    };
+
+    // Better Backspace handling for controlled inputs moving focus
+    const handleKeyUp = (index, e) => {
+        if (e.key === 'Backspace' && index > 0 && !value[index]) {
+            inputs.current[index - 1].focus();
+        }
+    }
+
+    return (
+        <div className="flex flex-col">
+            <div className="flex gap-2">
+                {[0, 1, 2, 3].map((index) => (
+                    <input
+                        key={index}
+                        ref={el => inputs.current[index] = el}
+                        type="text"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
+                        maxLength="1"
+                        value={value?.[index] || ''}
+                        onChange={(e) => handleChange(index, e)}
+                        onKeyUp={(e) => handleKeyUp(index, e)}
+                        onBlur={onBlur} // This marks touched on blur of any box
+                        className={`w-12 h-12 border ${error && touched ? 'border-red-500' : 'border-black'} text-center text-xl focus:outline-none focus:border-[#12b48b] bg-white`}
+                    />
+                ))}
+            </div>
+            {error && touched && <div className="text-red-500 text-xs mt-1">{error}</div>}
+            <div className="mt-1 text-sm text-gray-600">Enter Code As Seen</div>
+        </div>
+    );
+};
+
 const BecomeAnEditor = () => {
     const [activeTab, setActiveTab] = useState('author');
     const [captcha, setCaptcha] = useState(Math.floor(1000 + Math.random() * 9000));
     const [fetchedJournalOptions, setFetchedJournalOptions] = useState([]);
     const fileInputRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchJournalOptions = async () => {
@@ -162,6 +228,7 @@ const BecomeAnEditor = () => {
                 message.success('Author registration successful!');
                 resetForm();
                 setCaptcha(Math.floor(1000 + Math.random() * 9000));
+                navigate('/thank-you');
             } catch (error) {
                 console.error(error);
                 if (error.response && error.response.status === 409) {
@@ -203,6 +270,7 @@ const BecomeAnEditor = () => {
                     fileInputRef.current.value = '';
                 }
                 setCaptcha(Math.floor(1000 + Math.random() * 9000));
+                navigate('/thank-you'); // Redirect to thank you page
             } catch (error) {
                 console.error(error);
                 if (error.response && error.response.status === 409) {
@@ -350,25 +418,19 @@ const BecomeAnEditor = () => {
                                         </FormSection>
 
                                         <div className="flex flex-col md:flex-row items-center gap-4 mt-6">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex flex-col">
-                                                    <input
-                                                        type="text"
-                                                        maxLength="4"
-                                                        placeholder="Code"
-                                                        {...authorFormik.getFieldProps('captchaInput')}
-                                                        className={`w-32 h-10 border ${authorFormik.errors.captchaInput && authorFormik.touched.captchaInput ? 'border-red-500' : 'border-gray-400'} text-center text-lg focus:outline-none focus:border-[#12b48b]`}
-                                                    />
-                                                    {authorFormik.errors.captchaInput && authorFormik.touched.captchaInput && <div className="text-red-500 text-xs mt-1">{authorFormik.errors.captchaInput}</div>}
-                                                </div>
-                                                <div className="bg-[#567a9a] text-white px-4 py-2 font-bold text-lg tracking-widest">
+                                            <div className="flex items-center gap-4">
+                                                <CodeEntryInput
+                                                    value={authorFormik.values.captchaInput}
+                                                    onChange={(val) => authorFormik.setFieldValue('captchaInput', val)}
+                                                    onBlur={() => authorFormik.setFieldTouched('captchaInput', true)}
+                                                    error={authorFormik.errors.captchaInput}
+                                                    touched={authorFormik.touched.captchaInput}
+                                                />
+                                                <div className="bg-[#567a9a] text-white px-4 py-3 font-bold text-xl tracking-widest rounded self-start h-12 flex items-center">
                                                     {captcha}
                                                 </div>
                                             </div>
-                                            <p className="text-[#e85a4f] text-sm font-medium">(*) represents mandatory fields</p>
-                                        </div>
-                                        <div className="mb-6">
-                                            <span className="text-[10px] uppercase text-gray-500 tracking-wider">Enter Code As Seen</span>
+                                            <p className="text-[#e85a4f] text-sm font-medium self-end pb-4">(*) represents mandatory fields</p>
                                         </div>
 
                                         <div className="flex justify-between items-center pt-6 border-t border-gray-200">
@@ -451,27 +513,21 @@ const BecomeAnEditor = () => {
 
 
                                         <div className="flex flex-col md:flex-row items-center gap-4 mt-6">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex flex-col">
-                                                    <input
-                                                        type="text"
-                                                        maxLength="4"
-                                                        placeholder="Code"
-                                                        {...editorFormik.getFieldProps('captchaInput')}
-                                                        className={`w-32 h-10 border ${editorFormik.errors.captchaInput && editorFormik.touched.captchaInput ? 'border-red-500' : 'border-gray-400'} text-center text-lg focus:outline-none focus:border-[#12b48b]`}
-                                                    />
-                                                    {editorFormik.errors.captchaInput && editorFormik.touched.captchaInput && <div className="text-red-500 text-xs mt-1">{editorFormik.errors.captchaInput}</div>}
-                                                </div>
-                                                <div className="bg-[#567a9a] text-white px-4 py-2 font-bold text-lg tracking-widest">
+                                            <div className="flex items-center gap-4">
+                                                <CodeEntryInput
+                                                    value={editorFormik.values.captchaInput}
+                                                    onChange={(val) => editorFormik.setFieldValue('captchaInput', val)}
+                                                    onBlur={() => editorFormik.setFieldTouched('captchaInput', true)}
+                                                    error={editorFormik.errors.captchaInput}
+                                                    touched={editorFormik.touched.captchaInput}
+                                                />
+                                                <div className="bg-[#567a9a] text-white px-4 py-3 font-bold text-xl tracking-widest rounded self-start h-12 flex items-center">
                                                     {captcha}
                                                 </div>
                                             </div>
-                                            <div className="flex-1 text-right">
+                                            <div className="flex-1 text-right self-end pb-4">
                                                 <p className="text-[#e85a4f] text-sm font-medium">(*) represents mandatory fields</p>
                                             </div>
-                                        </div>
-                                        <div className="mb-6">
-                                            <span className="text-[10px] uppercase text-gray-500 tracking-wider">Enter Code As Seen</span>
                                         </div>
 
                                         <div className="flex justify-between items-center pt-6 border-t border-gray-200">
