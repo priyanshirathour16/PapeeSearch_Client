@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { authorApi } from '../../services/api';
 import { FaEye } from 'react-icons/fa';
 import { Table, Modal, Button, Tag, Space } from 'antd';
+import useRefreshOnFocus from '../../hooks/useRefreshOnFocus';
 
 const AdminAuthorList = () => {
     const [authors, setAuthors] = useState([]);
@@ -23,6 +24,9 @@ const AdminAuthorList = () => {
             setLoading(false);
         }
     };
+
+    // Auto-refresh when tab comes back into focus
+    useRefreshOnFocus(fetchAuthors);
 
     const handleView = (author) => {
         setSelectedAuthor(author);

@@ -6,6 +6,7 @@ import { countries, specializations, journalOptions } from '../../data/signUpDat
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { message } from 'antd';
+import Swal from 'sweetalert2';
 import { authApi, applicationApi, journalCategoryApi } from '../../services/api';
 
 
@@ -231,11 +232,16 @@ const BecomeAnEditor = () => {
                 navigate('/thank-you');
             } catch (error) {
                 console.error(error);
-                if (error.response && error.response.status === 409) {
-                    message.error('Author already exists');
-                } else {
-                    message.error('Registration failed. Please try again.');
-                }
+                // Extract error message from backend or use default
+                const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+                // Also check if stack is present as user showed example, but usually we just want the message for the user.
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Registration Error',
+                    text: errorMessage,
+                    confirmButtonColor: '#12b48b'
+                });
             } finally {
                 setSubmitting(false);
             }
@@ -273,11 +279,14 @@ const BecomeAnEditor = () => {
                 navigate('/thank-you'); // Redirect to thank you page
             } catch (error) {
                 console.error(error);
-                if (error.response && error.response.status === 409) {
-                    message.error('Editor application already submitted or email exists');
-                } else {
-                    message.error('Application failed. Please try again.');
-                }
+                const errorMessage = error.response?.data?.message || 'Application failed. Please try again.';
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Error',
+                    text: errorMessage,
+                    confirmButtonColor: '#12b48b'
+                });
             } finally {
                 setSubmitting(false);
             }

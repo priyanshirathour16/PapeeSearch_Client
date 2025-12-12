@@ -3,6 +3,7 @@ import { editorApplicationApi } from '../../services/api';
 import { Table, Modal, Button, Tag, Space, message, Popconfirm } from 'antd';
 import { FaEye, FaFileDownload, FaTrash } from 'react-icons/fa';
 import { ImageURl } from '../../services/serviceApi';
+import useRefreshOnFocus from '../../hooks/useRefreshOnFocus';
 
 const AdminEditorList = () => {
     const [editors, setEditors] = useState([]);
@@ -24,6 +25,9 @@ const AdminEditorList = () => {
             setLoading(false);
         }
     };
+
+    // Auto-refresh when tab comes back into focus
+    useRefreshOnFocus(fetchEditors);
 
     const handleView = (editor) => {
         setSelectedEditor(editor);
