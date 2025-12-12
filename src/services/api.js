@@ -2,8 +2,8 @@ import axios from 'axios';
 
 
 const api = axios.create({
-    // baseURL: 'http://localhost:5000/api',
-    baseURL: 'https://papersearchbackend-1.onrender.com/api',
+    baseURL: 'http://localhost:5000/api',
+    // baseURL: 'https://papersearchbackend-1.onrender.com/api',
 });
 
 api.interceptors.request.use(
@@ -102,6 +102,12 @@ export const manuscriptApi = {
     },
     getAll: () => api.get('/manuscripts'),
     getById: (id) => api.get(`/manuscripts/${id}`),
+};
+
+export const contactUsApi = {
+    create: (data) => api.post('/contact-us', data),
+    getAll: () => api.get('/contact-us'),
+    delete: (id) => api.delete(`/contact-us/${id}`),
 };
 
 export default api;
