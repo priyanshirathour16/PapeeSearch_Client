@@ -43,6 +43,7 @@ const JournalDetails = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [isImpactModalOpen, setIsImpactModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('1');
+    const [imageError, setImageError] = useState(false);
 
     const fetchCategories = async () => {
         try {
@@ -89,6 +90,7 @@ const JournalDetails = () => {
             if (data.image) {
                 // Construct server URL for image
                 setImagePreview(`${ImageURl}${data.image}`);
+                setImageError(false);
             }
         } catch (error) {
             message.error('Failed to fetch journal details');
@@ -415,6 +417,7 @@ const JournalDetails = () => {
                                                 const reader = new FileReader();
                                                 reader.onload = (e) => {
                                                     setImagePreview(e.target.result);
+                                                    setImageError(false);
                                                 };
                                                 reader.readAsDataURL(file);
                                                 return false;
@@ -422,6 +425,7 @@ const JournalDetails = () => {
                                             onRemove={() => {
                                                 setFieldValue('image', null);
                                                 setImagePreview(null);
+                                                setImageError(false);
                                             }}
                                             maxCount={1}
                                             listType="picture"
@@ -430,16 +434,14 @@ const JournalDetails = () => {
                                             <Button icon={<FaPlus />}>Upload New Image</Button>
                                         </Upload>
                                     ) : null}
-                                    {imagePreview && (
+                                    {imagePreview && !imageError && (
                                         <div className="mt-4">
                                             <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
                                             <img
                                                 src={imagePreview}
                                                 alt="Journal Preview"
                                                 className="max-w-xs h-auto rounded shadow-md border"
-                                                onError={(e) => {
-                                                    e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
-                                                }}
+                                                onError={() => setImageError(true)}
                                             />
                                         </div>
                                     )}
