@@ -5,21 +5,25 @@ export const sidebarData = [
         title: 'Manage Journals',
         icon: FaBook, // Storing component reference directly
         path: '#',
+        access: ["admin"],
         subNav: [
             {
                 title: 'View Journals',
                 path: '/dashboard/view-journal',
                 icon: FaEye,
+                access: ["admin"]
             },
             {
                 title: 'View Journal Issues',
                 path: '/dashboard/journal-issues',
                 icon: FaNewspaper,
+                access: ["admin"]
             },
             {
                 title: 'Journal Categories',
                 path: '/dashboard/journal-categories',
                 icon: FaBook,
+                access: ["admin"]
             },
 
         ]
@@ -28,16 +32,19 @@ export const sidebarData = [
         title: 'Manage User',
         icon: FaBook, // Using FaBook temporarily, can change if needed or import FaUsers
         path: '#',
+        access: ["admin"],
         subNav: [
             {
                 title: 'Author',
                 path: '/dashboard/manage-user/author', // Updated path to match typically admin routes, adjusting to dashboard/admin-authors
                 icon: FaEye,
+                access: ["admin"]
             },
             {
                 title: 'Editor',
                 path: '/dashboard/manage-user/editor',
                 icon: FaEye,
+                access: ["admin"]
             }
         ]
     },
@@ -45,10 +52,19 @@ export const sidebarData = [
         title: 'Submitter Manuscript',
         icon: FaFileAlt,
         path: '/dashboard/manuscripts',
+        access: ["admin"]
     },
     {
         title: 'Contact Us Inquiries',
         icon: FaEnvelope,
         path: '/dashboard/contact-us',
+        access: ["admin"]
+    },
+
+    {
+        title: 'Submit Manuscript',
+        icon: FaEnvelope,
+        path: '/dashboard/submit-manuscript',
+        access: ["author"]
     }
 ];

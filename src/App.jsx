@@ -46,6 +46,7 @@ const JournalCategories = lazy(() => import('./pages/Admin/JournalCategories'));
 const ManuscriptList = lazy(() => import('./pages/Admin/ManuscriptList'));
 const ManuscriptDetails = lazy(() => import('./pages/Admin/ManuscriptDetails'));
 const AdminContactList = lazy(() => import('./pages/Admin/AdminContactList'));
+const DashboardHome = lazy(() => import('./pages/DashboardHome'));
 
 function App() {
   return (
@@ -89,7 +90,7 @@ function App() {
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<div className="p-4">Welcome to Dashboard</div>} />
+              <Route index element={<DashboardHome />} />
               <Route path="view-journal" element={<ViewJournal />} />
               <Route path="view-journal/:id" element={<JournalDetails />} />
               <Route path="journal-issues" element={<ViewJournalIssues />} />

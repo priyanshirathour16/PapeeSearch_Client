@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom';
 const Header = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const navigate = useNavigate();
+    const user = localStorage.getItem('user');
+    const parseUser = JSON.parse(user);
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        localStorage.clear();
         navigate('/login');
     };
 
@@ -18,7 +20,7 @@ const Header = () => {
                     className="flex items-center space-x-2 focus:outline-none hover:text-blue-600 transition-colors"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
-                    <span className="font-medium text-gray-700">Admin</span>
+                    <span className="font-medium text-gray-700">{`${parseUser?.firstName ? parseUser?.firstName : "Admin"}`}</span>
                     <FaUserCircle className="text-3xl text-gray-600" />
                 </button>
 

@@ -62,6 +62,8 @@ export const journalIssueApi = {
 
 export const authApi = {
     register: (data) => api.post('/auth/register', data),
+    sendOTP: (data) => api.post('/auth/send-otp', data),
+    verifyOTPLogin: (data) => api.post('/auth/verify-otp-login', data),
 };
 
 export const applicationApi = {

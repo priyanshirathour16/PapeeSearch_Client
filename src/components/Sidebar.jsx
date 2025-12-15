@@ -18,12 +18,7 @@ const Sidebar = () => {
 
     // Filter sidebar items based on role
     const filteredSidebarData = sidebarData.filter(item => {
-        if (role === 'admin') return true; // Admin sees everything
-        if (role === 'author') {
-            // Author should NOT see 'Manage Journal'
-            return item.title !== 'Manage Journal';
-        }
-        return false;
+        return item?.access?.includes(role);
     });
 
     return (
