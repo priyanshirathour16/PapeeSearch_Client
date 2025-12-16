@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Tag, Spin, Button, message, Divider, Table, Typography, Row, Col, Statistic, Breadcrumb, Modal, Descriptions } from 'antd';
+import { Card, Tag, Spin, Button, message, Divider, Table, Typography, Row, Col, Descriptions, Breadcrumb, Avatar, Tooltip, Space, Modal } from 'antd';
 import {
     FaArrowLeft,
     FaFilePdf,
     FaImage,
-    FaUserTie,
+    FaUser,
     FaAlignLeft,
     FaInfoCircle,
     FaUsers,
     FaClipboardList,
-    FaEye
+    FaEye,
+    FaCheckCircle,
+    FaDownload
 } from 'react-icons/fa';
 import { manuscriptApi } from '../../services/api';
-import { ImageURl, scriptUrl } from '../../services/serviceApi';
+import { scriptUrl } from '../../services/serviceApi';
 import moment from 'moment';
 
 const { Title, Text, Paragraph } = Typography;
@@ -33,7 +35,9 @@ const MyManuscriptDetails = () => {
     const fetchDetails = async () => {
         try {
             const response = await manuscriptApi.getById(id);
-            setManuscript(response.data.data ? response.data.data : response.data);
+            // Handle both structure types { data: { ... } } or { ... }
+            const data = response.data.data ? response.data.data : response.data;
+            setManuscript(data);
         } catch (error) {
             console.error('Error fetching manuscript details:', error);
             message.error('Failed to load manuscript details');
@@ -50,9 +54,12 @@ const MyManuscriptDetails = () => {
             title: 'Name',
             key: 'name',
             render: (_, r) => (
-                <div>
-                    <span className="font-medium text-gray-800">{r.first_name} {r.last_name}</span>
-                    {r.is_corresponding_author && <Tag color="gold" className="ml-2 text-[10px]">Corresponding</Tag>}
+                <div className="flex items-center gap-2">
+                    <Avatar icon={<FaUser />} size="small" className="bg-[#12b48b]" />
+                    <div>
+                        <span className="font-medium text-gray-800">{r.first_name} {r.last_name}</span>
+                        {r.is_corresponding_author && <Tag color="gold" className="ml-2 text-[10px]">Corresponding</Tag>}
+                    </div>
                 </div>
             )
         },
@@ -78,12 +85,25 @@ const MyManuscriptDetails = () => {
         },
     ];
 
+    const checklistItems = [
+        { key: 'is_sole_submission', label: 'Sole Submission' },
+        { key: 'is_not_published', label: 'Not Published Before' },
+        { key: 'is_original_work', label: 'Original Work' },
+        { key: 'has_declared_conflicts', label: 'Declared Conflicts' },
+        { key: 'has_acknowledged_support', label: 'Acknowledged Support' },
+        { key: 'has_acknowledged_funding', label: 'Acknowledged Funding' },
+        { key: 'follows_guidelines', label: 'Follows Guidelines' },
+    ];
+
     const getStatusColor = (status) => {
-        if (status === 'Submitted') return 'blue';
-        if (status === 'Under Review') return 'orange';
-        if (status === 'Accepted') return 'green';
-        if (status === 'Rejected') return 'red';
-        return 'default';
+        if (!status) return 'default';
+        switch (status.toLowerCase()) {
+            case 'submitted': return 'blue';
+            case 'under review': return 'orange';
+            case 'accepted': return 'green';
+            case 'rejected': return 'red';
+            default: return 'default';
+        }
     };
 
     return (
@@ -116,26 +136,58 @@ const MyManuscriptDetails = () => {
             <Row gutter={[24, 24]}>
                 {/* Left Column: Main Content */}
                 <Col xs={24} lg={16}>
+                    {/* Header Card */}
+                    <Card className="shadow-sm border-none rounded-xl mb-6 overflow-hidden">
+                        <div className="border-l-4 border-[#12b48b] pl-4">
+                            <Text type="secondary" className="block text-xs uppercase tracking-wider mb-1">
+                                {manuscript.manuscript_id} &bull; {manuscript.manuscript_type}
+                            </Text>
+                            <Title level={3} className="mt-0 mb-2 leading-tight text-[#2c4a6e]">{manuscript.paper_title}</Title>
+                            <Text type="secondary">
+                                Submitted on <span className="text-gray-800 font-medium">{moment(manuscript.createdAt).format('DD MMM, YYYY')}</span>
+                            </Text>
+                        </div>
+                    </Card>
+
                     {/* Abstract Card */}
                     <Card
                         className="shadow-sm border-none rounded-xl mb-6 overflow-hidden"
-                        title={<div className="flex items-center gap-2 text-[#12b48b]"><FaAlignLeft /> Abstract</div>}
+                        title={<div className="flex items-center gap-2 text-[#2c4a6e] font-semibold"><FaAlignLeft /> Abstract</div>}
                     >
-                        <Title level={3} className="text-gray-800 mb-2">{manuscript.paper_title}</Title>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {manuscript.keywords?.split(',').map((word, i) => (
-                                <Tag key={i} className="bg-gray-100 text-gray-600 border-gray-200 rounded">{word.trim()}</Tag>
-                            ))}
-                        </div>
-                        <Paragraph className="text-gray-600 text-justify leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <Paragraph className="text-gray-600 text-justify leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
                             {manuscript.abstract}
                         </Paragraph>
+                        <div className="flex flex-wrap gap-2">
+                            {manuscript.keywords?.split(',').map((word, i) => (
+                                <Tag key={i} className="bg-white border border-gray-200 text-gray-600 rounded-full px-3">{word.trim()}</Tag>
+                            ))}
+                        </div>
                     </Card>
+
+                    {/* Checklist Card */}
+                    {manuscript.checklist && (
+                        <Card title={<span className="text-[#2c4a6e] font-semibold flex items-center gap-2"><FaCheckCircle /> Submission Checklist</span>} className="shadow-sm border-none mb-6 rounded-xl">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {checklistItems.map((item) => (
+                                    <div key={item.key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        {manuscript.checklist[item.key] ? (
+                                            <FaCheckCircle className="text-green-500 text-lg flex-shrink-0" />
+                                        ) : (
+                                            <FaCheckCircle className="text-gray-300 text-lg flex-shrink-0" />
+                                        )}
+                                        <Text className={manuscript.checklist[item.key] ? 'text-gray-700 font-medium' : 'text-gray-400'}>
+                                            {item.label}
+                                        </Text>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    )}
 
                     {/* Authors Card */}
                     <Card
                         className="shadow-sm border-none rounded-xl mb-6"
-                        title={<div className="flex items-center gap-2 text-[#12b48b]"><FaUsers /> Authors</div>}
+                        title={<div className="flex items-center gap-2 text-[#2c4a6e] font-semibold"><FaUsers /> Authors</div>}
                     >
                         <Table
                             dataSource={manuscript.authors || []}
@@ -146,109 +198,110 @@ const MyManuscriptDetails = () => {
                             className="no-border-table"
                         />
                     </Card>
-
-                    {/* Reviewer Info Card (if relevant) */}
-                    <Card
-                        className="shadow-sm border-none rounded-xl"
-                        title={<div className="flex items-center gap-2 text-[#12b48b]"><FaUserTie /> Nominated Reviewer</div>}
-                    >
-                        <Row gutter={[16, 16]}>
-                            <Col span={12}>
-                                <Text type="secondary" className="text-xs uppercase tracking-wide">Name</Text>
-                                <div className="font-medium text-base">{manuscript.reviewer_first_name} {manuscript.reviewer_first_name}</div>
-                            </Col>
-                            <Col span={12}>
-                                <Text type="secondary" className="text-xs uppercase tracking-wide">Institution</Text>
-                                <div className="font-medium text-base">{manuscript.reviewer_institution}</div>
-                            </Col>
-                            <Col span={12}>
-                                <Text type="secondary" className="text-xs uppercase tracking-wide">Email</Text>
-                                <div className="font-medium text-base">{manuscript.reviewer_email}</div>
-                            </Col>
-                            <Col span={12}>
-                                <Text type="secondary" className="text-xs uppercase tracking-wide">Phone</Text>
-                                <div className="font-medium text-base">{manuscript.reviewer_phone}</div>
-                            </Col>
-                        </Row>
-                    </Card>
                 </Col>
 
                 {/* Right Column: Sidebar Info */}
                 <Col xs={24} lg={8}>
-                    {/* Info Card */}
-                    <Card className="shadow-sm border-none rounded-xl mb-6 bg-[#12b48b] text-white stats-card">
-                        <div className="flex flex-col gap-4">
-                            <div className="flex justify-between items-center border-b border-white/20 pb-3">
-                                <span className="text-white/80">Submission Date</span>
-                                <span className="font-bold">{moment(manuscript.createdAt).format('DD MMM, YYYY')}</span>
+                    {/* Metadata Card */}
+                    <Card className="shadow-sm border-none rounded-xl mb-6 bg-[#f8fafc]">
+                        <Title level={5} className="mb-4 text-[#2c4a6e]">Manuscript Details</Title>
+                        <div className="space-y-4">
+                            <div className="flex justify-between border-b border-gray-200 pb-2">
+                                <Text type="secondary">Word Count</Text>
+                                <div className="text-right">
+                                    <Text strong>{manuscript.word_count}</Text>
+                                    <div className="text-xs text-gray-500 italic">{manuscript.no_of_words_text}</div>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center border-b border-white/20 pb-3">
-                                <span className="text-white/80">Journal</span>
-                                <span className="font-bold text-right truncate max-w-[150px]" title={manuscript.journal?.title}>{manuscript.journal?.title}</span>
+                            <div className="flex justify-between border-b border-gray-200 pb-2">
+                                <Text type="secondary">Pages</Text>
+                                <Text strong>{manuscript.page_count ?? 'N/A'}</Text>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-200 pb-2">
+                                <Text type="secondary">Tables / Figures</Text>
+                                <Text strong>{manuscript.table_count || 0} / {manuscript.figure_count || 0}</Text>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-200 pb-2">
+                                <Text type="secondary">Journal</Text>
+                                <div className="text-right">
+                                    <Text strong className="block truncate max-w-[150px]" title={manuscript.journal?.title}>{manuscript.journal?.title}</Text>
+                                    <Text type="secondary" className="text-xs">ISSN: {manuscript.journal?.print_issn}</Text>
+                                </div>
                             </div>
                         </div>
                     </Card>
 
-                    <Card
-                        className="shadow-sm border-none rounded-xl mb-6"
-                        title={<div className="flex items-center gap-2 text-gray-700"><FaInfoCircle /> Manuscript Stats</div>}
-                    >
-                        <Row gutter={[16, 16]}>
-                            <Col span={12}>
-                                <Statistic title="Words" value={manuscript.word_count} valueStyle={{ fontSize: '1.2rem', fontWeight: 600 }} />
-                            </Col>
-                            <Col span={12}>
-                                <Statistic title="Pages" value={manuscript.page_count} valueStyle={{ fontSize: '1.2rem', fontWeight: 600 }} />
-                            </Col>
-                            <Col span={12}>
-                                <Statistic title="Tables" value={manuscript.table_count} valueStyle={{ fontSize: '1.2rem', fontWeight: 600 }} />
-                            </Col>
-                            <Col span={12}>
-                                <Statistic title="Figures" value={manuscript.figure_count} valueStyle={{ fontSize: '1.2rem', fontWeight: 600 }} />
-                            </Col>
-                        </Row>
+                    {/* Submitter Info */}
+                    <Card className="shadow-sm border-none rounded-xl mb-6">
+                        <Title level={5} className="mb-4 text-[#2c4a6e]">Submitter Contact</Title>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    <FaUser size={12} />
+                                </div>
+                                <div className="overflow-hidden">
+                                    <Text className="block text-sm font-medium">{manuscript.submitter_name}</Text>
+                                    <Text type="secondary" className="text-xs">Submitter</Text>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    <FaCheckCircle size={12} />
+                                </div>
+                                <div className="overflow-hidden">
+                                    <Tooltip title={manuscript.submitter_email}>
+                                        <Text className="block text-sm font-medium truncate">{manuscript.submitter_email}</Text>
+                                    </Tooltip>
+                                    <Text type="secondary" className="text-xs">Email</Text>
+                                </div>
+                            </div>
+                        </div>
                     </Card>
 
                     {/* Files Card */}
                     <Card
                         className="shadow-sm border-none rounded-xl"
-                        title={<div className="flex items-center gap-2 text-gray-700"><FaClipboardList /> Documents</div>}
+                        title={<div className="flex items-center gap-2 text-[#2c4a6e] font-semibold"><FaClipboardList /> Documents</div>}
                     >
-                        <div className="flex flex-col gap-3">
-                            {manuscript.manuscript_file_path ? (
-                                <a
+                        <Space direction="vertical" className="w-full">
+                            {manuscript.manuscript_file_path && (
+                                <Button
+                                    type="primary"
+                                    block
+                                    icon={<FaFilePdf />}
                                     href={`${scriptUrl}${manuscript.manuscript_file_path}`}
                                     target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-3 p-3 border rounded-lg hover:border-[#12b48b] hover:bg-green-50 transition-all group"
+                                    className="bg-[#12b48b] border-[#12b48b] hover:bg-[#0e9470] h-10"
                                 >
-                                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-500 group-hover:bg-red-200 transition-colors">
-                                        <FaFilePdf size={18} />
-                                    </div>
-                                    <div>
-                                        <div className="font-medium text-gray-800">Manuscript File</div>
-                                        <div className="text-xs text-gray-500">Click to view/download</div>
-                                    </div>
-                                </a>
-                            ) : <Text type="secondary" italic>No manuscript file</Text>}
-
-                            {manuscript.signature_file_path ? (
-                                <a
-                                    href={`${scriptUrl}${manuscript.signature_file_path}`}
+                                    View Manuscript
+                                </Button>
+                            )}
+                            {manuscript.cover_letter_path && (
+                                <Button
+                                    block
+                                    icon={<FaDownload />}
+                                    href={`${scriptUrl}${manuscript.cover_letter_path}`}
                                     target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-3 p-3 border rounded-lg hover:border-[#12b48b] hover:bg-green-50 transition-all group"
+                                    className="h-10"
                                 >
-                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-500 group-hover:bg-purple-200 transition-colors">
-                                        <FaImage size={18} />
-                                    </div>
-                                    <div>
-                                        <div className="font-medium text-gray-800">Signature File</div>
-                                        <div className="text-xs text-gray-500">Click to view/download</div>
-                                    </div>
-                                </a>
-                            ) : <Text type="secondary" italic>No signature file</Text>}
-                        </div>
+                                    Cover Letter
+                                </Button>
+                            )}
+                            {!manuscript.manuscript_file_path && <Text type="secondary" className="text-center block italic">No manuscript file.</Text>}
+                        </Space>
+
+                        {manuscript.signature_file_path && (
+                            <div className="mt-6">
+                                <Text type="secondary" className="block text-xs mb-2 uppercase tracking-wide">Digital Signature</Text>
+                                <div className="p-2 border border-dashed border-gray-300 rounded bg-gray-50 flex justify-center">
+                                    <img
+                                        src={`${scriptUrl}${manuscript.signature_file_path}`}
+                                        alt="Signature"
+                                        className="h-16 object-contain opacity-80"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </Card>
                 </Col>
             </Row>
@@ -303,9 +356,6 @@ const MyManuscriptDetails = () => {
                             </Descriptions.Item>
                             <Descriptions.Item label="Address" span={2}>
                                 {selectedAuthor.address || 'N/A'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="ORCID" span={2}>
-                                {selectedAuthor.orcid || 'N/A'}
                             </Descriptions.Item>
                             <Descriptions.Item label="Corresponding Author" span={2}>
                                 <Tag color={selectedAuthor.is_corresponding_author ? 'green' : 'default'}>

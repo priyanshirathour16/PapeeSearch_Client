@@ -25,7 +25,7 @@ const Login = () => {
 
             if (response.data.success) {
                 localStorage.setItem('token', response.data.token);
-                // Also store user details if needed, e.g., localStorage.setItem('user', JSON.stringify(response.data.user));
+                localStorage.setItem('user', JSON.stringify(response.data.user));
                 setRole(response.data.role);
 
                 Swal.fire({
