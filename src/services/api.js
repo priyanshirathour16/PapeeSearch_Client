@@ -2,8 +2,8 @@ import axios from 'axios';
 
 
 const api = axios.create({
-    // baseURL: 'http://localhost:5000/api',
-    baseURL: 'https://papersearchbackend-1.onrender.com/api',
+    baseURL: 'http://localhost:5000/api',
+    // baseURL: 'https://papersearchbackend-1.onrender.com/api',
 });
 
 api.interceptors.request.use(
@@ -97,13 +97,19 @@ export const impactFactorApi = {
     delete: (id) => api.delete(`/journal-impact-factors/${id}`),
 };
 
+export const otpApi = {
+    send: (data) => api.post('/otp/send', data),
+    verify: (data) => api.post('/otp/verify', data),
+};
+
 export const manuscriptApi = {
     submit: (data) => {
         const headers = { 'Content-Type': 'multipart/form-data' };
-        return api.post('/manuscripts', data, { headers });
+        return api.post('/manuscripts/submit', data, { headers });
     },
     getAll: () => api.get('/manuscripts'),
     getById: (id) => api.get(`/manuscripts/${id}`),
+    getByAuthor: (authorId) => api.get(`/manuscripts/author/${authorId}`),
 };
 
 export const contactUsApi = {

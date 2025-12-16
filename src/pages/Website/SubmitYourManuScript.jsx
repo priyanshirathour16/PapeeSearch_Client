@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import ManuscriptForm from '../../components/Website/ManuscriptForm';
+import ManuscriptFormSteps from '../../components/Website/ManuscriptFormSteps';
 import { journalCategoryApi } from '../../services/api';
+import { message } from 'antd';
 
 const SubmitYourManuScript = () => {
     const [fetchedJournalOptions, setFetchedJournalOptions] = useState([]);
@@ -30,7 +31,7 @@ const SubmitYourManuScript = () => {
     }, []);
 
     return (
-        <div className=" bg-white">
+        <div className="bg-white py-8">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
@@ -39,10 +40,9 @@ const SubmitYourManuScript = () => {
                         <div className="content-inner form-panel">
                             <h1 className="text-2xl text-[#12b48b] font-normal mb-6 relative inline-block">
                                 Submit a Manuscript
-                                {/* <span className="absolute bottom-0 left-0 w-12 h-1 bg-[#12b48b] -mb-2"></span> */}
                             </h1>
 
-                            <ManuscriptForm fetchedJournalOptions={fetchedJournalOptions} />
+                            <ManuscriptFormSteps fetchedJournalOptions={fetchedJournalOptions} />
                         </div>
                     </div>
 
