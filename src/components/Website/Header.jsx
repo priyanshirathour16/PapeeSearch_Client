@@ -182,6 +182,14 @@ const Header = () => {
                                         Become An Editor <FaChevronCircleRight className="text-xs" />
                                     </Link>
                                 </li>
+                                <li>
+                                    <Link
+                                        to="/login"
+                                        className="bg-[#204066] hover:bg-[#1a3453] border border-white/20 hover:text-white text-white px-6 py-1 rounded flex items-center gap-1 transition-colors uppercase font-medium"
+                                    >
+                                        Login
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
 
