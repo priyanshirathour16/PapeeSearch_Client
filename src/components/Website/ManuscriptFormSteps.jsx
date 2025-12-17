@@ -47,7 +47,7 @@ const FormSection = ({ legend, children, className = "" }) => (
     </div>
 );
 
-const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
+const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
     const [otpSent, setOtpSent] = useState(false);
@@ -58,6 +58,32 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
     const [keywordInput, setKeywordInput] = useState("");
     const [wordCountText, setWordCountText] = useState("");
     const [abstractWordCount, setAbstractWordCount] = useState(0);
+
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        const checkLoginStatus = () => {
+            const userStr = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            if (isDashboard && userStr && token) {
+                try {
+                    const user = JSON.parse(userStr);
+                    const name = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim();
+                    const email = user.email || '';
+                    const phone = user.phone || user.contactNumber || '';
+
+                    setPersonalDetails({ name, email, phone });
+                    setOtpVerified(true);
+                    setOtpSent(true);
+                    setCurrentStep(2);
+                    setIsLoggedIn(true);
+                } catch (e) {
+                    console.error("Error parsing user data", e);
+                }
+            }
+        };
+        checkLoginStatus();
+    }, []);
 
     const totalSteps = 8;
 
@@ -157,9 +183,9 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
 
     const initialValues = {
         // Step 1: Personal Details
-        name: "",
-        email: "",
-        phone: "",
+        name: personalDetails?.name || "",
+        email: personalDetails?.email || "",
+        phone: personalDetails?.phone || "",
 
         // Step 2: Manuscript Information
         journalId: "",
@@ -218,13 +244,18 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
         reviewerAddress: "",
     };
 
+    const [currentOtp, setCurrentOtp] = useState(
+        ""
+    )
     const handleSendOTP = async (values) => {
         try {
-            await otpApi.send({
+            const response = await otpApi.send({
                 name: values.name,
                 email: values.email,
                 phone: values.phone
             });
+            // console.log(response?.data?.otp);
+            setCurrentOtp(response?.data?.otp);
             setOtpSent(true);
             setPersonalDetails({ name: values.name, email: values.email, phone: values.phone });
             message.success("OTP sent successfully to your email!");
@@ -323,14 +354,14 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
 
             Swal.fire({
                 title: "Submitted Successfully!",
-                text: `Congratulations! You have successfully submitted your manuscript. Your manuscript ID is: ${response.data.manuscriptId}. Please check your mailbox for acknowledgement of receipt of manuscript.`,
+                text: `Congratulations! You have successfully submitted your manuscript. Your manuscript ID is: ${response.data.data.manuscriptId}. Please check your mailbox for acknowledgement of receipt of manuscript.`,
                 icon: "success",
                 confirmButtonText: "OK",
                 customClass: {
                     confirmButton: "bg-[#12b48b] text-white px-6 py-2 rounded",
                 }
             }).then(() => {
-                navigate('/dashboard');
+                navigate('/dashboard/submit-manuscript');
             });
         } catch (error) {
             console.error(error);
@@ -338,32 +369,42 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
         }
     };
 
-    const StepIndicator = () => (
-        <div className="mb-8">
-            <div className="flex items-center justify-between">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
-                    <div key={step} className="flex items-center flex-1">
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step ? 'bg-[#12b48b] border-[#12b48b] text-white' : 'bg-white border-gray-300 text-gray-400'
-                            }`}>
-                            {currentStep > step ? <FaCheck /> : step}
-                        </div>
-                        {step < 8 && (
-                            <div className={`flex-1 h-1 mx-2 ${currentStep > step ? 'bg-[#12b48b]' : 'bg-gray-300'}`} />
-                        )}
-                    </div>
-                ))}
+    const StepIndicator = () => {
+        const stepsToRender = isLoggedIn ? [2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 4, 5, 6, 7, 8];
+        const displayStep = isLoggedIn ? currentStep - 1 : currentStep;
+        const displayTotal = isLoggedIn ? totalSteps - 1 : totalSteps;
+
+        return (
+            <div className="mb-8">
+                <div className="flex items-center justify-between">
+                    {stepsToRender.map((step) => {
+                        const label = isLoggedIn ? step - 1 : step;
+                        return (
+                            <div key={step} className="flex items-center flex-1">
+                                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step ? 'bg-[#12b48b] border-[#12b48b] text-white' : 'bg-white border-gray-300 text-gray-400'
+                                    }`}>
+                                    {currentStep > step ? <FaCheck /> : label}
+                                </div>
+                                {step < 8 && (
+                                    <div className={`flex-1 h-1 mx-2 ${currentStep > step ? 'bg-[#12b48b]' : 'bg-gray-300'}`} />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="mt-2 text-center text-sm text-gray-600">
+                    Step {displayStep} of {displayTotal}
+                </div>
             </div>
-            <div className="mt-2 text-center text-sm text-gray-600">
-                Step {currentStep} of {totalSteps}
-            </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <Formik
             initialValues={initialValues}
             validationSchema={getStepValidationSchema(currentStep)}
             onSubmit={handleSubmit}
+            enableReinitialize={true}
             validateOnChange={false}
             validateOnBlur={true}
         >
@@ -401,6 +442,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
                                         </button>
                                     ) : (
                                         <div className="space-y-3">
+                                            <h4>Insert This OTP -  {currentOtp}</h4>
                                             <div className="flex items-center gap-3">
                                                 <input
                                                     type="text"
@@ -795,7 +837,9 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
                             <div className="border border-gray-300 rounded p-4">
                                 <div className="flex justify-between items-center mb-3">
                                     <h3 className="font-semibold text-[#204066]">Personal Details</h3>
-                                    <button type="button" onClick={() => setCurrentStep(1)} className="text-[#12b48b] text-sm hover:underline">Edit</button>
+                                    {!isLoggedIn && (
+                                        <button type="button" onClick={() => setCurrentStep(1)} className="text-[#12b48b] text-sm hover:underline">Edit</button>
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <p><strong>Name:</strong> {personalDetails?.name}</p>
@@ -880,8 +924,8 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions }) => {
                         <button
                             type="button"
                             onClick={() => setCurrentStep(currentStep - 1)}
-                            disabled={currentStep === 1}
-                            className={`flex items-center gap-2 px-6 py-2 rounded font-bold ${currentStep === 1
+                            disabled={currentStep === 1 || (isLoggedIn && currentStep === 2)}
+                            className={`flex items-center gap-2 px-6 py-2 rounded font-bold ${(currentStep === 1 || (isLoggedIn && currentStep === 2))
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gray-500 hover:bg-gray-600 text-white'
                                 }`}

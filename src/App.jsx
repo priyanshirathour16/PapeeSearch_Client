@@ -106,6 +106,7 @@ function App() {
               <Route path="manuscripts/:id" element={<ManuscriptDetails />} />
               <Route path="contact-us" element={<AdminContactList />} />
               <Route path="submit-manuscript" element={<MyManuscriptList />} />
+              <Route path="submit-manuscript/new" element={<SubmitYourManuScript isDashboard={true} />} />
               <Route path="submit-manuscript/:id" element={<MyManuscriptDetails />} />
             </Route>
           </Route>

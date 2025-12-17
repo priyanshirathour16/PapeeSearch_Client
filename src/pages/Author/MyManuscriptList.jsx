@@ -104,6 +104,15 @@ const MyManuscriptList = () => {
             <Card
                 title={<div className="flex items-center gap-2"><FaFileAlt className="text-[#12b48b]" /> My Manuscripts</div>}
                 className="shadow-sm border-t-4 border-t-[#12b48b]"
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => navigate('/dashboard/submit-manuscript/new')}
+                        className="bg-[#12b48b] hover:bg-[#0e9f7a] border-none"
+                    >
+                        New Manuscript
+                    </Button>
+                }
             >
                 <Table
                     columns={columns}

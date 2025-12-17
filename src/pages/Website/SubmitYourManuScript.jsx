@@ -3,7 +3,7 @@ import ManuscriptFormSteps from '../../components/Website/ManuscriptFormSteps';
 import { journalCategoryApi } from '../../services/api';
 import { message } from 'antd';
 
-const SubmitYourManuScript = () => {
+const SubmitYourManuScript = ({ isDashboard }) => {
     const [fetchedJournalOptions, setFetchedJournalOptions] = useState([]);
 
     useEffect(() => {
@@ -42,7 +42,7 @@ const SubmitYourManuScript = () => {
                                 Submit a Manuscript
                             </h1>
 
-                            <ManuscriptFormSteps fetchedJournalOptions={fetchedJournalOptions} />
+                            <ManuscriptFormSteps fetchedJournalOptions={fetchedJournalOptions} isDashboard={isDashboard} />
                         </div>
                     </div>
 

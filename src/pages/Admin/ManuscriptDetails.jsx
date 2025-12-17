@@ -202,14 +202,14 @@ const ManuscriptDetails = () => {
                                     <div className="text-xs text-gray-500 italic">{manuscript.no_of_words_text}</div>
                                 </div>
                             </div>
-                            <div className="flex justify-between border-b border-gray-200 pb-2">
+                            {/* <div className="flex justify-between border-b border-gray-200 pb-2">
                                 <Text type="secondary">Pages</Text>
                                 <Text strong>{manuscript.page_count ?? 'N/A'}</Text>
                             </div>
                             <div className="flex justify-between border-b border-gray-200 pb-2">
                                 <Text type="secondary">Tables / Figures</Text>
                                 <Text strong>{manuscript.table_count || 0} / {manuscript.figure_count || 0}</Text>
-                            </div>
+                            </div> */}
                             <div className="flex justify-between border-b border-gray-200 pb-2">
                                 <Text type="secondary">Journal</Text>
                                 <div className="text-right">
