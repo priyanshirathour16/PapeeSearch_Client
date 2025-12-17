@@ -2,8 +2,8 @@ import axios from 'axios';
 
 
 const api = axios.create({
-    // baseURL: 'http://localhost:5000/api',
-    baseURL: 'https://papersearchbackend-1.onrender.com/api',
+    baseURL: 'http://localhost:5000/api',
+    // baseURL: 'https://papersearchbackend-1.onrender.com/api',
 });
 
 api.interceptors.request.use(
@@ -64,6 +64,7 @@ export const authApi = {
     register: (data) => api.post('/auth/register', data),
     sendOTP: (data) => api.post('/auth/send-otp', data),
     verifyOTPLogin: (data) => api.post('/auth/verify-otp-login', data),
+    changePassword: (data) => api.post('/auth/change-password', data),
 };
 
 export const applicationApi = {
