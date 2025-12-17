@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaArrowLeft, FaCheck, FaTimes } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaArrowLeft, FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { Formik, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -58,6 +58,15 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     const [keywordInput, setKeywordInput] = useState("");
     const [wordCountText, setWordCountText] = useState("");
     const [abstractWordCount, setAbstractWordCount] = useState(0);
+    const [otpTimer, setOtpTimer] = useState(0);
+    const [verifyOtpError, setVerifyOtpError] = useState("");
+    const [sendOtpError, setSendOtpError] = useState("");
+    const [verificationRequiredError, setVerificationRequiredError] = useState("");
+
+    // Loading states
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+    const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -85,7 +94,29 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         checkLoginStatus();
     }, []);
 
+    useEffect(() => {
+        let interval;
+        if (otpTimer > 0) {
+            interval = setInterval(() => {
+                setOtpTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [otpTimer]);
+
     const totalSteps = 8;
+
+    const getTouchedFromErrors = (errors) => {
+        const touched = {};
+        Object.keys(errors).forEach((key) => {
+            if (typeof errors[key] === 'object' && errors[key] !== null) {
+                touched[key] = getTouchedFromErrors(errors[key]);
+            } else {
+                touched[key] = true;
+            }
+        });
+        return touched;
+    };
 
     const getStepValidationSchema = (step) => {
         switch (step) {
@@ -248,6 +279,8 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         ""
     )
     const handleSendOTP = async (values) => {
+        setIsSendingOtp(true);
+        setSendOtpError("");
         try {
             const response = await otpApi.send({
                 name: values.name,
@@ -258,26 +291,29 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
             setCurrentOtp(response?.data?.otp);
             setOtpSent(true);
             setPersonalDetails({ name: values.name, email: values.email, phone: values.phone });
+            setOtpTimer(45);
             message.success("OTP sent successfully to your email!");
         } catch (error) {
             console.error(error);
-            message.error(error.response?.data?.message || "Failed to send OTP");
+            setSendOtpError(error.response?.data?.message || "Failed to send OTP");
+        } finally {
+            setIsSendingOtp(false);
         }
     };
 
     const handleVerifyOTP = async (email) => {
-        if (!otp || otp.length !== 6) {
-            message.error("Please enter a valid 6-digit OTP");
-            return;
-        }
-
+        setIsVerifyingOtp(true);
+        setVerifyOtpError("");
         try {
             const response = await otpApi.verify({ email, otp });
             setOtpVerified(true);
+            setVerificationRequiredError("");
             message.success("Email verified successfully!");
         } catch (error) {
             console.error(error);
-            message.error(error.response?.data?.message || "Invalid or expired OTP");
+            setVerifyOtpError(error.response?.data?.message || "Invalid or expired OTP");
+        } finally {
+            setIsVerifyingOtp(false);
         }
     };
 
@@ -308,7 +344,8 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         }
     };
 
-    const handleSubmit = async (values) => {
+    const handleSubmit = async (values, { resetForm }) => {
+        setIsFinalSubmitting(true);
         try {
             const formData = new FormData();
 
@@ -361,11 +398,34 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                     confirmButton: "bg-[#12b48b] text-white px-6 py-2 rounded",
                 }
             }).then(() => {
-                navigate('/dashboard/submit-manuscript');
+                // Reset form and local state
+                resetForm();
+                setCurrentStep(1);
+                setOtpSent(false);
+                setOtpVerified(false);
+                setOtp("");
+                setPersonalDetails(null);
+                setKeywords([]);
+                setKeywordInput("");
+                setWordCountText("");
+                setAbstractWordCount(0);
+                setCurrentOtp(null);
+                setOtpTimer(0);
+                setVerifyOtpError("");
+                setSendOtpError("");
+                setVerificationRequiredError("");
+
+                if (isDashboard && isLoggedIn) {
+                    navigate('/dashboard/submit-manuscript');
+                } else {
+                    navigate('/submit-manuscript');
+                }
             });
         } catch (error) {
             console.error(error);
             message.error(error.response?.data?.error || "Failed to submit manuscript");
+        } finally {
+            setIsFinalSubmitting(false);
         }
     };
 
@@ -408,7 +468,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
             validateOnChange={false}
             validateOnBlur={true}
         >
-            {({ values, setFieldValue, validateForm, setTouched }) => (
+            {({ values, setFieldValue, validateForm, setTouched, touched, isSubmitting, resetForm }) => (
                 <div>
                     <StepIndicator />
 
@@ -423,23 +483,33 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
 
                             {!otpVerified && (
                                 <div className="mt-4">
+                                    {verificationRequiredError && <div className="text-red-500 text-sm mb-2 font-bold">{verificationRequiredError}</div>}
                                     {!otpSent ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                validateForm().then((errors) => {
-                                                    if (Object.keys(errors).length === 0) {
-                                                        handleSendOTP(values);
-                                                    } else {
-                                                        setTouched({ name: true, email: true, phone: true });
-                                                        message.error("Please fill all required fields correctly");
-                                                    }
-                                                });
-                                            }}
-                                            className="bg-[#12b48b] hover:bg-[#0e9470] text-white font-bold py-2 px-6 rounded"
-                                        >
-                                            Send OTP
-                                        </button>
+                                        <div className="flex flex-col items-start gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    validateForm().then((errors) => {
+                                                        if (Object.keys(errors).length === 0) {
+                                                            handleSendOTP(values);
+                                                        } else {
+                                                            setTouched({ name: true, email: true, phone: true });
+                                                        }
+                                                    });
+                                                }}
+                                                className={`bg-[#12b48b] hover:bg-[#0e9470] text-white font-bold py-2 px-6 rounded flex items-center gap-2 ${isSendingOtp || !values.name || !values.email || !values.phone ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                disabled={isSendingOtp || !values.name || !values.email || !values.phone}
+                                            >
+                                                {isSendingOtp ? (
+                                                    <>
+                                                        <FaSpinner className="animate-spin" /> Sending...
+                                                    </>
+                                                ) : (
+                                                    "Send OTP"
+                                                )}
+                                            </button>
+                                            {sendOtpError && <div className="text-red-500 text-xs">{sendOtpError}</div>}
+                                        </div>
                                     ) : (
                                         <div className="space-y-3">
                                             <h4>Insert This OTP -  {currentOtp}</h4>
@@ -449,18 +519,51 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                                     maxLength="6"
                                                     placeholder="Enter 6-digit OTP"
                                                     value={otp}
-                                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                                    className="border border-gray-300 px-4 py-2 rounded w-48 text-center text-lg tracking-widest"
+                                                    onChange={(e) => {
+                                                        setOtp(e.target.value.replace(/\D/g, ''));
+                                                        setVerifyOtpError("");
+                                                    }}
+                                                    className={`border ${verifyOtpError ? 'border-red-500' : 'border-gray-300'} px-4 py-2 rounded w-48 text-center text-lg tracking-widest focus:outline-none`}
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleVerifyOTP(values.email)}
-                                                    className="bg-[#12b48b] hover:bg-[#0e9470] text-white font-bold py-2 px-6 rounded"
-                                                >
-                                                    Verify OTP
-                                                </button>
+                                                {otpTimer > 0 ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleVerifyOTP(values.email)}
+                                                        className={`bg-[#12b48b] hover:bg-[#0e9470] text-white font-bold py-2 px-6 rounded flex items-center gap-2 ${isVerifyingOtp || !otp || otp.length !== 6 ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        disabled={isVerifyingOtp || !otp || otp.length !== 6}
+                                                    >
+                                                        {isVerifyingOtp ? (
+                                                            <>
+                                                                <FaSpinner className="animate-spin" /> Verifying...
+                                                            </>
+                                                        ) : (
+                                                            "Verify OTP"
+                                                        )}
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSendOTP(values)}
+                                                        className={`bg-[#12b48b] hover:bg-[#0e9470] text-white font-bold py-2 px-6 rounded flex items-center gap-2 ${isSendingOtp ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        disabled={isSendingOtp}
+                                                    >
+                                                        {isSendingOtp ? (
+                                                            <>
+                                                                <FaSpinner className="animate-spin" /> Sending...
+                                                            </>
+                                                        ) : (
+                                                            "Resend OTP"
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
+                                            {verifyOtpError && <div className="text-red-500 text-xs mt-1">{verifyOtpError}</div>}
                                             <p className="text-xs text-gray-500">OTP has been sent to {values.email}</p>
+                                            <div className="mt-2 text-sm text-gray-600">
+                                                {otpTimer > 0 && (
+                                                    <p>Resend OTP in <span className="font-bold text-[#12b48b]">{otpTimer}s</span></p>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -738,14 +841,14 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                     { name: 'hasAcknowledgedFunding', label: 'Sources of funding, if any, have been acknowledged.' },
                                     { name: 'followsGuidelines', label: 'The manuscript is submitted as per the journal submission guidelines provided at the journal home page.' },
                                 ].map((item, index) => (
-                                    <div key={index} className="flex items-start gap-3 p-3 border border-gray-200 rounded hover:bg-gray-50">
-                                        <Field type="checkbox" name={`checklist.${item.name}`} className="mt-1 h-4 w-4 text-[#12b48b]" />
-                                        <label className="text-sm text-gray-700 flex-1">{item.label}</label>
+                                    <div key={index} className="flex flex-col gap-1">
+                                        <div className="flex items-start gap-3 p-3 border border-gray-200 rounded hover:bg-gray-50">
+                                            <Field type="checkbox" name={`checklist.${item.name}`} className="mt-1 h-4 w-4 text-[#12b48b]" />
+                                            <label className="text-sm text-gray-700 flex-1">{item.label}</label>
+                                        </div>
+                                        <ErrorMessage name={`checklist.${item.name}`} component="div" className="text-red-500 text-xs ml-1" />
                                     </div>
                                 ))}
-                            </div>
-                            <div className="mt-2">
-                                <ErrorMessage name="checklist.isSoleSubmission" component="div" className="text-red-500 text-xs" />
                             </div>
                         </FormSection>
                     )}
@@ -769,6 +872,11 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                             className="flex-1 px-3 py-2 bg-gray-100 text-sm"
                                         />
                                     </div>
+                                    {values.manuscriptFile && (
+                                        <div className="text-sm text-[#12b48b] mt-1">
+                                            Selected: {values.manuscriptFile.name}
+                                        </div>
+                                    )}
                                     <ErrorMessage name="manuscriptFile" component="div" className="text-red-500 text-xs mt-1" />
                                 </div>
 
@@ -787,6 +895,11 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                             className="flex-1 px-3 py-2 bg-gray-100 text-sm"
                                         />
                                     </div>
+                                    {values.coverLetter && (
+                                        <div className="text-sm text-[#12b48b] mt-1">
+                                            Selected: {values.coverLetter.name}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </FormSection>
@@ -912,8 +1025,12 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <p><strong>Name:</strong> {values.reviewerFirstName} {values.reviewerLastName}</p>
                                     <p><strong>Email:</strong> {values.reviewerEmail}</p>
+                                    <p><strong>Phone:</strong> {values.reviewerPhone}</p>
+                                    <p><strong>Designation:</strong> {values.reviewerDesignation}</p>
                                     <p><strong>Institution:</strong> {values.reviewerInstitution}</p>
+                                    <p><strong>Department:</strong> {values.reviewerDepartment}</p>
                                     <p><strong>Specialisation:</strong> {values.reviewerSpecialisation}</p>
+                                    <p><strong>Address:</strong> {values.reviewerAddress}, {values.reviewerCity}, {values.reviewerState}, {values.reviewerCountry}</p>
                                 </div>
                             </div>
                         </div>
@@ -938,7 +1055,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                 type="button"
                                 onClick={() => {
                                     if (currentStep === 1 && !otpVerified) {
-                                        message.error("Please verify your email with OTP before proceeding");
+                                        setVerificationRequiredError("Please verify your email with OTP before proceeding");
                                         return;
                                     }
 
@@ -947,7 +1064,9 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         if (!hasErrors) {
                                             setCurrentStep(currentStep + 1);
                                         } else {
-                                            message.error("Please fill all required fields correctly");
+                                            const errorFields = getTouchedFromErrors(errors);
+                                            setTouched({ ...touched, ...errorFields });
+                                            // message.error("Please fill all required fields correctly");
                                         }
                                     });
                                 }}
@@ -958,10 +1077,19 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                         ) : (
                             <button
                                 type="button"
-                                onClick={() => handleSubmit(values)}
-                                className="flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold"
+                                disabled={isFinalSubmitting}
+                                onClick={() => handleSubmit(values, { resetForm })}
+                                className={`flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold ${isFinalSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                Submit Manuscript <FaLongArrowAltRight />
+                                {isFinalSubmitting ? (
+                                    <>
+                                        <FaSpinner className="animate-spin" /> Submitting...
+                                    </>
+                                ) : (
+                                    <>
+                                        Submit Manuscript <FaLongArrowAltRight />
+                                    </>
+                                )}
                             </button>
                         )}
                     </div>

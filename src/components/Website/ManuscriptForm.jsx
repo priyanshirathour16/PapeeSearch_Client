@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaListOl, FaTh, FaFileImage, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaListOl, FaTh, FaFileImage, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaSpinner } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
-import { Formik, Field, FieldArray, ErrorMessage } from 'formik';
+import { Formik, Field, FieldArray, ErrorMessage, useField } from 'formik';
 import * as Yup from 'yup';
 import SignatureCanvas from 'react-signature-canvas';
 import { manuscriptApi } from '../../services/api';
@@ -13,20 +13,25 @@ const countries = [
     "Select Country", "United Kingdom", "United States", "India", "Australia", "Canada", "Germany", "France", "other"
 ];
 
-const IconInput = ({ icon: Icon, ...props }) => (
-    <div className="flex flex-col">
-        <div className={`flex bg-gray-100 border border-gray-300 rounded overflow-hidden ${props.className}`}>
-            <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
-                <Icon className="text-sm" />
+const IconInput = ({ icon: Icon, className, ...props }) => {
+    const [field, meta] = useField(props);
+    const hasError = meta.touched && meta.error;
+    return (
+        <div className="flex flex-col">
+            <div className={`flex bg-gray-100 border rounded overflow-hidden ${hasError ? 'border-red-500' : 'border-gray-300'} ${className || ''}`}>
+                <div className={`w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r ${hasError ? 'border-red-500' : 'border-gray-300'}`}>
+                    <Icon className="text-sm" />
+                </div>
+                <input
+                    {...field}
+                    {...props}
+                    className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
+                />
             </div>
-            <Field
-                {...props}
-                className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
-            />
+            {hasError && <div className="text-red-500 text-xs mt-1">{meta.error}</div>}
         </div>
-        <ErrorMessage name={props.name} component="div" className="text-red-500 text-xs mt-1" />
-    </div>
-);
+    );
+};
 
 const ManuscriptForm = ({ fetchedJournalOptions }) => {
     const [captchaVal, setCaptchaVal] = useState("");
@@ -215,7 +220,7 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
         >
-            {({ values, setFieldValue, isSubmitting, handleSubmit }) => (
+            {({ values, setFieldValue, isSubmitting, handleSubmit, errors, touched }) => (
                 <form className="space-y-6" onSubmit={handleSubmit}>
 
                     {/* 1. PERSONAL INFORMATION */}
@@ -232,8 +237,8 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
                     <FormSection legend="General Information:">
                         <div className="space-y-4">
                             <div className="flex flex-col">
-                                <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-                                    <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                <div className={`flex bg-gray-100 border rounded overflow-hidden ${touched.journal && errors.journal ? 'border-red-500' : 'border-gray-300'}`}>
+                                    <div className={`w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r ${touched.journal && errors.journal ? 'border-red-500' : 'border-gray-300'}`}>
                                         <FaUser className="text-sm" />
                                     </div>
                                     <Field as="select"
@@ -366,8 +371,8 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
                         <div className="space-y-4">
                             <IconInput icon={FaKeyboard} type="text" name="keywords" placeholder="Keywords *" />
                             <div className="flex flex-col">
-                                <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-                                    <div className="w-10 flex items-start pt-3 justify-center bg-gray-200 text-gray-500 border-r border-gray-300 h-32">
+                                <div className={`flex bg-gray-100 border rounded overflow-hidden ${touched.abstract && errors.abstract ? 'border-red-500' : 'border-gray-300'}`}>
+                                    <div className={`w-10 flex items-start pt-3 justify-center bg-gray-200 text-gray-500 border-r h-32 ${touched.abstract && errors.abstract ? 'border-red-500' : 'border-gray-300'}`}>
                                         <FaFile className="text-sm" />
                                     </div>
                                     <Field as="textarea" name="abstract" placeholder="Abstract *" className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 h-32 resize-none" />
@@ -382,8 +387,8 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="text-xs text-gray-600 mb-1 block">Upload Manuscript*</label>
-                                <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-                                    <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                <div className={`flex bg-gray-100 border rounded overflow-hidden ${touched.manuscriptFile && errors.manuscriptFile ? 'border-red-500' : 'border-gray-300'}`}>
+                                    <div className={`w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r ${touched.manuscriptFile && errors.manuscriptFile ? 'border-red-500' : 'border-gray-300'}`}>
                                         <FaCloudUploadAlt className="text-sm" />
                                     </div>
                                     <input
@@ -452,8 +457,22 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
                             <div className="bg-[#4A6983] text-white px-3 py-2 text-sm font-bold min-w-[60px] text-center">{captchaVal}</div>
                             <div className="text-[10px] text-gray-600">Enter Code As Seen</div>
                         </div>
-                        <button type="submit" disabled={isSubmitting} className="bg-[#00a65a] hover:bg-[#008d4c] text-white font-bold py-2 px-6 rounded shadow flex items-center gap-2">
-                            {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'} <FaLongArrowAltRight />
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className={`bg-[#00a65a] hover:bg-[#008d4c] text-white font-bold py-2 px-6 rounded shadow flex items-center gap-3 transition-all ${isSubmitting ? 'opacity-80 cursor-not-allowed' : ''}`}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <FaSpinner className="animate-spin text-lg" />
+                                    <span>SUBMITTING...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>SUBMIT</span>
+                                    <FaLongArrowAltRight />
+                                </>
+                            )}
                         </button>
                     </div>
 
