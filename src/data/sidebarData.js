@@ -55,6 +55,12 @@ export const sidebarData = [
         access: ["admin"]
     },
     {
+        title: 'View Submitter Publication',
+        icon: FaNewspaper,
+        path: '/dashboard/view-submitter-publications',
+        access: ["admin"]
+    },
+    {
         title: 'Contact Us Inquiries',
         icon: FaEnvelope,
         path: '/dashboard/contact-us',

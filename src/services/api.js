@@ -58,6 +58,7 @@ export const journalIssueApi = {
     create: (data) => api.post('/journal-issues', data),
     update: (id, data) => api.put(`/journal-issues/${id}`, data),
     delete: (id) => api.delete(`/journal-issues/${id}`),
+    getByJournal: (journalId) => api.get(`/journal-issues/journal/${journalId}`),
 };
 
 export const authApi = {
@@ -117,6 +118,15 @@ export const contactUsApi = {
     create: (data) => api.post('/contact-us', data),
     getAll: () => api.get('/contact-us'),
     delete: (id) => api.delete(`/contact-us/${id}`),
+};
+
+export const publicationApi = {
+    getAll: (params) => api.get('/publications', { params }),
+    getById: (id) => api.get(`/publications/${id}`),
+    create: (data) => {
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return api.post('/publications', data, { headers });
+    }
 };
 
 export default api;

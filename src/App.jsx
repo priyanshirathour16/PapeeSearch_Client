@@ -46,6 +46,8 @@ const JournalCategories = lazy(() => import('./pages/Admin/JournalCategories'));
 const ManuscriptList = lazy(() => import('./pages/Admin/ManuscriptList'));
 const ManuscriptDetails = lazy(() => import('./pages/Admin/ManuscriptDetails'));
 const AdminContactList = lazy(() => import('./pages/Admin/AdminContactList'));
+const ViewSubmitterPublications = lazy(() => import('./pages/Admin/ViewSubmitterPublications'));
+const SubmitterPublicationDetails = lazy(() => import('./pages/Admin/SubmitterPublicationDetails'));
 const DashboardHome = lazy(() => import('./pages/DashboardHome'));
 const MyManuscriptList = lazy(() => import('./pages/Author/MyManuscriptList'));
 const MyManuscriptDetails = lazy(() => import('./pages/Author/MyManuscriptDetails'));
@@ -105,6 +107,8 @@ function App() {
               <Route path="manuscripts" element={<ManuscriptList />} />
               <Route path="manuscripts/:id" element={<ManuscriptDetails />} />
               <Route path="contact-us" element={<AdminContactList />} />
+              <Route path="view-submitter-publications" element={<ViewSubmitterPublications />} />
+              <Route path="view-submitter-publications/:id" element={<SubmitterPublicationDetails />} />
               <Route path="submit-manuscript" element={<MyManuscriptList />} />
               <Route path="submit-manuscript/new" element={<SubmitYourManuScript isDashboard={true} />} />
               <Route path="submit-manuscript/:id" element={<MyManuscriptDetails />} />
