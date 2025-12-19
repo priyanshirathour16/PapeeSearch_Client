@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, message, Space, Tooltip, Select, Input, Upload, Row, Col } from 'antd';
-import { FaEye, FaPlus, FaUpload } from 'react-icons/fa';
+import { Table, Button, Modal, message, Space, Tooltip, Select, Input, Upload, Row, Col, Popconfirm } from 'antd';
+import { FaEye, FaPlus, FaUpload, FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { publicationApi, journalApi, journalIssueApi } from '../../services/api';
 import { encryptId } from '../../utils/idEncryption';
+import { ImageURl } from '../../services/serviceApi';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -16,6 +17,7 @@ const ViewSubmitterPublications = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [journals, setJournals] = useState([]);
     const [issues, setIssues] = useState([]);
+    const [editingPublication, setEditingPublication] = useState(null);
     const navigate = useNavigate();
 
     // Fetch Initial Data
@@ -64,7 +66,7 @@ const ViewSubmitterPublications = () => {
     };
 
     // Validation Schema
-    const PublicationSchema = Yup.object().shape({
+    const getPublicationSchema = (isEdit) => Yup.object().shape({
         journal_id: Yup.number().required('Journal is required'),
         issue_id: Yup.number().required('Issue is required'),
         manuscript_id: Yup.string().required('Manuscript ID is required'),
@@ -75,33 +77,69 @@ const ViewSubmitterPublications = () => {
         author_affiliations: Yup.string().optional(),
         abstract_description: Yup.string().optional(),
         abstract_keywords: Yup.string().optional(),
-        pdf_file: Yup.mixed().required('PDF File is required')
-            .test(
+        pdf_file: isEdit
+            ? Yup.mixed().nullable().test(
+                "fileType",
+                "Only PDF files are allowed",
+                value => !value || (value && value.type === "application/pdf")
+            )
+            : Yup.mixed().required('PDF File is required').test(
                 "fileType",
                 "Only PDF files are allowed",
                 value => value && value.type === "application/pdf"
             )
     });
 
-    const handleCreate = async (values, { setSubmitting, resetForm }) => {
+    const handleDelete = async (id) => {
+        try {
+            await publicationApi.delete(id);
+            message.success('Publication deleted successfully');
+            fetchPublications();
+        } catch (error) {
+            console.error("Delete error", error);
+            message.error(error.response?.data?.message || 'Failed to delete publication');
+        }
+    };
+
+    const handleEdit = (record) => {
+        setEditingPublication(record);
+        setIsModalVisible(true);
+        // Pre-fetch issues if journal is already selected
+        if (record.journal_id) {
+            fetchIssuesByJournal(record.journal_id);
+        }
+    };
+
+    const handleSubmitForm = async (values, { setSubmitting, resetForm }) => {
+        console.log("Submitting values:", values);
         const formData = new FormData();
         Object.keys(values).forEach(key => {
-            formData.append(key, values[key]);
+            // Only append if value is present or if it's pdf_file (handle differently for edit)
+            if (values[key] !== null && values[key] !== undefined) {
+                formData.append(key, values[key]);
+            }
         });
 
         try {
-            const response = await publicationApi.create(formData);
+            let response;
+            if (editingPublication) {
+                response = await publicationApi.update(editingPublication.id, formData);
+            } else {
+                response = await publicationApi.create(formData);
+            }
+
             if (response.data.success) {
-                message.success('Publication created successfully');
+                message.success(`Publication ${editingPublication ? 'updated' : 'created'} successfully`);
                 setIsModalVisible(false);
                 resetForm();
+                setEditingPublication(null);
                 fetchPublications();
             } else {
-                message.error(response.data.message || 'Failed to create publication');
+                message.error(response.data.message || `Failed to ${editingPublication ? 'update' : 'create'} publication`);
             }
         } catch (error) {
-            console.error("Creation error", error);
-            message.error(error.response?.data?.message || 'Failed to create publication');
+            console.error("Submission error", error);
+            message.error(error.response?.data?.message || `Failed to ${editingPublication ? 'update' : 'create'} publication`);
         } finally {
             setSubmitting(false);
         }
@@ -157,6 +195,27 @@ const ViewSubmitterPublications = () => {
                             }}
                         />
                     </Tooltip>
+                    <Tooltip title="Edit">
+                        <Button
+                            icon={<FaPencilAlt />}
+                            className="text-blue-500 hover:text-blue-700"
+                            onClick={() => handleEdit(record)}
+                        />
+                    </Tooltip>
+                    <Popconfirm
+                        title="Delete Publication?"
+                        description="Are you sure you want to delete this publication? This action cannot be undone."
+                        onConfirm={() => handleDelete(record.id)}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Tooltip title="Delete">
+                            <Button
+                                icon={<FaTrash />}
+                                className="text-red-500 hover:text-red-700"
+                            />
+                        </Tooltip>
+                    </Popconfirm>
                 </Space>
             )
         }
@@ -169,7 +228,11 @@ const ViewSubmitterPublications = () => {
                 <Button
                     type="primary"
                     icon={<FaPlus />}
-                    onClick={() => setIsModalVisible(true)}
+                    onClick={() => {
+                        setEditingPublication(null);
+                        setIsModalVisible(true);
+                        setIssues([]); // Reset issues on new
+                    }}
                     size="large"
                 >
                     Add New Publication
@@ -187,29 +250,32 @@ const ViewSubmitterPublications = () => {
             </div>
 
             <Modal
-                title="Add New Publication"
+                title={editingPublication ? "Edit Publication" : "Add New Publication"}
                 open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    setEditingPublication(null);
+                }}
                 footer={null}
                 width={800}
                 destroyOnClose
             >
                 <Formik
                     initialValues={{
-                        journal_id: '',
-                        issue_id: '',
-                        manuscript_id: '',
-                        title: '',
-                        author_name: '',
-                        doi: '',
-                        pages: '',
-                        author_affiliations: '',
-                        abstract_description: '',
-                        abstract_keywords: '',
-                        pdf_file: null
+                        journal_id: editingPublication?.journal_id || '',
+                        issue_id: editingPublication?.issue_id || '',
+                        manuscript_id: editingPublication?.manuscript_id || '',
+                        title: editingPublication?.title || '',
+                        author_name: editingPublication?.author_name || '',
+                        doi: editingPublication?.doi || '',
+                        pages: editingPublication?.pages || '',
+                        author_affiliations: editingPublication?.author_affiliations || '',
+                        abstract_description: editingPublication?.abstract_description || '',
+                        abstract_keywords: editingPublication?.abstract_keywords || '',
+                        pdf_file: null // File cannot be prefilled
                     }}
-                    validationSchema={PublicationSchema}
-                    onSubmit={handleCreate}
+                    validationSchema={getPublicationSchema(!!editingPublication)}
+                    onSubmit={handleSubmitForm}
                 >
                     {({ values, errors, touched, handleChange, handleBlur, handleSubmit, setFieldValue, isSubmitting }) => {
 
@@ -377,11 +443,21 @@ const ViewSubmitterPublications = () => {
                                         <Button icon={<FaUpload />}>Select PDF File</Button>
                                     </Upload>
                                     {touched.pdf_file && errors.pdf_file && <div className="text-red-500 text-xs mt-1">{errors.pdf_file}</div>}
+                                    {editingPublication && editingPublication.pdf_path && (
+                                        <div className="mt-2 text-sm text-gray-500">
+                                            Current File: <a href={`${ImageURl}${editingPublication.pdf_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View Existing PDF</a>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex justify-end space-x-2 pt-4 border-t">
-                                    <Button onClick={() => setIsModalVisible(false)} type="default">Cancel</Button>
-                                    <Button type="primary" htmlType="submit" loading={isSubmitting}>Submit Publicaton</Button>
+                                    <Button onClick={() => {
+                                        setIsModalVisible(false);
+                                        setEditingPublication(null);
+                                    }} type="default">Cancel</Button>
+                                    <Button type="primary" htmlType="submit" loading={isSubmitting}>
+                                        {editingPublication ? 'Update Publication' : 'Submit Publication'}
+                                    </Button>
                                 </div>
                             </form>
                         )

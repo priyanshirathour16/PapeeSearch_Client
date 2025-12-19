@@ -126,7 +126,12 @@ export const publicationApi = {
     create: (data) => {
         const headers = { 'Content-Type': 'multipart/form-data' };
         return api.post('/publications', data, { headers });
-    }
+    },
+    update: (id, data) => {
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return api.put(`/publications/${id}`, data, { headers });
+    },
+    delete: (id) => api.delete(`/publications/${id}`),
 };
 
 export default api;

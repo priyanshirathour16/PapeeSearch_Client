@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Spin, Card, Typography, Button, Tag, message, Row, Col, Descriptions, Divider } from 'antd';
 import { FaArrowLeft, FaFilePdf, FaBook, FaCalendar, FaUser } from 'react-icons/fa';
 import { publicationApi } from '../../services/api';
-import { scriptUrl } from '../../services/serviceApi';
+import { ImageURl, scriptUrl } from '../../services/serviceApi';
 import { decryptId } from '../../utils/idEncryption';
 
 const { Title, Text, Paragraph } = Typography;
@@ -160,12 +160,12 @@ const SubmitterPublicationDetails = () => {
 
                     <Card className="shadow-sm border-0 mb-6 rounded-lg">
                         <Title level={5} className="mb-4">Full Text</Title>
-                        {publication.pdf_file ? (
+                        {publication.pdf_path ? (
                             <Button
                                 type="primary"
                                 block
                                 icon={<FaFilePdf />}
-                                href={`${scriptUrl}${publication.pdf_file}`}
+                                href={`${ImageURl}${publication?.pdf_path}`}
                                 target="_blank"
                                 size="large"
                             >
