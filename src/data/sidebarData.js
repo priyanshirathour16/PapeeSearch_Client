@@ -61,6 +61,20 @@ export const sidebarData = [
         access: ["admin"]
     },
     {
+        title: 'Conference',
+        icon: FaBook,
+        path: '#',
+        access: ["admin"],
+        subNav: [
+            {
+                title: 'Add Conference',
+                path: '/dashboard/add-conference',
+                icon: FaFileAlt,
+                access: ["admin"]
+            }
+        ]
+    },
+    {
         title: 'Contact Us Inquiries',
         icon: FaEnvelope,
         path: '/dashboard/contact-us',

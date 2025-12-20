@@ -134,4 +134,12 @@ export const publicationApi = {
     delete: (id) => api.delete(`/publications/${id}`),
 };
 
+export const conferenceApi = {
+    create: (data) => api.post('/conferences', data),
+    update: (id, data) => api.put(`/conferences/${id}`, data),
+    delete: (id) => api.delete(`/conferences/${id}`),
+    getAll: () => api.get('/conferences'),
+    getById: (id) => api.get(`/conferences/${id}`),
+};
+
 export default api;

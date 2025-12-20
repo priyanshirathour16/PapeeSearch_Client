@@ -51,6 +51,7 @@ const SubmitterPublicationDetails = lazy(() => import('./pages/Admin/SubmitterPu
 const DashboardHome = lazy(() => import('./pages/DashboardHome'));
 const MyManuscriptList = lazy(() => import('./pages/Author/MyManuscriptList'));
 const MyManuscriptDetails = lazy(() => import('./pages/Author/MyManuscriptDetails'));
+const AddConference = lazy(() => import('./pages/Admin/AddConference'));
 function App() {
   return (
     <Router>
@@ -107,6 +108,7 @@ function App() {
               <Route path="manuscripts" element={<ManuscriptList />} />
               <Route path="manuscripts/:id" element={<ManuscriptDetails />} />
               <Route path="contact-us" element={<AdminContactList />} />
+              <Route path="add-conference" element={<AddConference />} />
               <Route path="view-submitter-publications" element={<ViewSubmitterPublications />} />
               <Route path="view-submitter-publications/:id" element={<SubmitterPublicationDetails />} />
               <Route path="submit-manuscript" element={<MyManuscriptList />} />
