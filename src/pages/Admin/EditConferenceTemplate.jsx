@@ -25,6 +25,7 @@ const EditConferenceTemplate = () => {
     // Store existing images to display previews
     const [existingImages, setExistingImages] = useState({
         organizer_image: null,
+        organizer_logo: null,
         partner_image: null,
         venue_image: null
     });
@@ -87,10 +88,12 @@ const EditConferenceTemplate = () => {
                     // Extract Existing Images and remove from parsedData to avoid Upload component error
                     setExistingImages({
                         organizer_image: parsedData.organizer_image,
+                        organizer_logo: parsedData.organizer_logo,
                         partner_image: parsedData.partner_image,
                         venue_image: parsedData.venue_image
                     });
                     delete parsedData.organizer_image;
+                    delete parsedData.organizer_logo;
                     delete parsedData.partner_image;
                     delete parsedData.venue_image;
 
@@ -144,6 +147,9 @@ const EditConferenceTemplate = () => {
             // Images (Only if new file uploaded)
             if (values.organizer_image && values.organizer_image.length > 0) {
                 formData.append('organizer_image', values.organizer_image[0].originFileObj);
+            }
+            if (values.organizer_logo && values.organizer_logo.length > 0) {
+                formData.append('organizer_logo', values.organizer_logo[0].originFileObj);
             }
             if (values.partner_image && values.partner_image.length > 0) {
                 formData.append('partner_image', values.partner_image[0].originFileObj);
@@ -422,15 +428,23 @@ const EditConferenceTemplate = () => {
                     {/* Branding Images */}
                     <Card title="Branding Images" className="shadow-sm">
                         <Row gutter={24}>
-                            <Col span={12}>
+                            <Col span={8}>
                                 {existingImages.organizer_image && (
                                     <div className="mb-2"><img src={`${ImageURl}${existingImages.organizer_image}`} className="h-20 rounded" /></div>
                                 )}
-                                <Form.Item name="organizer_image" label="Organizer Image" valuePropName="fileList" getValueFromEvent={normFile}>
+                                <Form.Item name="organizer_image" label="Organizer Banner" valuePropName="fileList" getValueFromEvent={normFile}>
                                     <Upload listType="picture" maxCount={1} beforeUpload={() => false}><Button icon={<UploadOutlined />}>Replace</Button></Upload>
                                 </Form.Item>
                             </Col>
-                            <Col span={12}>
+                            <Col span={8}>
+                                {existingImages.organizer_logo && (
+                                    <div className="mb-2"><img src={`${ImageURl}${existingImages.organizer_logo}`} className="h-20 rounded" /></div>
+                                )}
+                                <Form.Item name="organizer_logo" label="Organizer Logo" valuePropName="fileList" getValueFromEvent={normFile}>
+                                    <Upload listType="picture" maxCount={1} beforeUpload={() => false}><Button icon={<UploadOutlined />}>Replace</Button></Upload>
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
                                 {existingImages.partner_image && (
                                     <div className="mb-2"><img src={`${ImageURl}${existingImages.partner_image}`} className="h-20 rounded" /></div>
                                 )}

@@ -59,7 +59,7 @@ const ConferenceTemplateDetails = () => {
         description, conference_objectives,
         call_for_papers, guidelines,
         venue, important_dates,
-        organizer_image, partner_image, venue_image,
+        organizer_image, partner_image, venue_image, organizer_logo,
         keynote_speakers,
         key_benefits, themes,
         organizing_committee, steering_committee, review_board, organisers,
@@ -300,7 +300,8 @@ const ConferenceTemplateDetails = () => {
                         {/* Gallery */}
                         <Card title="Gallery" size="small" className="mb-4 shadow-sm">
                             <div className="grid grid-cols-2 gap-2">
-                                {organizer_image && <div className="text-center"><Image src={`${ImageURl}${organizer_image}`} className="rounded object-cover h-20 w-full" /><Text className="text-[10px] uppercase">Organizer</Text></div>}
+                                {organizer_image && <div className="text-center"><Image src={`${ImageURl}${organizer_image}`} className="rounded object-cover h-20 w-full" /><Text className="text-[10px] uppercase">Organizer Banner</Text></div>}
+                                {organizer_logo && <div className="text-center"><Image src={`${ImageURl}${organizer_logo}`} className="rounded object-cover h-20 w-full" /><Text className="text-[10px] uppercase">Organizer Logo</Text></div>}
                                 {partner_image && <div className="text-center"><Image src={`${ImageURl}${partner_image}`} className="rounded object-cover h-20 w-full" /><Text className="text-[10px] uppercase">Partner</Text></div>}
                                 {venue_image && <div className="col-span-2 text-center"><Image src={`${ImageURl}${venue_image}`} className="rounded object-cover h-32 w-full" /><Text className="text-[10px] uppercase">Venue</Text></div>}
                             </div>

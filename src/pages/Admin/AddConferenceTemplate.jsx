@@ -60,10 +60,14 @@ const AddConferenceTemplate = () => {
             if (values.organizer_image && values.organizer_image.length > 0) {
                 formData.append('organizer_image', values.organizer_image[0].originFileObj);
             }
+            if (values.organizer_logo && values.organizer_logo.length > 0) {
+                formData.append('organizer_logo', values.organizer_logo[0].originFileObj);
+            }
             if (values.partner_image && values.partner_image.length > 0) {
                 formData.append('partner_image', values.partner_image[0].originFileObj);
             }
             if (values.venue_image && values.venue_image.length > 0) {
+                // ... existing venue_image logic ... (Wait, I need to match the replacement chunks carefully)
                 formData.append('venue_image', values.venue_image[0].originFileObj);
             }
 
@@ -310,19 +314,31 @@ const AddConferenceTemplate = () => {
                     {/* Branding Images */}
                     <Card title="Branding Images" className="shadow-sm">
                         <Row gutter={24}>
-                            <Col span={12}>
+                            <Col span={8}>
                                 <Form.Item
                                     name="organizer_image"
-                                    label="Organizer Image"
+                                    label="Organizer Banner"
                                     valuePropName="fileList"
                                     getValueFromEvent={normFile}
                                 >
                                     <Upload listType="picture" maxCount={1} beforeUpload={() => false}>
-                                        <Button icon={<UploadOutlined />}>Upload Organizer Image</Button>
+                                        <Button icon={<UploadOutlined />}>Upload Organizer Banner</Button>
                                     </Upload>
                                 </Form.Item>
                             </Col>
-                            <Col span={12}>
+                            <Col span={8}>
+                                <Form.Item
+                                    name="organizer_logo"
+                                    label="Organizer Logo"
+                                    valuePropName="fileList"
+                                    getValueFromEvent={normFile}
+                                >
+                                    <Upload listType="picture" maxCount={1} beforeUpload={() => false}>
+                                        <Button icon={<UploadOutlined />}>Upload Organizer Logo</Button>
+                                    </Upload>
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
                                 <Form.Item
                                     name="partner_image"
                                     label="Partner Image"
