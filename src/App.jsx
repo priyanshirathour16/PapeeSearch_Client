@@ -38,6 +38,7 @@ const JournalIndexing = lazy(() => import('./pages/Website/JournalIndexing'));
 const PublicEthicAndMalPractices = lazy(() => import('./pages/Website/PublicEthicAndMalPractices'));
 const Journals = lazy(() => import('./pages/Website/Journals'));
 const ThankYou = lazy(() => import('./pages/Website/ThankYou'));
+const ConferenceList = lazy(() => import('./pages/Website/ConferenceList')); // Load ConferenceList
 
 const PageNotFound = lazy(() => import('./pages/Website/PageNotFound'));
 const AdminAuthorList = lazy(() => import('./pages/Admin/AdminAuthorList'));
@@ -86,6 +87,8 @@ function App() {
             <Route path="/publication-ethics-and-malpractice-statement" element={<PublicEthicAndMalPractices />} />
             <Route path="/journals/:route" element={<Journals />} />
             <Route path="/thank-you" element={<ThankYou />} />
+            <Route path="/upcoming-conferences" element={<ConferenceList type="upcoming" />} />
+            <Route path="/previous-conferences" element={<ConferenceList type="previous" />} />
             {/* 404 Page (within layout) */}
             <Route path="*" element={<PageNotFound />} />
           </Route>

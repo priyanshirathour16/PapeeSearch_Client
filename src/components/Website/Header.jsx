@@ -142,6 +142,23 @@ const Header = () => {
             ]
         },
         {
+            id: "conference",
+            label: "CONFERENCE SOLUTIONS",
+            type: "dropdown",
+            layout: "conference",
+            data: {
+                links: [
+                    { label: "Upcoming Conferences", to: "/upcoming-conferences" },
+                    { label: "Browse Special Issues", to: "/browse-special-issues" },
+                    { label: "Previous Conferences", to: "/previous-conferences" }
+                ],
+                cta: {
+                    label: "REQUEST PROPOSAL",
+                    to: "/request-proposal"
+                }
+            }
+        },
+        {
             id: "editor",
             label: "Become An Editor",
             link: "/become-an-editor",
@@ -281,6 +298,30 @@ const Header = () => {
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {/* LAYOUT: CONFERENCE (New) */}
+                                                {item.layout === 'conference' && (
+                                                    <div className="flex w-full">
+                                                        {/* Left Side: Content */}
+                                                        <div className="w-2/3 p-8 bg-white">
+                                                            <h3 className="font-bold text-[#1e3a5f] mb-4 uppercase text-sm tracking-wide">CONFERENCES</h3>
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                {item.data.links.map((link, idx) => (
+                                                                    <Link key={idx} to={link.to} className="block bg-[#e0e0e0] hover:bg-[#2c4a6e] hover:text-white px-4 py-4 transition-colors text-sm text-[#1e3a5f] text-center font-medium">
+                                                                        {link.label}
+                                                                    </Link>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        {/* Right Side: CTA */}
+                                                        <div className="w-1/3 bg-[#45cbb2] p-8 flex flex-col justify-center items-center">
+                                                            <Link to={item.data.cta.to} className="w-full bg-[#1e3a5f] hover:bg-[#152943] text-white px-6 py-4 transition-colors shadow-md group/btn flex items-center justify-between uppercase text-sm font-bold tracking-wider">
+                                                                {item.data.cta.label}
+                                                                <FaLongArrowAltRight className="text-xl group-hover/btn:translate-x-1 transition-transform" />
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </>
                                     )}
@@ -342,6 +383,22 @@ const Header = () => {
                                                                 {link.label}
                                                             </Link>
                                                         ))
+                                                    )}
+                                                    {/* MOBILE LAYOUT: CONFERENCE */}
+                                                    {item.layout === 'conference' && (
+                                                        <div className="space-y-2">
+                                                            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest pt-2">Conferences</div>
+                                                            {item.data.links.map((link, idx) => (
+                                                                <Link key={idx} to={link.to} className="block py-1 text-gray-200 hover:text-white pl-2 border-l-2 border-transparent hover:border-[#45cbb2] transition-colors">
+                                                                    {link.label}
+                                                                </Link>
+                                                            ))}
+                                                            <div className="pt-2">
+                                                                <Link to={item.data.cta.to} className="block bg-[#45cbb2] text-[#1e3a5f] py-2 px-4 text-center font-bold uppercase text-sm hover:bg-[#34a892] transition-colors">
+                                                                    {item.data.cta.label}
+                                                                </Link>
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             )}
