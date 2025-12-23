@@ -71,6 +71,12 @@ export const sidebarData = [
                 path: '/dashboard/add-conference',
                 icon: FaFileAlt,
                 access: ["admin"]
+            },
+            {
+                title: 'Conference Template',
+                path: '/dashboard/conference-templates',
+                icon: FaFileAlt,
+                access: ["admin"]
             }
         ]
     },

@@ -52,6 +52,10 @@ const DashboardHome = lazy(() => import('./pages/DashboardHome'));
 const MyManuscriptList = lazy(() => import('./pages/Author/MyManuscriptList'));
 const MyManuscriptDetails = lazy(() => import('./pages/Author/MyManuscriptDetails'));
 const AddConference = lazy(() => import('./pages/Admin/AddConference'));
+const ConferenceTemplateList = lazy(() => import('./pages/Admin/ConferenceTemplateList'));
+const AddConferenceTemplate = lazy(() => import('./pages/Admin/AddConferenceTemplate'));
+const EditConferenceTemplate = lazy(() => import('./pages/Admin/EditConferenceTemplate'));
+const ConferenceTemplateDetails = lazy(() => import('./pages/Admin/ConferenceTemplateDetails'));
 function App() {
   return (
     <Router>
@@ -114,6 +118,11 @@ function App() {
               <Route path="submit-manuscript" element={<MyManuscriptList />} />
               <Route path="submit-manuscript/new" element={<SubmitYourManuScript isDashboard={true} />} />
               <Route path="submit-manuscript/:id" element={<MyManuscriptDetails />} />
+
+              <Route path="conference-templates" element={<ConferenceTemplateList />} />
+              <Route path="add-conference-template" element={<AddConferenceTemplate />} />
+              <Route path="conference-templates/edit/:id" element={<EditConferenceTemplate />} />
+              <Route path="conference-templates/:id" element={<ConferenceTemplateDetails />} />
             </Route>
           </Route>
 

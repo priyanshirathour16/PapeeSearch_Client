@@ -2,8 +2,8 @@ import axios from 'axios';
 
 
 const api = axios.create({
-    // baseURL: 'http://localhost:5000/api',
-    baseURL: 'https://rapidcollaborate.in/elkjournals_backend/api',
+    baseURL: 'http://localhost:5000/api',
+    // baseURL: 'https://rapidcollaborate.in/elkjournals_backend/api',
 });
 
 api.interceptors.request.use(
@@ -140,6 +140,20 @@ export const conferenceApi = {
     delete: (id) => api.delete(`/conferences/${id}`),
     getAll: () => api.get('/conferences'),
     getById: (id) => api.get(`/conferences/${id}`),
+};
+
+export const conferenceTemplateApi = {
+    getAll: () => api.get('/conferences/template'),
+    getById: (id) => api.get(`/conferences/template/${id}`),
+    create: (data) => {
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return api.post('/conferences/template', data, { headers });
+    },
+    update: (id, data) => {
+        const headers = { 'Content-Type': 'multipart/form-data' };
+        return api.put(`/conferences/template/${id}`, data, { headers });
+    },
+    delete: (id) => api.delete(`/conferences/template/${id}`),
 };
 
 export default api;
