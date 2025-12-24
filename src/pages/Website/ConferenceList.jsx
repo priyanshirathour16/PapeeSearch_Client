@@ -144,7 +144,7 @@ const ConferenceList = ({ type }) => {
 
                             return (
                                 <Link
-                                    to={`/dashboard/conference-templates/${encryptId(item.conference_id)}`}
+                                    to={`/conference/${item?.conference_id}`}
                                     key={item.id}
                                     className="block bg-white shadow-sm hover:shadow-md transition-shadow duration-300 group overflow-hidden flex flex-col md:flex-row min-h-[100px]"
                                 >
