@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaListOl, FaTh, FaFileImage, FaFileAlt, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaLock, FaGlobe, FaCloudUploadAlt } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { countries, specializations, journalOptions } from '../../data/signUpData';
@@ -398,7 +398,7 @@ const BecomeAnEditor = () => {
 
                                                 <div className="flex justify-between items-center pt-6 border-t border-gray-200">
                                                     <div className="flex gap-4 text-sm text-gray-600">
-                                                        <a href="#" className="flex items-center gap-1 hover:text-[#12b48b]"><FaUser className="text-gray-400" /> Find My Account</a>
+                                                        <Link to="/forget-password" className="flex items-center gap-1 hover:text-[#12b48b]"><FaUser className="text-gray-400" /> Find My Account</Link>
                                                         <span>|</span>
                                                         <button type="button" onClick={() => setIsLoginView(true)} className="flex items-center gap-1 hover:text-[#12b48b]"><FaLock className="text-gray-400" /> Login</button>
                                                     </div>
@@ -493,7 +493,7 @@ const BecomeAnEditor = () => {
 
                                                 <div className="flex justify-between items-center pt-6 border-t border-gray-200">
                                                     <div className="flex gap-4 text-sm text-gray-600">
-                                                        <a href="#" className="flex items-center gap-1 hover:text-[#12b48b]"><FaUser className="text-gray-400" /> Find My Account</a>
+                                                        <Link to="/forget-password" className="flex items-center gap-1 hover:text-[#12b48b]"><FaUser className="text-gray-400" /> Find My Account</Link>
                                                         <span>|</span>
                                                         <button type="button" onClick={() => setIsLoginView(true)} className="flex items-center gap-1 hover:text-[#12b48b]"><FaLock className="text-gray-400" /> Login</button>
                                                     </div>

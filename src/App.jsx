@@ -20,6 +20,7 @@ const ScholarShip = lazy(() => import('./pages/Website/ScholarShip'));
 const SubmitYourManuScript = lazy(() => import('./pages/Website/SubmitYourManuScript'));
 const TermsAndConditions = lazy(() => import('./pages/Website/TermsAndConditions'));
 const BecomeAnEditor = lazy(() => import('./pages/Website/BecomeAnEditor'));
+const ForgetPassword = lazy(() => import('./pages/Website/ForgetPassword'));
 const WebsiteLayout = lazy(() => import('./components/WebsiteLayout'));
 const PrivacyPolicy = lazy(() => import('./pages/Website/PrivacyPolicy'));
 const SiteMap = lazy(() => import('./pages/Website/SiteMap'));
@@ -71,6 +72,7 @@ function App() {
             <Route path="/submit-manuscript" element={<SubmitYourManuScript />} />
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="/become-an-editor" element={<BecomeAnEditor />} />
+            <Route path="/forget-password" element={<ForgetPassword />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/sitemap" element={<SiteMap />} />
             <Route path="/contact-us" element={<Contact />} />
