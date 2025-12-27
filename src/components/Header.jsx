@@ -3,6 +3,7 @@ import { FaUserCircle, FaSignOutAlt, FaKey, FaSpinner } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { authApi } from '../services/api';
+import { getRole } from '../utils/secureStorage';
 
 const Header = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -20,8 +21,13 @@ const Header = () => {
     const parseUser = user ? JSON.parse(user) : null;
 
     const handleLogout = () => {
+        const role = getRole();
         localStorage.clear();
-        navigate('/login');
+        if (role === 'author' || role === 'editor') {
+            navigate('/login');
+        } else {
+            navigate('/admin/login');
+        }
     };
 
     const handleChangePassword = async (e) => {

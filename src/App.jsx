@@ -41,6 +41,7 @@ const Journals = lazy(() => import('./pages/Website/Journals'));
 const ThankYou = lazy(() => import('./pages/Website/ThankYou'));
 const ConferenceList = lazy(() => import('./pages/Website/ConferenceList')); // Load ConferenceList
 const ConferenceDetailsPage = lazy(() => import('./pages/Website/ConferenceDetailsPage'));
+const AuthorLogin = lazy(() => import('./pages/Website/AuthorLogin'));
 
 const PageNotFound = lazy(() => import('./pages/Website/PageNotFound'));
 const AdminAuthorList = lazy(() => import('./pages/Admin/AdminAuthorList'));
@@ -67,6 +68,7 @@ function App() {
           {/* Public Routes */}
           <Route element={<WebsiteLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/login" element={<AuthorLogin />} />
             <Route path="/about-us" element={<About />} />
             <Route path="/scholarships" element={<ScholarShip />} />
             <Route path="/submit-manuscript" element={<SubmitYourManuScript />} />
@@ -100,7 +102,7 @@ function App() {
           <Route path="/conference/:id" element={<ConferenceDetailsPage />} />
 
           <Route element={<PublicRoute />}>
-            <Route path="/login" element={<Login />} />
+            <Route path="/admin/login" element={<Login />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
           </Route>
 
