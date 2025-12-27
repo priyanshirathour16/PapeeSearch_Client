@@ -89,6 +89,7 @@ export const editorApplicationApi = {
 export const journalCategoryApi = {
     getAll: () => api.get('/journal-categories'),
     getWithJournals: () => api.get('/journal-categories/with-journals'),
+    getWithJournalsAndIssues: () => api.get('/journal-categories/with-journals-and-issues'),
     create: (data) => api.post('/journal-categories', data),
     delete: (id) => api.delete(`/journal-categories/${id}`),
 };

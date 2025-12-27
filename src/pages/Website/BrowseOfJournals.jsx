@@ -1,19 +1,64 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { journalCategoryApi } from '../../services/api';
+import { Link } from 'react-router-dom';
+
+const numberToWords = (num) => {
+    const words = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+    return words[num] || num;
+};
 
 const BrowseOfJournals = () => {
-    const journals = [
-        { id: 1, name: "ELK's International Journal of Computer Science", printISSN: "2454-3047", onlineISSN: "2394-0441", freq: "Two Issue Per Year", link: "#" },
-        { id: 2, name: "ELK's International Journal of Manufacturing, Industrial and Production Engineering", printISSN: "2454-3020", onlineISSN: "2394-0425", freq: "One Issue Per Year", link: "#" },
-        { id: 3, name: "ELK's International Journal of Human Resource Management", printISSN: "2454-3004", onlineISSN: "2394-0409", freq: "Two Issue Per Year", link: "#" },
-        { id: 4, name: "ELK's International Journal of Leadership Studies", printISSN: "2454-3012", onlineISSN: "2394-0417", freq: "One Issue Per Year", link: "#" },
-        { id: 5, name: "ELK's Indian Journal of Mechanical Engineering", printISSN: "2454-2962", onlineISSN: "2394-9368", freq: "Two Issue Per Year", link: "#" },
-        { id: 6, name: "ELK's International Journal of Thermal Sciences", printISSN: "2454-3039", onlineISSN: "2394-0433", freq: "One Issue Per Year", link: "#" },
-        { id: 7, name: "ELK's International Journal of Civil Engineering", printISSN: "2454-2946", onlineISSN: "2394-9341", freq: "One Issue Per Year", link: "#" },
-        { id: 8, name: "ELK's International Journal of Electronics Engineering", printISSN: "2454-2954", onlineISSN: "2394-935X", freq: "One Issue Per Year", link: "#" },
-        { id: 9, name: "ELK's International Journal of Library and Information Science", printISSN: "2454-2989", onlineISSN: "2394-9384", freq: "One Issue Per Year", link: "#" },
-        { id: 10, name: "ELK's International Journal of Social Science", printISSN: "2454-2997", onlineISSN: "2394-9392", freq: "Four Issue Per Year", link: "#" },
-        { id: 11, name: "ELK's International Journal of Project Management", printISSN: "2454-2970", onlineISSN: "2394-9376", freq: "One Issue Per Year", link: "#" },
-    ];
+    const [journals, setJournals] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchJournals = async () => {
+            try {
+                const response = await journalCategoryApi.getWithJournalsAndIssues();
+                const data = Array.isArray(response.data) ? response.data : response;
+
+                const flattenedJournals = [];
+                const currentYear = new Date().getFullYear();
+
+                if (Array.isArray(data)) {
+                    data.forEach(category => {
+                        if (category.journals && category.journals.length > 0) {
+                            category.journals.forEach(journal => {
+                                const issuesThisYear = journal.issues?.filter(issue => parseInt(issue.year) === currentYear).length || 0;
+                                const freqText = `${numberToWords(issuesThisYear)} Issue${issuesThisYear !== 1 ? 's' : ''} Per Year`;
+
+                                flattenedJournals.push({
+                                    id: journal.id,
+                                    name: journal.title,
+                                    printISSN: journal.print_issn,
+                                    onlineISSN: journal.e_issn,
+                                    freq: freqText,
+                                    link: `/journals/${category.route}`
+                                });
+                            });
+                        }
+                    });
+                }
+                setJournals(flattenedJournals);
+                setLoading(false);
+            } catch (err) {
+                console.error("Error fetching journals:", err);
+                setError("Failed to load journals.");
+                setLoading(false);
+            }
+        };
+
+        fetchJournals();
+    }, []);
+
+    if (loading) {
+        return <div className="p-4 text-center">Loading...</div>;
+    }
+
+    if (error) {
+        return <div className="p-4 text-center text-red-500">{error}</div>;
+    }
 
     return (
         <div className="container mx-auto px-4 py-3">
@@ -39,11 +84,11 @@ const BrowseOfJournals = () => {
                                 <tbody>
                                     {journals.map((journal, idx) => (
                                         <tr key={idx} className={`${idx % 2 === 0 ? 'bg-[#f5f5f5]' : 'bg-white'} border-b border-gray-200`}>
-                                            <td className="p-3 text-sm text-[#555] border-r border-gray-200">{journal.id}</td>
+                                            <td className="p-3 text-sm text-[#555] border-r border-gray-200">{idx + 1}</td>
                                             <td className="p-3 text-sm text-[#555] border-r border-gray-200">
-                                                <a href={journal.link} className="text-[#204066] hover:text-[#12b48b] hover:underline transition-colors">
+                                                <Link to={journal.link} className="text-[#204066] hover:text-[#12b48b] hover:underline transition-colors">
                                                     {journal.name}
-                                                </a>
+                                                </Link>
                                             </td>
                                             <td className="p-3 text-sm text-[#555] border-r border-gray-200">{journal.printISSN}</td>
                                             <td className="p-3 text-sm text-[#555] border-r border-gray-200">{journal.onlineISSN}</td>
