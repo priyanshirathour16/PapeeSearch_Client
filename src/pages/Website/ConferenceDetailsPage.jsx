@@ -23,7 +23,45 @@ const ConferenceDetailsPage = () => {
             try {
                 const response = await conferenceTemplateApi.getById(id);
                 if (response.data && response.data.success) {
-                    setConferenceData(response.data.success);
+                    const data = response.data.success;
+
+                    // Helper to safely parse JSON or return original if array
+                    const safeJsonParse = (field) => {
+                        if (Array.isArray(field)) return field;
+                        if (typeof field === 'string') {
+                            try {
+                                const parsed = JSON.parse(field);
+                                if (Array.isArray(parsed)) return parsed;
+                            } catch (e) {
+                                // If not valid JSON, return empty array for safety
+                                console.warn('Failed to parse JSON field:', e);
+                            }
+                        }
+                        return [];
+                    };
+
+                    // Helper for string arrays (comma separated or JSON)
+                    const safeStringArrayParse = (field) => {
+                        if (Array.isArray(field)) return field;
+                        if (typeof field === 'string') {
+                            try {
+                                const parsed = JSON.parse(field);
+                                if (Array.isArray(parsed)) return parsed;
+                            } catch (e) {
+                                // Not JSON, try comma separation
+                                return field.split(',').map(item => item.trim()).filter(item => item);
+                            }
+                        }
+                        return [];
+                    };
+
+                    // Apply safe parsing to specific fields suspected to be JSON strings
+                    data.steering_committee = safeJsonParse(data.steering_committee);
+                    data.review_board = safeJsonParse(data.review_board);
+                    data.keynote_speakers = safeJsonParse(data.keynote_speakers);
+                    data.key_benefits = safeStringArrayParse(data.key_benefits);
+
+                    setConferenceData(data);
                 } else {
                     setError('Failed to load conference details.');
                 }

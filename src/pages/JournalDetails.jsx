@@ -82,7 +82,13 @@ const JournalDetails = () => {
                 endYear: data.end_year,
                 mission: data.mission || '',
                 aimsScope: data.aims_scope || '',
-                areasCovered: data.areas_covered || [],
+                areasCovered: Array.isArray(data.areas_covered)
+                    ? data.areas_covered
+                    : (typeof data.areas_covered === 'string'
+                        ? (data.areas_covered.startsWith('[')
+                            ? JSON.parse(data.areas_covered)
+                            : data.areas_covered.split(',').map(item => item.trim()))
+                        : []),
                 image: null, // Reset image field
             });
             setEditors(data.editorial_board || []);
