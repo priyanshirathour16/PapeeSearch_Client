@@ -1,81 +1,74 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 
-const servicesData = [
-    {
-        link: "/computer-Science-and-information-systems",
-        issnPrint: "2454-3047",
-        issnOnline: "2394-0441",
-        title: "ELK's International Journal of Computer Science"
-    },
-    {
-        link: "/manufacturing-science-and-engineering",
-        issnPrint: "2454-3020",
-        issnOnline: "2394-0425",
-        title: "ELK's International Journal of Manufacturing, Industrial and Production Engineering"
-    },
-    {
-        link: "/hr-management-and-organizational-behaviour",
-        issnPrint: "2454-3004",
-        issnOnline: "2394-0409",
-        title: "ELK's International Journal of Human Resource Management"
-    },
-    {
-        link: "/leadership-and-innovation-management",
-        issnPrint: "2454-3012",
-        issnOnline: "2394-0417",
-        title: "ELK's International Journal of Leadership Studies"
-    },
-    {
-        link: "/mechanical-engineering-research",
-        issnPrint: "2454-2962",
-        issnOnline: "2394-9368",
-        title: "ELK's Indian Journal of Mechanical Engineering"
-    },
-    {
-        link: "/applied-thermal-engineering",
-        issnPrint: "2454-3039",
-        issnOnline: "2394-0433",
-        title: "ELK's International Journal of Thermal Sciences"
-    },
-    {
-        link: "/civil-engineering-and-structural-development",
-        issnPrint: "2454-2946",
-        issnOnline: "2394-9341",
-        title: "ELK's International Journal of Civil Engineering"
-    },
-    {
-        link: "/electronics-and-communication-technology",
-        issnPrint: "2454-2954",
-        issnOnline: "2394-935X",
-        title: "ELK's International Journal of Electronics Engineering"
-    },
-    {
-        link: "/library-management-and-information-technology",
-        issnPrint: "2454-2989",
-        issnOnline: "2394-9384",
-        title: "ELK's International Journal of Library and Information Science"
-    },
-    {
-        link: "/social-sciences",
-        issnPrint: "2454-2997",
-        issnOnline: "2394-9392",
-        title: "ELK's International Journal of Social Science"
-    },
-    {
-        link: "/project-management-and-control",
-        issnPrint: "2454-2970",
-        issnOnline: "2394-9376",
-        title: "ELK's International Journal of Project Management"
-    }
-];
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { journalCategoryApi } from '../../services/api';
 
 const Services = () => {
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const response = await journalCategoryApi.getWithJournals();
+                // Check if response is an array (based on user request example)
+                const data = Array.isArray(response.data) ? response.data : response;
+
+                // Flatten the structure: Category -> Journals to flat list of Journals with Category route
+                const flattenedServices = [];
+                if (Array.isArray(data)) {
+                    data.forEach(category => {
+                        if (category.journals && category.journals.length > 0) {
+                            category.journals.forEach(journal => {
+                                flattenedServices.push({
+                                    id: journal.id, // Use journal ID for key if unique, or combination
+                                    link: `/journals/${category.route}`,
+                                    issnPrint: journal.print_issn,
+                                    issnOnline: journal.e_issn,
+                                    title: journal.title
+                                });
+                            });
+                        }
+                    });
+                }
+                setServices(flattenedServices);
+                setLoading(false);
+            } catch (err) {
+                console.error("Error fetching services:", err);
+                setError("Failed to load services.");
+                setLoading(false);
+            }
+        };
+
+        fetchServices();
+    }, []);
+
+    if (loading) {
+        return (
+            <section className="bg-white py-6">
+                <div className="w-full max-w-[1164px] mx-auto px-4 text-center">
+                    <div>Loading...</div>
+                </div>
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section className="bg-white py-6">
+                <div className="w-full max-w-[1164px] mx-auto px-4 text-center text-red-500">
+                    <div>{error}</div>
+                </div>
+            </section>
+        );
+    }
+
     return (
         <section className="bg-white py-6">
             <div className="w-full max-w-[1164px] mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {servicesData.map((service, index) => (
+                    {services && services?.map((service, index) => (
                         <Link
                             to={service.link}
                             key={index}

@@ -209,19 +209,19 @@ const JournalInner = ({ journalData }) => {
                         </div>
 
                         {/* Impact Factor Widget */}
-                        <div className="bg-[#00cca3] text-white p-3 font-bold uppercase text-sm">
+                        {journalData?.impactFactors?.length > 0 && <>   <div className="bg-[#00cca3] text-white p-3 font-bold uppercase text-sm">
                             JID Impact Factor
                         </div>
-                        <div className="bg-white border border-t-0 p-2 space-y-1 shadow-sm max-h-[400px] overflow-y-auto custom-scrollbar">
-                            {journalData.impactFactors.map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">
-                                    <FaCalendarAlt className="text-gray-400" />
-                                    <div className="font-medium text-gray-700 text-sm">
-                                        <span className="font-bold">{item.year}:</span> {item.score}
+                            <div className="bg-white border border-t-0 p-2 space-y-1 shadow-sm max-h-[400px] overflow-y-auto custom-scrollbar">
+                                {journalData?.impactFactors?.map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">
+                                        <FaCalendarAlt className="text-gray-400" />
+                                        <div className="font-medium text-gray-700 text-sm">
+                                            <span className="font-bold">{item.year}:</span> {item.score}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>  </>}
 
                         {/* Submit Manuscript Button */}
                         <Link to="/submit-manuscript" className="block w-full bg-[#204066] hover:bg-[#1a3352] text-white font-bold py-4 px-4 text-center uppercase tracking-wider transition-colors shadow-lg">
