@@ -74,7 +74,7 @@ export default function About() {
 
                         {/* Team list */}
                         <div className="space-y-6">
-                            {team.map((member) => (
+                            {team?.length > 0 && team.map((member) => (
                                 <div key={member.id} className="flex gap-2">
                                     <div className="mt-3  text-[#204066]">
                                         <FaEdit className="text-sm  border-[#204066] p-[1px] rounded-sm" />

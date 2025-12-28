@@ -28,7 +28,7 @@ const Sidebar = () => {
             </div>
             <nav className="flex-1 overflow-y-auto py-4">
                 <ul>
-                    {filteredSidebarData.map((item, index) => {
+                    {filteredSidebarData?.length > 0 && filteredSidebarData?.map((item, index) => {
                         const isActive = location.pathname === item.path;
                         const hasSubNav = item.subNav && item.subNav.length > 0;
                         const isOpen = openSubMenu[index];
@@ -76,7 +76,7 @@ const Sidebar = () => {
                                 )}
                                 {hasSubNav && isOpen && (
                                     <ul className="bg-gray-900">
-                                        {item.subNav.map((subItem, subIndex) => {
+                                        {item?.subNav?.length > 0 && item.subNav.map((subItem, subIndex) => {
                                             const isSubActive = location.pathname === subItem.path;
                                             return (
                                                 <li key={subIndex}>

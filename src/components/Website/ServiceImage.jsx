@@ -49,7 +49,7 @@ const ServiceImage = () => {
                     <strong>Index</strong> & Citations
                 </h2>
                 <ul >
-                    {imageData.map((item, index) => (
+                    {imageData?.length > 0 && imageData.map((item, index) => (
                         <li key={index}>
                             <img
                                 src={item.src}

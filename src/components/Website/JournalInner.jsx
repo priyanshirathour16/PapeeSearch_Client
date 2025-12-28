@@ -104,14 +104,14 @@ const JournalInner = ({ journalData }) => {
                                         <span className="text-[#12b48b] text-lg">{journalData.stats.articles}</span> Articles available from {journalData.stats.yearRange}.
                                     </p>
 
-                                    {journalData.about.map((para, index) => (
+                                    {Array.isArray(journalData.about) && journalData.about.map((para, index) => (
                                         <p key={index} dangerouslySetInnerHTML={{ __html: para }} />
                                     ))}
 
                                     <div className="mt-6">
                                         <h4 className="font-bold text-[#204066] mb-3 border-b pb-2">Key Audiences:</h4>
                                         <ul className="space-y-2">
-                                            {journalData.keyAudiences.map((item, idx) => (
+                                            {Array.isArray(journalData.keyAudiences) && journalData.keyAudiences.map((item, idx) => (
                                                 <li key={idx} className="flex items-start gap-2">
                                                     <FaUserTie className="text-[#12b48b] mt-1 shrink-0" />
                                                     <span>{item}</span>
@@ -127,7 +127,7 @@ const JournalInner = ({ journalData }) => {
                                 <div>
                                     <p className="font-bold text-[#204066] mb-4">The subject areas covered under the scope of the journal include:</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {journalData.areasCovered.map((area, idx) => (
+                                        {Array.isArray(journalData.areasCovered) && journalData.areasCovered.map((area, idx) => (
                                             <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 border-l-2 border-[#12b48b] hover:bg-gray-100 transition-colors">
                                                 <FaBookOpen className="text-gray-400 text-xs" />
                                                 <span className="text-sm font-medium text-gray-700">{area}</span>
@@ -165,7 +165,7 @@ const JournalInner = ({ journalData }) => {
                                         <div className="overflow-x-auto">
                                             <table className="w-full border-collapse border border-gray-200 text-sm">
                                                 <tbody>
-                                                    {journalData.editorialBoard.members.map((member, idx) => (
+                                                    {Array.isArray(journalData?.editorialBoard?.members) && journalData.editorialBoard.members.map((member, idx) => (
                                                         <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                                                             <td className="border p-3 font-bold text-[#204066] w-[10%]">{member?.title}</td>
                                                             <td className="border p-3 font-bold text-gray-800 w-[25%]">{member?.name}</td>

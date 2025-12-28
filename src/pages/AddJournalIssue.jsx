@@ -118,7 +118,7 @@ const AddJournalIssue = () => {
                                         option.children.toLowerCase().includes(input.toLowerCase())
                                     }
                                 >
-                                    {journals.map((journal) => (
+                                    {journals?.length > 0 && journals.map((journal) => (
                                         <Option key={journal.id} value={journal.id}>
                                             {journal.title}
                                         </Option>
@@ -187,7 +187,7 @@ const AddJournalIssue = () => {
                                     size="large"
                                     status={touched.year && errors.year ? 'error' : ''}
                                 >
-                                    {yearOptions.map((year) => (
+                                    {yearOptions?.length > 0 && yearOptions.map((year) => (
                                         <Option key={year} value={year}>
                                             {year}
                                         </Option>

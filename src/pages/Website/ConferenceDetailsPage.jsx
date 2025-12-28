@@ -209,7 +209,7 @@ const ConferenceDetailsPage = () => {
                                         Important Dates
                                     </h3>
                                     <div className="space-y-3">
-                                        {dateData.map((item) => (
+                                        {dateData?.length > 0 && dateData.map((item) => (
                                             <div key={item.key} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
                                                 <div className="flex-shrink-0 bg-blue-50 text-[#1e3a5f] p-3 rounded-lg">
                                                     <ScheduleOutlined className="text-xl" />

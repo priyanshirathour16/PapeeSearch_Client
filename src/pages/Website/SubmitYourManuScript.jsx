@@ -14,8 +14,8 @@ const SubmitYourManuScript = ({ isDashboard }) => {
                     const options = response.data
                         .filter(cat => cat.journals && cat.journals.length > 0)
                         .map(cat => ({
-                            label: cat.title,
-                            options: cat.journals.map(journal => ({
+                            label: cat?.title,
+                            options: cat?.journals?.map(journal => ({
                                 value: journal.id,
                                 label: journal.title
                             }))

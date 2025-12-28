@@ -178,7 +178,7 @@ const AddConferenceTemplate = () => {
                                     rules={[{ required: true, message: 'Please select a conference' }]}
                                 >
                                     <Select placeholder="Select a conference" loading={conferences.length === 0}>
-                                        {conferences.map(conf => (
+                                        {conferences?.length > 0 && conferences.map(conf => (
                                             <Option key={conf.id} value={conf.id}>{conf.name}</Option>
                                         ))}
                                     </Select>
@@ -242,7 +242,7 @@ const AddConferenceTemplate = () => {
                         <Form.List name="keynote_speakers">
                             {(fields, { add, remove }) => (
                                 <>
-                                    {fields.map(({ key, name, ...restField }) => (
+                                    {fields?.length > 0 && fields.map(({ key, name, ...restField }) => (
                                         <Card key={key} size="small" className="mb-4 bg-gray-50 border-dashed border-gray-300">
                                             <Row gutter={16}>
                                                 <Col span={8}>
@@ -359,7 +359,7 @@ const AddConferenceTemplate = () => {
                         <Form.List name="key_benefits">
                             {(fields, { add, remove }) => (
                                 <div className="mb-6">
-                                    {fields.map(({ key, name, ...restField }) => (
+                                    {fields?.length > 0 && fields.map(({ key, name, ...restField }) => (
                                         <Space key={key} className="flex mb-2" align="baseline">
                                             <Form.Item {...restField} name={name} rules={[{ required: true, message: 'Missing benefit' }]}>
                                                 <Input placeholder="Benefit" />
@@ -380,7 +380,7 @@ const AddConferenceTemplate = () => {
                                 <Form.List name="steering_committee">
                                     {(fields, { add, remove }) => (
                                         <div className="mt-2">
-                                            {fields.map(({ key, name, ...restField }) => (
+                                            {fields?.length > 0 && fields.map(({ key, name, ...restField }) => (
                                                 <Space key={key} className="flex mb-2" align="baseline">
                                                     <Form.Item {...restField} name={[name, 'name']} rules={[{ required: true }]}>
                                                         <Input placeholder="Member Name" />
@@ -398,7 +398,7 @@ const AddConferenceTemplate = () => {
                                 <Form.List name="review_board">
                                     {(fields, { add, remove }) => (
                                         <div className="mt-2">
-                                            {fields.map(({ key, name, ...restField }) => (
+                                            {fields?.length > 0 && fields.map(({ key, name, ...restField }) => (
                                                 <Space key={key} className="flex mb-2" align="baseline">
                                                     <Form.Item {...restField} name={[name, 'name']} rules={[{ required: true }]}>
                                                         <Input placeholder="Member Name" />
@@ -418,7 +418,7 @@ const AddConferenceTemplate = () => {
                             <Form.List name="past_conferences">
                                 {(fields, { add, remove }) => (
                                     <div className="mt-2">
-                                        {fields.map(({ key, name, ...restField }) => (
+                                        {fields?.length > 0 && fields.map(({ key, name, ...restField }) => (
                                             <Space key={key} className="flex mb-2" align="baseline">
                                                 <Form.Item {...restField} name={[name, 'year']} rules={[{ required: true }]}>
                                                     <Input placeholder="Year" />

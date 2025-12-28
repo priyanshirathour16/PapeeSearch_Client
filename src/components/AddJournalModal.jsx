@@ -99,7 +99,7 @@ const AddJournalModal = ({ visible, onClose, onSubmit }) => {
                                     status={touched.categoryId && errors.categoryId ? 'error' : ''}
                                     placeholder="Select a category"
                                 >
-                                    {categories.map(category => (
+                                    {categories?.length > 0 && categories?.map(category => (
                                         <Option key={category.id} value={category.id}>{category.title}</Option>
                                     ))}
                                 </Select>
@@ -167,7 +167,7 @@ const AddJournalModal = ({ visible, onClose, onSubmit }) => {
                             <FieldArray name="areasCovered">
                                 {({ push, remove }) => (
                                     <div>
-                                        {values.areasCovered.map((area, index) => (
+                                        {values?.areasCovered && values?.areasCovered.map((area, index) => (
                                             <div key={index} className="flex space-x-2 mb-2">
                                                 <Input
                                                     name={`areasCovered.${index}`}

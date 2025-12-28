@@ -246,9 +246,9 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
                                         className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700"
                                     >
                                         <option value="">Select Journal *</option>
-                                        {fetchedJournalOptions?.map((group, idx) => (
+                                        {fetchedJournalOptions?.length > 0 && fetchedJournalOptions?.map((group, idx) => (
                                             <optgroup key={idx} label={group.label}>
-                                                {group.options.map((opt, optIdx) => (
+                                                {group?.options && group?.options?.map((opt, optIdx) => (
                                                     <option key={optIdx} value={opt.value}>{opt.label}</option>
                                                 ))}
                                             </optgroup>
@@ -273,7 +273,7 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
                     <FieldArray name="authors">
                         {({ push, remove }) => (
                             <div>
-                                {values.authors.map((author, index) => (
+                                {values?.authors?.length > 0 && values?.authors?.map((author, index) => (
                                     <div key={index}>
                                         <div className="mt-8">
                                             <div className="bg-[#204066] text-white py-2 px-4 rounded-sm inline-block font-bold text-sm tracking-wide">
@@ -300,7 +300,7 @@ const ManuscriptForm = ({ fetchedJournalOptions }) => {
                                                             name={`authors.${index}.country`}
                                                             className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700"
                                                         >
-                                                            {countries.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                                                            {countries?.length > 0 && countries.map((c, i) => <option key={i} value={c}>{c}</option>)}
                                                         </Field>
                                                     </div>
                                                     <ErrorMessage name={`authors.${index}.country`} component="div" className="text-red-500 text-xs mt-1" />

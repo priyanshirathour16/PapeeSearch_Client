@@ -82,7 +82,7 @@ const BrowseOfJournals = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {journals.map((journal, idx) => (
+                                    {journals?.length > 0 && journals.map((journal, idx) => (
                                         <tr key={idx} className={`${idx % 2 === 0 ? 'bg-[#f5f5f5]' : 'bg-white'} border-b border-gray-200`}>
                                             <td className="p-3 text-sm text-[#555] border-r border-gray-200">{idx + 1}</td>
                                             <td className="p-3 text-sm text-[#555] border-r border-gray-200">

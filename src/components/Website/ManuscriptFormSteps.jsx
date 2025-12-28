@@ -597,9 +597,9 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         </div>
                                         <Field as="select" name="journalId" className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700">
                                             <option value="">Select Journal *</option>
-                                            {fetchedJournalOptions?.map((group, idx) => (
+                                            {fetchedJournalOptions?.length > 0 && fetchedJournalOptions?.map((group, idx) => (
                                                 <optgroup key={idx} label={group.label}>
-                                                    {group.options.map((opt, optIdx) => (
+                                                    {group.options?.length > 0 && group.options.map((opt, optIdx) => (
                                                         <option key={optIdx} value={opt.value}>{opt.label}</option>
                                                     ))}
                                                 </optgroup>
@@ -617,7 +617,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         </div>
                                         <Field as="select" name="manuscriptType" className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700">
                                             <option value="">Select Manuscript Type *</option>
-                                            {manuscriptTypes.map((type, idx) => (
+                                            {manuscriptTypes?.length > 0 && manuscriptTypes.map((type, idx) => (
                                                 <option key={idx} value={type}>{type}</option>
                                             ))}
                                         </Field>
@@ -759,7 +759,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                 <FieldArray name="authors">
                                     {({ push, remove }) => (
                                         <div>
-                                            {values.authors.map((author, index) => (
+                                            {values.authors?.length > 0 && values.authors.map((author, index) => (
                                                 <div key={index} className="mb-6 p-4 border border-gray-200 rounded">
                                                     <div className="flex justify-between items-center mb-3">
                                                         <h4 className="text-sm font-semibold text-[#204066]">Co-Author {index + 1}</h4>

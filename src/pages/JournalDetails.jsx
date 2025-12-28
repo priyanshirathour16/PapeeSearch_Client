@@ -267,7 +267,7 @@ const JournalDetails = () => {
                                                     className="w-full"
                                                     status={touched.categoryId && errors.categoryId ? 'error' : ''}
                                                 >
-                                                    {categories.map(category => (
+                                                    {categories?.length > 0 && categories.map(category => (
                                                         <Option key={category.id} value={category.id}>{category.title}</Option>
                                                     ))}
                                                 </Select>
@@ -388,7 +388,7 @@ const JournalDetails = () => {
                                         <FieldArray name="areasCovered">
                                             {({ push, remove }) => (
                                                 <div>
-                                                    {values.areasCovered.map((area, index) => (
+                                                    {values?.areasCovered?.length > 0 && values.areasCovered.map((area, index) => (
                                                         <div key={index} className="flex space-x-2 mb-2">
                                                             <Input
                                                                 name={`areasCovered.${index}`}
@@ -406,7 +406,7 @@ const JournalDetails = () => {
                                         </FieldArray>
                                     ) : (
                                         <ul className="list-disc list-inside">
-                                            {values.areasCovered.map((area, index) => (
+                                            {values?.areasCovered?.length > 0 && values.areasCovered.map((area, index) => (
                                                 <li key={index}>{area}</li>
                                             ))}
                                         </ul>
@@ -528,7 +528,7 @@ const JournalDetails = () => {
                                             <FieldArray name="factors">
                                                 {({ push, remove }) => (
                                                     <div className="space-y-4">
-                                                        {values.factors.map((factor, index) => (
+                                                        {values?.factors?.length > 0 && values.factors.map((factor, index) => (
                                                             <div key={index} className="flex gap-4 items-start bg-gray-50 p-3 rounded border">
                                                                 <div className="flex-1">
                                                                     <label className="block text-xs font-bold text-gray-500 mb-1">Year</label>

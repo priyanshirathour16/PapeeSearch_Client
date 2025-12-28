@@ -113,7 +113,7 @@ const JournalIndexing = () => {
                         </h1>
 
                         <div className="space-y-6 mt-6">
-                            {indexingData.map((item, index) => (
+                            {indexingData?.length > 0 && indexingData.map((item, index) => (
                                 <div key={index} className="bg-[#f5f5f5] border border-gray-200 px-4 pt-4 rounded-sm">
                                     <div className="flex flex-col">
                                         {/* Alternating Header Logic */}

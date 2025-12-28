@@ -168,7 +168,7 @@ const MyManuscriptDetails = () => {
                     {manuscript.checklist && (
                         <Card title={<span className="text-[#2c4a6e] font-semibold flex items-center gap-2"><FaCheckCircle /> Submission Checklist</span>} className="shadow-sm border-none mb-6 rounded-xl">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {checklistItems.map((item) => (
+                                {checklistItems?.length > 0 && checklistItems.map((item) => (
                                     <div key={item.key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                                         {manuscript.checklist[item.key] ? (
                                             <FaCheckCircle className="text-green-500 text-lg flex-shrink-0" />

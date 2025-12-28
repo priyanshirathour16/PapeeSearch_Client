@@ -33,7 +33,7 @@ const CodeEntryInput = ({ length = 4, onChange, onEnter }) => {
 
     return (
         <div className="flex gap-2">
-            {code.map((digit, index) => (
+            {code?.length > 0 && code.map((digit, index) => (
                 <input
                     key={index}
                     type="text"

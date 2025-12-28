@@ -68,7 +68,7 @@ const Services = () => {
         <section className="bg-white py-6">
             <div className="w-full max-w-[1164px] mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {services && services?.map((service, index) => (
+                    {services?.length > 0 && services?.map((service, index) => (
                         <Link
                             to={service.link}
                             key={index}

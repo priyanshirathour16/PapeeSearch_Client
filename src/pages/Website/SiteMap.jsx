@@ -100,11 +100,11 @@ const SiteMap = () => {
                         </div>
 
                         <div className="space-y-6">
-                            {sections.map((section, idx) => (
+                            {sections?.length > 0 && sections.map((section, idx) => (
                                 <div key={idx}>
                                     <h6 className="text-[#204066] font-normal mb-2 text-[14px]">{section.title}</h6>
                                     <div className="flex flex-wrap gap-x-6 gap-y-2">
-                                        {section.links.map((link, linkIdx) => (
+                                        {section?.links?.length > 0 && section?.links.map((link, linkIdx) => (
                                             link.isHeader ? (
                                                 <div key={linkIdx} className="w-full text-[#333] text-[12px] font-bold mb-0 mt-1">
                                                     {link.label}

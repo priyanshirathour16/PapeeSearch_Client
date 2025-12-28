@@ -348,7 +348,7 @@ const BecomeAnEditor = () => {
                                                     <IconInput icon={MdSchool} type="text" placeholder="Educational Qualification *" {...authorFormik.getFieldProps('qualification')} error={authorFormik.errors.qualification} touched={authorFormik.touched.qualification} />
                                                     <SelectInput icon={FaListOl} {...authorFormik.getFieldProps('specialization')} error={authorFormik.errors.specialization} touched={authorFormik.touched.specialization}>
                                                         <option value="">Please Select Area of Specialisation</option>
-                                                        {specializations.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                                                        {specializations?.length > 0 && specializations.map((s, i) => <option key={i} value={s}>{s}</option>)}
                                                     </SelectInput>
                                                     <div className="md:col-span-2">
                                                         <IconInput icon={FaUniversity} type="text" placeholder="Institute/ University *" {...authorFormik.getFieldProps('institute')} error={authorFormik.errors.institute} touched={authorFormik.touched.institute} />
@@ -417,9 +417,9 @@ const BecomeAnEditor = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <SelectInput icon={FaFileAlt} {...editorFormik.getFieldProps('journal')} error={editorFormik.errors.journal} touched={editorFormik.touched.journal} >
                                                         <option value="">Select Journal</option>
-                                                        {fetchedJournalOptions.map((group, i) => (
+                                                        {fetchedJournalOptions?.length > 0 && fetchedJournalOptions.map((group, i) => (
                                                             <optgroup key={i} label={group.label}>
-                                                                {group.options.map((opt, j) => (
+                                                                {group.options?.length > 0 && group.options.map((opt, j) => (
                                                                     <option key={j} value={opt.value}>{opt.label}</option>
                                                                 ))}
                                                             </optgroup>
