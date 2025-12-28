@@ -398,9 +398,9 @@ const BecomeAnEditor = () => {
 
                                             <div className="flex justify-between items-center pt-6 border-t border-gray-200">
                                                 <div className="flex gap-4 text-sm text-gray-600">
-                                                    <Link to="/forget-password" className="flex items-center gap-1 hover:text-[#12b48b]"><FaUser className="text-gray-400" /> Find My Account</Link>
+                                                    <a href="/forget-password" className="flex items-center gap-1 hover:text-[#12b48b]"><FaUser className="text-gray-400" /> Find My Account</a>
                                                     <span>|</span>
-                                                    <Link to="/login" className="flex items-center gap-1 hover:text-[#12b48b]"><FaLock className="text-gray-400" /> Login</Link>
+                                                    <a href="/login" className="flex items-center gap-1 hover:text-[#12b48b]" onClick={() => navigate("/login")}><FaLock className="text-gray-400" /> Login</a>
                                                 </div>
                                                 <button type="submit" disabled={authorFormik.isSubmitting} className="bg-[#12b48b] text-white px-10 py-2 rounded-full shadow hover:bg-[#0e9f7a] flex items-center gap-2 font-bold transition-colors disabled:opacity-50">
                                                     {authorFormik.isSubmitting ? 'SUBMITTING...' : 'SUBMIT'} <FaLongArrowAltRight />

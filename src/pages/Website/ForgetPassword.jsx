@@ -169,7 +169,7 @@ const ForgetPassword = () => {
 
                                     <div className="flex justify-between items-center mt-6">
                                         <div className="flex gap-4 text-sm text-[#204066]">
-                                            <Link to="/become-an-editor" className="flex items-center gap-1 hover:underline font-medium">
+                                            <Link to="/login" className="flex items-center gap-1 hover:underline font-medium">
                                                 <FaLock className="text-xs" /> Login
                                             </Link>
                                             <span className="text-gray-400">|</span>
