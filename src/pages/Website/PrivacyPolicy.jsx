@@ -1,4 +1,5 @@
 import React from 'react';
+import NewsWidget from "../../components/Website/NewsWidget";
 
 const PrivacyPolicy = () => {
   return (
@@ -127,7 +128,9 @@ const PrivacyPolicy = () => {
           </div>
 
           {/* Right Column - Sidebar area if needed, left empty to match structure */}
-          <div className="lg:col-span-1"></div>
+          <div className="lg:col-span-1">
+            <NewsWidget />
+          </div>
         </div>
       </div>
     </div>

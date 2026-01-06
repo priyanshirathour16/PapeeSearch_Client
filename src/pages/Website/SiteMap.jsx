@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaEdit } from "react-icons/fa";
+import NewsWidget from "../../components/Website/NewsWidget";
 
 const SiteMap = () => {
     const sections = [
@@ -120,9 +121,7 @@ const SiteMap = () => {
                     </div>
 
                     <div className="lg:col-span-1">
-                        <div className="text-right">
-                            <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-xs hover:underline">Tweets by @ElkJournals</a>
-                        </div>
+                        <NewsWidget />
                     </div>
                 </div>
             </div>

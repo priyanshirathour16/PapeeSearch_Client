@@ -2,8 +2,8 @@ import axios from 'axios';
 
 
 const api = axios.create({
-    // baseURL: 'http://localhost:5000/api',
-    baseURL: 'https://rapidcollaborate.in/elkjournals_backend/api',
+    baseURL: 'http://localhost:5000/api',
+    // baseURL: 'https://rapidcollaborate.in/elkjournals_backend/api',
 });
 
 api.interceptors.request.use(
@@ -112,9 +112,12 @@ export const manuscriptApi = {
         const headers = { 'Content-Type': 'multipart/form-data' };
         return api.post('/manuscripts/submit', data, { headers });
     },
-    getAll: () => api.get('/manuscripts'),
+    // Updated: Now accepts params for filtering (e.g., { status: 'Awaiting Copyright' })
+    getAll: (params) => api.get('/manuscripts', { params }),
+    getNewManuscriptDetails: (id) => api.get(`/manuscripts/new-manuscript/${id}`),
     getById: (id) => api.get(`/manuscripts/${id}`),
     getByAuthor: (authorId) => api.get(`/manuscripts/author/${authorId}`),
+    updateStatus: (id, data) => api.patch(`/manuscripts/${id}/status`, data),
 };
 
 export const contactUsApi = {
@@ -157,6 +160,21 @@ export const conferenceTemplateApi = {
         return api.put(`/conferences/template/${id}`, data, { headers });
     },
     delete: (id) => api.delete(`/conferences/template/${id}`),
+};
+
+export const copyrightApi = {
+    getActiveTemplate: () => api.get('/copyright/template/active'),
+    getManuscript: (manuscriptId) => api.get(`/copyright/manuscript/${manuscriptId}`),
+    submit: (data) => api.post('/copyright/submit', data),
+    getSubmission: (manuscriptId) => api.get(`/copyright/submission/${manuscriptId}`),
+};
+
+export const newsApi = {
+    create: (data) => api.post('/news', data),
+    getAll: () => api.get('/news'),
+    getById: (id) => api.get(`/news/${id}`),
+    update: (id, data) => api.put(`/news/${id}`, data),
+    delete: (id) => api.delete(`/news/${id}`),
 };
 
 export default api;

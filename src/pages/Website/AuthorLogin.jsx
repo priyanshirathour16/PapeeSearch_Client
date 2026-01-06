@@ -5,6 +5,7 @@ import api, { conferenceApi } from '../../services/api';
 import { setRole } from '../../utils/secureStorage';
 import { FaTwitter } from 'react-icons/fa'; // Assuming react-icons is available, or fallback to text
 import './AuthorLogin.css'; // specialized styles
+import NewsWidget from "../../components/Website/NewsWidget";
 
 const AuthorLogin = () => {
     const [loginRole, setLoginRole] = useState('author'); // 'author' or 'editor'
@@ -192,9 +193,7 @@ const AuthorLogin = () => {
 
             {/* Right Column: Sidebar */}
             <div className="w-full md:w-1/4">
-                <div className="text-right text-gray-500 mb-4 text-sm">
-                    Tweets by @ElkJournals
-                </div>
+                <NewsWidget />
 
                 <div className="mb-6">
                     <div className="bg-[#12b48b] text-white p-3 font-semibold uppercase text-sm tracking-wide">

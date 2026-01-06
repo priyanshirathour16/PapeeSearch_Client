@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaEdit } from 'react-icons/fa';
 import ScholarshipForm from '../../components/Website/ScholarshipForm';
+import NewsWidget from "../../components/Website/NewsWidget";
 
 const ScholarShip = () => {
     return (
@@ -73,9 +74,7 @@ const ScholarShip = () => {
 
                     {/* RIGHT COLUMN - Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="text-right py-3">
-                            <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-xs hover:underline ">Tweets by @ElkJournals</a>
-                        </div>
+                        <NewsWidget />
                     </div>
                 </div>
             </div>

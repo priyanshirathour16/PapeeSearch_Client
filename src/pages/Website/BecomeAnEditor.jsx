@@ -9,6 +9,7 @@ import { message } from 'antd';
 import Swal from 'sweetalert2';
 import { authApi, applicationApi, journalCategoryApi } from '../../services/api';
 import CodeEntryInput from '../../components/CodeEntryInput';
+import NewsWidget from "../../components/Website/NewsWidget";
 // import LoginForm from '../../components/LoginForm'; // Removed as we navigate to /login page now
 
 
@@ -376,16 +377,8 @@ const BecomeAnEditor = () => {
                                                 <div className="flex items-center gap-4">
                                                     <CodeEntryInput
                                                         length={4}
-                                                        value={authorFormik.values.captchaInput} // Note: Shared component might need updating to accept 'value' prop for controlled input if it manages its own state. 
-                                                        // The shared component currently manages its own state and calls onChange. Passing value back in might cause conflict if not handled.
-                                                        // Let's check shared component implementation. It uses local state. It does NOT accept 'value' prop to sync from parent. 
-                                                        // However, Since Formik doesn't change the value externally except on reset, it might be fine, or we need to update shared component to be fully controlled.
-                                                        // For now, let's just pass onChange. If resetting form, we might need to reset the component. 
-                                                        // The shared component defined in step 218 initializes with empty array. It doesn't seem to support controlled value from prop easily without useEffect sync.
-                                                        // But wait, the shared component uses `onChange(code.join(''))`.
-                                                        // In `BecomeAnEditor`, formik manages state.
-                                                        // If we want to clear it on reset, we might need a key or ref.
-                                                        // Let's use `key={captcha}` to force re-mount on captcha refresh! Smart.
+
+
                                                         key={captcha}
                                                         onChange={(val) => authorFormik.setFieldValue('captchaInput', val)}
                                                     />
@@ -511,9 +504,7 @@ const BecomeAnEditor = () => {
 
                     {/* RIGHT COLUMN - Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="text-right">
-                            <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-xs hover:underline">Tweets by @ElkJournals</a>
-                        </div>
+                        <NewsWidget />
                     </div>
                 </div>
             </div>

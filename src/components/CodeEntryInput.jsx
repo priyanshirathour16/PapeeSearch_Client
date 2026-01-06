@@ -4,9 +4,17 @@ const CodeEntryInput = ({ length = 4, onChange, onEnter }) => {
     const [code, setCode] = useState(new Array(length).fill(''));
     const inputs = useRef([]);
 
+    const onChangeRef = useRef(onChange);
+
     useEffect(() => {
-        onChange(code.join(''));
-    }, [code, onChange]);
+        onChangeRef.current = onChange;
+    }, [onChange]);
+
+    useEffect(() => {
+        if (onChangeRef.current) {
+            onChangeRef.current(code.join(''));
+        }
+    }, [code]);
 
     const processInput = (e, index) => {
         const value = e.target.value;
