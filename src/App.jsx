@@ -55,11 +55,16 @@ const SubmitterPublicationDetails = lazy(() => import('./pages/Admin/SubmitterPu
 const DashboardHome = lazy(() => import('./pages/DashboardHome'));
 const MyManuscriptList = lazy(() => import('./pages/Author/MyManuscriptList'));
 const MyManuscriptDetails = lazy(() => import('./pages/Author/MyManuscriptDetails'));
+const CopyrightForm = lazy(() => import('./pages/Author/CopyrightForm'));
 const AddConference = lazy(() => import('./pages/Admin/AddConference'));
 const ConferenceTemplateList = lazy(() => import('./pages/Admin/ConferenceTemplateList'));
 const AddConferenceTemplate = lazy(() => import('./pages/Admin/AddConferenceTemplate'));
 const EditConferenceTemplate = lazy(() => import('./pages/Admin/EditConferenceTemplate'));
 const ConferenceTemplateDetails = lazy(() => import('./pages/Admin/ConferenceTemplateDetails'));
+const ManageNews = lazy(() => import('./pages/Admin/ManageNews'));
+const NewsDetails = lazy(() => import('./pages/Admin/NewsDetails'));
+const NewsDetailPage = lazy(() => import('./pages/Website/NewsDetailPage'));
+const AllNewsPage = lazy(() => import('./pages/Website/AllNewsPage'));
 function App() {
   return (
     <Router>
@@ -92,6 +97,8 @@ function App() {
             <Route path="/publication-ethics-and-malpractice-statement" element={<PublicEthicAndMalPractices />} />
             <Route path="/journals/:route" element={<Journals />} />
             <Route path="/thank-you" element={<ThankYou />} />
+            <Route path="/news" element={<AllNewsPage />} />
+            <Route path="/news/:id" element={<NewsDetailPage />} />
             <Route path="/upcoming-conferences" element={<ConferenceList type="upcoming" />} />
             <Route path="/previous-conferences" element={<ConferenceList type="previous" />} />
             {/* 404 Page (within layout) */}
@@ -122,6 +129,7 @@ function App() {
 
               <Route path="manuscripts" element={<ManuscriptList />} />
               <Route path="manuscripts/:id" element={<ManuscriptDetails />} />
+              <Route path="manuscripts/:id/copyright" element={<CopyrightForm viewOnly={true} />} />
               <Route path="contact-us" element={<AdminContactList />} />
               <Route path="add-conference" element={<AddConference />} />
               <Route path="view-submitter-publications" element={<ViewSubmitterPublications />} />
@@ -129,11 +137,14 @@ function App() {
               <Route path="submit-manuscript" element={<MyManuscriptList />} />
               <Route path="submit-manuscript/new" element={<SubmitYourManuScript isDashboard={true} />} />
               <Route path="submit-manuscript/:id" element={<MyManuscriptDetails />} />
+              <Route path="submit-manuscript/:id/copyright" element={<CopyrightForm />} />
 
               <Route path="conference-templates" element={<ConferenceTemplateList />} />
               <Route path="add-conference-template" element={<AddConferenceTemplate />} />
               <Route path="conference-templates/edit/:id" element={<EditConferenceTemplate />} />
               <Route path="conference-templates/:id" element={<ConferenceTemplateDetails />} />
+              <Route path="manage-news" element={<ManageNews />} />
+              <Route path="news/:id" element={<NewsDetails />} />
             </Route>
           </Route>
 

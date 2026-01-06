@@ -303,6 +303,42 @@ const MyManuscriptDetails = () => {
                             </div>
                         )}
                     </Card>
+
+                    {/* Status Overview Card */}
+                    <Card
+                        className="shadow-sm border-none rounded-xl mt-6"
+                        title={<div className="flex items-center gap-2 text-[#2c4a6e] font-semibold"><FaInfoCircle /> Status Overview</div>}
+                    >
+                        <div className="mb-4 flex items-center justify-between">
+                            <Text type="secondary" className="text-xs uppercase tracking-wider">Current Status:</Text>
+                            <Tag color={getStatusColor(manuscript.status)} className="text-sm px-3 py-1 rounded-full font-semibold uppercase tracking-wider">
+                                {manuscript.status}
+                            </Tag>
+                        </div>
+
+                        {manuscript.status?.toLowerCase() !== 'pending' && manuscript.comment && (
+                            <div>
+                                <Divider className="my-3" />
+                                <Text type="secondary" className="block text-xs mb-1 uppercase tracking-wider">Admin Comment</Text>
+                                <Paragraph className="text-gray-600 bg-gray-50 p-3 rounded border border-gray-100 mb-0">
+                                    {manuscript.comment}
+                                </Paragraph>
+                            </div>
+                        )}
+
+                        {manuscript.status?.trim().toLowerCase() === 'awaiting copyright' && (
+                            <div className="mt-4">
+                                <Button
+                                    type="primary"
+                                    block
+                                    className="bg-[#12b48b] hover:bg-[#0e9f7a]"
+                                    onClick={() => navigate(`/dashboard/submit-manuscript/${id}/copyright`)}
+                                >
+                                    Write Copywrite
+                                </Button>
+                            </div>
+                        )}
+                    </Card>
                 </Col>
             </Row>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Spin, Descriptions, Typography, Card, Table, Button, Tag, message, Divider, Space, Row, Col, Avatar, Tooltip } from 'antd';
-import { FaArrowLeft, FaDownload, FaFilePdf, FaCheckCircle, FaTimesCircle, FaUser, FaInfoCircle } from 'react-icons/fa';
+import { Spin, Descriptions, Typography, Card, Table, Button, Tag, message, Divider, Space, Row, Col, Avatar, Tooltip, Select, Input } from 'antd';
+import { FaArrowLeft, FaDownload, FaFilePdf, FaCheckCircle, FaTimesCircle, FaUser, FaInfoCircle, FaEdit, FaFileContract } from 'react-icons/fa';
 import { manuscriptApi } from '../../services/api';
 import { scriptUrl } from '../../services/serviceApi';
 
@@ -12,6 +12,9 @@ const ManuscriptDetails = () => {
     const navigate = useNavigate();
     const [manuscript, setManuscript] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+    const [newStatus, setNewStatus] = useState(null);
+    const [adminComment, setAdminComment] = useState('');
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -31,6 +34,38 @@ const ManuscriptDetails = () => {
             fetchDetails();
         }
     }, [id]);
+
+    const handleUpdateStatus = async () => {
+        if (!newStatus) {
+            message.error("Please select a status");
+            return;
+        }
+        if (!adminComment.trim()) {
+            message.error("Comment is mandatory");
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            await manuscriptApi.updateStatus(id, {
+                status: newStatus,
+                comment: adminComment,
+                statusUpdatedBy: "1"
+            });
+            message.success("Manuscript status updated successfully");
+
+            // Refresh details
+            const response = await manuscriptApi.getById(id);
+            setManuscript(response.data.data);
+            setNewStatus(null);
+            setAdminComment('');
+        } catch (error) {
+            console.error("Error updating status:", error);
+            message.error("Failed to update status");
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -85,10 +120,15 @@ const ManuscriptDetails = () => {
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
-            case 'submitted': return 'green';
-            case 'under review': return 'orange';
-            case 'accepted': return 'blue';
+            case 'pending': return 'gold';
+            case 'accepted': return 'green';
             case 'rejected': return 'red';
+            case 'awaiting copyright': return 'purple';
+            case 'assigned to editor': return 'blue';
+            case 'assigned to reviewer': return 'cyan';
+            case 'awaiting revised manuscript': return 'orange';
+            case 'submitted': return 'geekblue';
+            case 'under review': return 'volcano';
             default: return 'default';
         }
     };
@@ -191,6 +231,8 @@ const ManuscriptDetails = () => {
 
                 {/* RIGHT COLUMN: Sidebar Metadata */}
                 <Col xs={24} lg={8}>
+
+
                     {/* Metadata Card */}
                     <Card className="shadow-sm border-0 mb-6 rounded-lg bg-[#f8fafc]">
                         <Title level={5} className="mb-4 text-[#204066]">Manuscript Details</Title>
@@ -287,6 +329,78 @@ const ManuscriptDetails = () => {
                                         className="h-16 object-contain opacity-80"
                                     />
                                 </div>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* Status Actions Card */}
+                    <Card
+                        title={<span className="text-[#204066] font-semibold flex items-center gap-2"><FaEdit /> Status & Actions</span>}
+                        className="shadow-sm border-0 mb-6 rounded-lg bg-white"
+                    >
+                        {manuscript.status?.toLowerCase() === 'pending' ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <Text className="block mb-1 text-sm font-medium">Change Status</Text>
+                                    <Select
+                                        placeholder="Select Status"
+                                        style={{ width: '100%' }}
+                                        value={newStatus}
+                                        onChange={setNewStatus}
+                                        options={[
+                                            { value: 'Accepted', label: 'Accepted' },
+                                            { value: 'Rejected', label: 'Rejected' },
+                                            { value: 'Awaiting Copyright', label: 'Awaiting Copyright' },
+                                            { value: 'Assigned to Editor', label: 'Assigned to Editor' },
+                                            { value: 'Assigned to Reviewer', label: 'Assigned to Reviewer' },
+                                            { value: 'Awaiting Revised Manuscript', label: 'Awaiting Revised Manuscript' },
+                                        ]}
+                                    />
+                                </div>
+                                <div>
+                                    <Text className="block mb-1 text-sm font-medium">Admin Comment <span className="text-red-500">*</span></Text>
+                                    <Input.TextArea
+                                        rows={4}
+                                        placeholder="Enter comment..."
+                                        value={adminComment}
+                                        onChange={(e) => setAdminComment(e.target.value)}
+                                    />
+                                </div>
+                                <Button
+                                    type="primary"
+                                    block
+                                    onClick={handleUpdateStatus}
+                                    loading={updating}
+                                    className="bg-[#12b48b] border-[#12b48b] hover:bg-[#0e9470]"
+                                >
+                                    Update Status
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                                    <Text type="secondary">Current Status</Text>
+                                    <Tag color={getStatusColor(manuscript.status)} className="m-0 px-3 py-1 text-sm uppercase font-semibold">
+                                        {manuscript.status}
+                                    </Tag>
+                                </div>
+                                <div>
+                                    <Text type="secondary" className="block mb-2 text-xs uppercase tracking-wide">Admin Comment</Text>
+                                    <div className="bg-gray-50 p-3 rounded border border-gray-100 text-gray-700 text-sm">
+                                        {manuscript.comment || <span className="italic text-gray-400">No comment provided.</span>}
+                                    </div>
+                                </div>
+                                {manuscript.status?.toLowerCase() === 'awaiting copyright' && (
+                                    <Button
+                                        type="primary"
+                                        block
+                                        icon={<FaFileContract />}
+                                        onClick={() => navigate(`/dashboard/manuscripts/${manuscript.manuscript_id}/copyright`)}
+                                        className="bg-purple-600 border-purple-600 hover:bg-purple-700 h-10"
+                                    >
+                                        See Copyright
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </Card>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaEdit } from 'react-icons/fa';
+import NewsWidget from "../../components/Website/NewsWidget";
 
 const MeetOurTeam = () => {
     return (
@@ -58,8 +59,8 @@ const MeetOurTeam = () => {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-1/4 mt-8 lg:mt-0 text-right">
-                    <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-[11px] hover:underline">Tweets by @ElkJournals</a>
+                <div className="w-full lg:w-1/4 mt-8 lg:mt-0">
+                    <NewsWidget />
                 </div>
 
             </div>

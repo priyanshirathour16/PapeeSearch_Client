@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUnlockAlt, FaCheck, FaCalendarAlt, FaBookOpen, FaUserTie, FaTwitter, FaPrint, FaGlobe, FaEnvelope } from 'react-icons/fa';
+import NewsWidget from './NewsWidget';
 
 import Image1 from "../../assets/images/6.png";
 import Image2 from "../../assets/images/11.png";
@@ -63,9 +64,9 @@ const JournalInner = ({ journalData }) => {
                             </button>
                         </div>
 
-                        {/* Twitter Placeholder */}
-                        <div className="text-sm text-[#12b48b] font-medium mt-4">
-                            <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="hover:underline">Tweets by @ElkJournals</a>
+                        {/* News Widget */}
+                        <div className="mt-4">
+                            <NewsWidget />
                         </div>
                     </div>
 

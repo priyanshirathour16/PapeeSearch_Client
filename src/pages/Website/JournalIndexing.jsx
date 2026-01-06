@@ -1,4 +1,5 @@
 import React from 'react';
+import NewsWidget from "../../components/Website/NewsWidget";
 
 // Importing images as requested
 import image1 from '../../assets/images/image1.png';
@@ -146,8 +147,8 @@ const JournalIndexing = () => {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-1/4 mt-8 lg:mt-0 text-right">
-                    <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-[11px] hover:underline">Tweets by @ElkJournals</a>
+                <div className="w-full lg:w-1/4 mt-8 lg:mt-0">
+                    <NewsWidget />
                 </div>
             </div>
         </div>

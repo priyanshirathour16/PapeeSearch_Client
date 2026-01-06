@@ -5,6 +5,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import Swal from 'sweetalert2';
 import { authApi, conferenceApi } from '../../services/api';
+import NewsWidget from "../../components/Website/NewsWidget";
 
 const ForgetPassword = () => {
     const navigate = useNavigate();
@@ -192,9 +193,7 @@ const ForgetPassword = () => {
 
                     {/* RIGHT COLUMN - Sidebar */}
                     <div className="lg:col-span-1 space-y-8">
-                        <div className="text-right">
-                            <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-xs hover:underline">Tweets by @ElkJournals</a>
-                        </div>
+                        <NewsWidget />
                         <div>
                             <h3 className="bg-[#12b48b] text-white font-bold p-3 text-sm uppercase">UPCOMING CONFERENCES</h3>
                             <div className="bg-white border border-gray-200 p-2 min-h-[100px] flex text-gray-500 text-sm">

@@ -49,15 +49,21 @@ export const sidebarData = [
         ]
     },
     {
-        title: 'Submitter Manuscript',
+        title: 'Submitted Manuscript',
         icon: FaFileAlt,
         path: '/dashboard/manuscripts',
         access: ["admin"]
     },
     {
-        title: 'View Submitter Publication',
+        title: 'View Submitted Publication',
         icon: FaNewspaper,
         path: '/dashboard/view-submitter-publications',
+        access: ["admin"]
+    },
+    {
+        title: 'Manage News',
+        icon: FaNewspaper,
+        path: '/dashboard/manage-news',
         access: ["admin"]
     },
     {

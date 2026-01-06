@@ -5,6 +5,7 @@ import * as Yup from 'yup';
 import Swal from 'sweetalert2';
 import { contactUsApi } from '../../services/api';
 import CodeEntryInput from '../../components/CodeEntryInput';
+import NewsWidget from "../../components/Website/NewsWidget";
 
 // Reusable Components matching other forms
 const IconInput = ({ icon: Icon, ...props }) => (
@@ -246,7 +247,7 @@ const Contact = () => {
                     </div>
 
                     <div className="lg:col-span-1">
-                        <a href="https://x.com/ElkJournals" target="_blank" rel="noopener noreferrer" className="text-[#204066] text-[11px] hover:underline">Tweets by @ElkJournals</a>
+                        <NewsWidget />
                     </div>
                 </div>
             </div>
