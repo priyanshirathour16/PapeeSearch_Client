@@ -1,9 +1,15 @@
 import React from 'react';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const Resources = () => {
     return (
-        <div className="container mx-auto px-4 py-3">
+        <>
+            <SEO 
+                title="Resources - ELK Asia Pacific Journals"
+                description="Authors can download resources such as journal paper template, Call for Papers, Agreement for Editors, Cover letter template and other needed documents"
+            />
+            <div className="container mx-auto px-4 py-3">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
                     <div className="content-inner form-panel">
@@ -43,6 +49,7 @@ const Resources = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

@@ -1,9 +1,15 @@
 import React from 'react';
 import { FaEdit } from 'react-icons/fa';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const ViewCallForPaper = () => {
     return (
+        <><SEO
+            title="View Latest Call for Papers by ELK Asia Pacific Journals"
+            description="Find and submit relevant journal for your manuscript publication here. All journals have ISSN and are listed internationally"
+            
+            />
         <div className="container mx-auto px-4 py-4">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
@@ -104,6 +110,7 @@ const ViewCallForPaper = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

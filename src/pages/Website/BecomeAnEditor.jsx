@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 import { authApi, applicationApi, journalCategoryApi } from '../../services/api';
 import CodeEntryInput from '../../components/CodeEntryInput';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 // import LoginForm from '../../components/LoginForm'; // Removed as we navigate to /login page now
 
 
@@ -247,7 +248,12 @@ const BecomeAnEditor = () => {
 
 
     return (
-        <div className="py-8 bg-white min-h-screen">
+        <>
+            <SEO 
+                title="Authors and Editors Registration - ELK Asia Pacific Journals"
+                description="Authors and Editors Registration - ELK Asia Pacific Journals"
+            />
+            <div className="py-8 bg-white min-h-screen">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* LEFT COLUMN - Main Content */}
@@ -509,6 +515,7 @@ const BecomeAnEditor = () => {
                 </div>
             </div>
         </div>
+        </>
     )
 }
 

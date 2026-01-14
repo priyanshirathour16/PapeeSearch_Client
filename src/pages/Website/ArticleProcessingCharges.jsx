@@ -1,10 +1,16 @@
 import React from 'react';
 import { FaEdit } from 'react-icons/fa';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const ArticleProcessingCharges = () => {
     return (
-        <div className="container mx-auto px-4 py-3">
+        <>
+            <SEO 
+                title="Article Processing Charge, Paper Publication Fee - ELK Asia Pacific Journals"
+                description="Details of Article Processing Charge (APC) for publishing in our International Google Scholar indexed journals"
+            />
+            <div className="container mx-auto px-4 py-3">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
                     <div className="">
@@ -98,6 +104,7 @@ const ArticleProcessingCharges = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

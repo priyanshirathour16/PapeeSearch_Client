@@ -4,10 +4,15 @@ import { FaLongArrowAltRight } from 'react-icons/fa';
 import RequestAccess from '../../components/Website/RequestAccess';
 import Services from '../../components/Website/Services';
 import ServiceImage from '../../components/Website/ServiceImage';
+import SEO from '../../components/SEO';
 
 const Home = () => {
     return (
         <>
+            <SEO 
+                title="Open Access Journals in India - ELK Asia Pacific Journals"
+                description="ELK Asia Pacific Journals is Expanding Literary Knowledge Base through its reputed Open Access journal published in multiple research areas."
+            />
             <section className="relative w-full border-t-2 border-white bg-gradient-to-r from-[#204066] to-[#204066] h-auto">
                 <div className="container mx-auto px-4">
                     <div className="w-full py-10 md:py-20 text-center relative z-10">
