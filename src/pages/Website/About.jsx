@@ -1,6 +1,7 @@
 import React from "react";
 import { FaEdit } from "react-icons/fa";
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from "../../components/SEO";
 
 const team = [
     {
@@ -42,7 +43,12 @@ const team = [
 
 export default function About() {
     return (
-        <div className="py-8 bg-white">
+        <>
+            <SEO 
+                title="Know More About Open-Access International ELK Asia Pacific Journals"
+                description="Into existence since 2009, ELK Asia Pacific Journals, with unique DOI generation for all accepted papers, publish open access papers under cc license"
+            />
+            <div className="py-8 bg-white">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* LEFT COLUMN - content area */}
@@ -103,5 +109,6 @@ export default function About() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

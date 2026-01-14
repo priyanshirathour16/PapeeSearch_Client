@@ -2,9 +2,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaHandPointer, FaFileAlt } from 'react-icons/fa';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const WhyPublishWithUs = () => {
     return (
+        <>
+        <SEO 
+                title="Choose us for quick journal publication - ELK Asia Pacific Journals"
+                description="Our team of expert peer reviewers aim at providing quick and easy publication service to journals. Write in to us to get published"
+            />
         <div className="container mx-auto px-4 py-3">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
@@ -134,6 +140,7 @@ const WhyPublishWithUs = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

@@ -1,10 +1,16 @@
 import React from 'react';
 import { FaDownload, FaEdit } from 'react-icons/fa';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const AuthorGuidlinens = () => {
     return (
-        <div className="container mx-auto px-4 py-4">
+        <>
+            <SEO 
+                title="Authors Information - ELK Asia Pacific Journals"
+                description="Resources and instructions for Authors including Submission Guidelines, Research paper template, sample for covering letter, Call for Papers"
+            />
+            <div className="container mx-auto px-4 py-4">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
                     <div className="">
@@ -205,6 +211,7 @@ const AuthorGuidlinens = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

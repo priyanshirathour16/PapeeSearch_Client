@@ -1,9 +1,15 @@
 import React from 'react';
 import { FaEdit } from "react-icons/fa";
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const TermsAndConditions = () => {
     return (
+        <>
+        <SEO 
+            title="Terms & Conditions - ELK Asia Pacific Journals"
+            description=""
+        />
         <div className="py-8 bg-white">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -113,6 +119,7 @@ const TermsAndConditions = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 }
 

@@ -2,10 +2,16 @@ import React from 'react';
 import { FaEdit } from 'react-icons/fa';
 import Image from "../../assets/images/im-logo.png";
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const ImpactFactors = () => {
     return (
-        <div className="container mx-auto px-4 py-8">
+        <>
+            <SEO 
+                title="Impact Factor Score, Journals Impact Factor - ELK Asia Pacific Journal"
+                description="Know the impact factor of our journals and choose the relevant journal that is suitable to your research area"
+            />
+            <div className="container mx-auto px-4 py-8">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
                     <div className="">
@@ -92,6 +98,7 @@ const ImpactFactors = () => {
 
             </div>
         </div>
+        </>
     );
 };
 

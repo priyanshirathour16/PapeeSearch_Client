@@ -1,9 +1,15 @@
 import React from 'react';
 import { FaEdit } from 'react-icons/fa';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const MeetOurTeam = () => {
     return (
+        <>
+        <SEO
+                title="Meet Our Team - ELK Asia Pacific Journals"
+                description=""
+            />
         <div className="container mx-auto px-4 py-2">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
@@ -65,6 +71,7 @@ const MeetOurTeam = () => {
 
             </div>
         </div>
+        </>
     );
 };
 

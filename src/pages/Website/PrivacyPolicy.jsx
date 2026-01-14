@@ -1,8 +1,14 @@
 import React from 'react';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const PrivacyPolicy = () => {
   return (
+    <>
+    <SEO
+      title="Privacy Policy - ELK Asia Pacific Journals"
+      description=""
+    />
     <div className="py-8 bg-white min-h-screen">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -134,6 +140,7 @@ const PrivacyPolicy = () => {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

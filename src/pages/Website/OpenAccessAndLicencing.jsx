@@ -1,10 +1,16 @@
 import React from 'react';
 import { FaCheckCircle, FaBan, FaEdit } from 'react-icons/fa';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const OpenAccessAndLicencing = () => {
     return (
-        <div className="container mx-auto px-4 py-2">
+        <>
+            <SEO 
+                title="Open Access Policies - ELK Asia Pacific Journals"
+                description="ELK Asia Pacific Journals are Open Access and adhere to the BOAI definition of Open Access. After blind review process, articles are published under CC-BY International license."
+            />
+            <div className="container mx-auto px-4 py-2">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
                     <div className="">
@@ -99,7 +105,7 @@ const OpenAccessAndLicencing = () => {
 
             </div>
         </div>
-
+        </>
     )
 }
 

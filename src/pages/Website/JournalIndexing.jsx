@@ -1,5 +1,6 @@
 import React from 'react';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 // Importing images as requested
 import image1 from '../../assets/images/image1.png';
@@ -105,8 +106,13 @@ const JournalIndexing = () => {
     ];
 
     return (
-        <div className="container mx-auto px-4 py-3">
-            <div className="flex flex-wrap">
+        <>
+            <SEO 
+                title="Journal indexing, International Indexes - ELK Asia Pacific Journals"
+                description="We help scholars increase citation of their paper by indexing our journals at Google Scholar and other journal directories. Contact us for journal paper indexing"
+            />
+            <div className="container mx-auto px-4 py-3">
+                <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
                     <div className="">
                         <h1 className="text-2xl text-[#12b48b] font-normal mb-2 relative inline-block">
@@ -152,6 +158,7 @@ const JournalIndexing = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { journalCategoryApi } from '../../services/api';
 import { Link } from 'react-router-dom';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const numberToWords = (num) => {
     const words = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
@@ -62,6 +63,11 @@ const BrowseOfJournals = () => {
     }
 
     return (
+        <><SEO
+            title="Our list of Journals - ELK Asia Pacific Journal"
+            description="With our wide list of journals, we attempt to provide quality research information on various research areas such as Marketing, Finance, Engineering and Social Sciences"
+            
+            />
         <div className="container mx-auto px-4 py-3">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
@@ -109,6 +115,7 @@ const BrowseOfJournals = () => {
 
             </div>
         </div>
+        </>
     );
 };
 

@@ -1,10 +1,16 @@
 import React from 'react';
 import { FaEdit } from 'react-icons/fa';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 const EthicalGuidLine = () => {
     return (
-        <div className="container mx-auto px-4 py-3">
+        <>
+            <SEO 
+                title="Publication Ethics - ELK Asia Pacific Journals"
+                description="For ethical publishing of journal papers we have mentioned our ethical guidelines for authors, reviewers and editors so as to maintain authenticity and originality of the papers"
+            />
+            <div className="container mx-auto px-4 py-3">
             <div className="flex flex-wrap">
                 <div className="w-full lg:w-3/4">
                     <div className="">
@@ -104,6 +110,7 @@ const EthicalGuidLine = () => {
 
             </div>
         </div>
+        </>
     );
 };
 

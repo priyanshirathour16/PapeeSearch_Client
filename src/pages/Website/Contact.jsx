@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { contactUsApi } from '../../services/api';
 import CodeEntryInput from '../../components/CodeEntryInput';
 import NewsWidget from "../../components/Website/NewsWidget";
+import SEO from '../../components/SEO';
 
 // Reusable Components matching other forms
 const IconInput = ({ icon: Icon, ...props }) => (
@@ -104,7 +105,12 @@ const Contact = () => {
     });
 
     return (
-        <div className="py-8 bg-white min-h-screen font-sans">
+        <>
+            <SEO 
+                title="Get contact details of ELK Asia Pacific Journals"
+                description=""
+            />
+            <div className="py-8 bg-white min-h-screen font-sans">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     <div className="lg:col-span-3">
@@ -252,6 +258,7 @@ const Contact = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 }
 
