@@ -19,9 +19,9 @@ const ImpactFactors = () => {
                             Impact Factor
                         </h1>
 
-                        <div className="flex justify-center mb-8">
+                        {/* <div className="flex justify-center mb-8">
                             <img src={Image} className="max-w-full h-auto" alt="Impact Factor Scores" />
-                        </div>
+                        </div> */}
 
                         <div className="bg-[#204066] text-white p-4 font-bold text-center mb-6 uppercase text-sm">
                             ELK Asia Pacific Journals reveals its success story to a trending measure of quality!
@@ -92,7 +92,7 @@ const ImpactFactors = () => {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-1/4 mt-8 lg:mt-0">
+                <div className="w-full lg:w-1/4 mt-8 lg:mt-0 lg:pl-6">
                     <NewsWidget />
                 </div>
 

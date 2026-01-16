@@ -10,25 +10,25 @@ import SEO from '../../components/SEO';
 
 // Reusable Components matching other forms
 const IconInput = ({ icon: Icon, ...props }) => (
-    <div className={`flex bg-[#f1f1f1] border rounded-sm overflow-hidden mb-1 h-10 ${props.error ? 'border-red-500' : 'border-[#e5e5e5]'}`}>
-        <div className="w-10 flex items-center justify-center bg-[#e0e0e0] text-[#666] border-r border-[#ccc]">
-            <Icon className="text-sm" />
+    <div className={`flex bg-white border rounded-lg overflow-hidden mb-1 h-12 shadow-sm hover:shadow-md transition-shadow ${props.error ? 'border-red-400' : 'border-gray-300'}`}>
+        <div className="w-12 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-[#204066] border-r border-gray-300">
+            <Icon className="text-base" />
         </div>
         <input
             {...props}
-            className="flex-1 px-3 py-2 bg-[#f1f1f1] focus:bg-white focus:outline-none text-[13px] text-gray-700 placeholder-gray-500"
+            className="flex-1 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-[#12b48b]/30 text-sm text-gray-700 placeholder-gray-500"
         />
     </div>
 );
 
 const SelectInput = ({ icon: Icon, options, ...props }) => (
-    <div className={`flex bg-[#f1f1f1] border rounded-sm overflow-hidden mb-1 h-10 ${props.error ? 'border-red-500' : 'border-[#e5e5e5]'}`}>
-        <div className="w-10 flex items-center justify-center bg-[#e0e0e0] text-[#666] border-r border-[#ccc]">
-            <Icon className="text-sm" />
+    <div className={`flex bg-white border rounded-lg overflow-hidden mb-1 h-12 shadow-sm hover:shadow-md transition-shadow ${props.error ? 'border-red-400' : 'border-gray-300'}`}>
+        <div className="w-12 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-[#204066] border-r border-gray-300">
+            <Icon className="text-base" />
         </div>
         <select
             {...props}
-            className="flex-1 px-3 py-2 bg-[#f1f1f1] focus:bg-white focus:outline-none text-[13px] text-gray-700 placeholder-gray-500 appearance-none"
+            className="flex-1 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-[#12b48b]/30 text-sm text-gray-700 appearance-none cursor-pointer"
         >
             {props.children}
         </select>
@@ -110,7 +110,7 @@ const Contact = () => {
                 title="Get contact details of ELK Asia Pacific Journals"
                 description=""
             />
-            <div className="py-8 bg-white min-h-screen font-sans">
+            <div className="py-12 bg-gradient-to-b from-gray-50 to-white min-h-screen font-sans">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     <div className="lg:col-span-3">
@@ -122,7 +122,7 @@ const Contact = () => {
                         </div>
 
                         {/* Form Section */}
-                        <div className="w-full mx-4">
+                        <div className="w-full bg-white rounded-xl shadow-xl border border-gray-200 p-8">
                             {/* Form Header with Green Left Border */}
                             <div className="bg-[#204066] py-1 px-4 mb-6 border-l-[5px] border-[#12b48b]">
                                 <h2 className="text-white text-[16px] font-normal uppercase tracking-wide">GENERAL ENQUIRY</h2>
@@ -201,13 +201,13 @@ const Contact = () => {
                                     <option value="Others">Others</option>
                                 </SelectInput>
 
-                                <div className="mb-4">
-                                    <div className={`bg-[#f1f1f1] border rounded-sm p-3 ${formik.touched.message && formik.errors.message ? 'border-red-500' : 'border-[#e5e5e5]'}`}>
+                                <div className="mb-6">
+                                    <div className={`bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow ${formik.touched.message && formik.errors.message ? 'border-red-400' : 'border-gray-300'}`}>
                                         <textarea
                                             name="message"
-                                            rows="5"
-                                            className="w-full bg-transparent focus:outline-none text-[13px] text-gray-700 placeholder-gray-500 resize-y"
-                                            placeholder="Message*"
+                                            rows="6"
+                                            className="w-full bg-transparent focus:outline-none focus:ring-2 focus:ring-[#12b48b]/30 text-sm text-gray-700 placeholder-gray-500 resize-y rounded-lg"
+                                            placeholder="Message *"
                                             onChange={formik.handleChange}
                                             onBlur={formik.handleBlur}
                                             value={formik.values.message}
@@ -217,35 +217,28 @@ const Contact = () => {
                                 </div>
 
                                 {/* Captcha Section */}
-                                <div className="flex flex-col md:flex-row justify-between items-start mt-6 gap-4">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex gap-2">
-                                                <CodeEntryInput
-                                                    length={4}
-                                                    onChange={(code) => formik.setFieldValue('captchaInput', code)}
-                                                />
-                                            </div>
-                                            <div className="bg-[#48637c] text-white h-10 flex items-center px-4 text-lg font-medium tracking-widest min-w-[70px] justify-center shadow-sm">
-                                                {captchaCode}
-                                            </div>
+                                <div className="mt-8">
+                                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                                        <div className="flex gap-2">
+                                            <CodeEntryInput
+                                                length={4}
+                                                onChange={(code) => formik.setFieldValue('captchaInput', code)}
+                                            />
                                         </div>
-                                        <span className="text-[10px] text-gray-500 mt-1">Enter Code As Seen</span>
-                                        {formik.touched.captchaInput && formik.errors.captchaInput && <div className="text-red-500 text-xs mt-1">{formik.errors.captchaInput}</div>}
-                                    </div>
-
-                                    <div className="text-center md:text-right flex flex-col items-end">
-                                        <p className="text-[#c45500] text-[12px] mb-8">(*) represents mandatory fields</p>
-
+                                        <div className="bg-gradient-to-br from-[#48637c] to-[#3a4d5f] text-white h-12 flex items-center px-6 text-xl font-bold tracking-widest min-w-[90px] justify-center shadow-lg rounded-lg">
+                                            {captchaCode}
+                                        </div>
                                         <button
                                             type="submit"
                                             disabled={formik.isSubmitting}
-                                            className="inline-flex items-center justify-center px-6 py-2 bg-[#12b48b] text-white text-sm font-bold rounded-full hover:bg-[#0e9f7a] transition-colors uppercase gap-2 disabled:opacity-50"
+                                            className="ml-auto inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#12b48b] to-[#0e9673] hover:from-[#0e9673] hover:to-[#0a7857] text-white text-sm font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 uppercase gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-12"
                                         >
                                             {formik.isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
-                                            <FaLongArrowAltRight className="text-sm" />
+                                            <FaLongArrowAltRight className="text-base" />
                                         </button>
                                     </div>
+                                    {formik.touched.captchaInput && formik.errors.captchaInput && <div className="text-red-500 text-xs mb-2">{formik.errors.captchaInput}</div>}
+                                    <p className="text-red-600 text-sm font-medium">(*) represents mandatory fields</p>
                                 </div>
 
                             </form>

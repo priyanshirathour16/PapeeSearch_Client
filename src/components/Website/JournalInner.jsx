@@ -38,25 +38,25 @@ const JournalInner = ({ journalData }) => {
                     {/* LEFT SIDEBAR */}
                     <div className="w-full lg:w-1/4 space-y-6">
                         {/* Open Access Widget */}
-                        <div className="bg-white shadow-sm border border-gray-200">
-                            <div className="bg-[#12b48b] text-white p-3 font-bold uppercase flex items-center gap-2">
-                                <FaUnlockAlt /> Open Access
+                        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
+                            <div className="bg-gradient-to-r from-[#12b48b] to-[#0e9673] text-white p-4 font-bold uppercase flex items-center gap-2">
+                                <FaUnlockAlt className="text-xl" /> Open Access
                             </div>
-                            <div className="p-4 flex justify-center">
-                                <img src={`${ImageURl}${journalData.coverImage}`} alt={journalData.title} className="max-w-full h-auto shadow-md" />
+                            <div className="p-6 flex justify-center bg-gradient-to-b from-white to-gray-50">
+                                <img src={`${ImageURl}${journalData.coverImage}`} alt={journalData.title} className="max-w-full h-auto shadow-xl rounded-md hover:scale-105 transition-transform duration-300" />
                             </div>
                         </div>
 
                         {/* Action Buttons */}
                         <div className="space-y-4">
-                            <button className="w-full bg-[#204066] text-white py-3 px-4 uppercase font-bold text-sm tracking-wide text-left flex justify-between items-center hover:bg-[#1a3352] transition-colors shadow-md border-l-4 border-l-[#12b48b] relative overflow-hidden group">
+                            <button className="w-full bg-gradient-to-r from-[#204066] to-[#1a3352] text-white py-4 px-5 uppercase font-bold text-sm tracking-wide text-left flex justify-between items-center hover:from-[#1a3352] hover:to-[#12304a] transition-all duration-300 shadow-lg hover:shadow-xl rounded-lg border-l-4 border-l-[#12b48b] transform hover:scale-105 relative overflow-hidden group">
                                 <span className="relative z-10">Peer Review Process</span>
-                                <span className="relative z-10">→</span>
+                                <span className="relative z-10 text-xl">→</span>
                             </button>
-                            <button onClick={() => navigate('/publication-ethics-and-malpractice-statement')} className="w-full bg-[#12b48b] text-white py-3 px-4 uppercase font-bold text-sm tracking-wide text-left flex justify-between items-center hover:bg-[#0e9673] transition-colors shadow-md border-l-4 border-l-[#204066] relative overflow-hidden group">
+                            <button onClick={() => navigate('/publication-ethics-and-malpractice-statement')} className="w-full bg-gradient-to-r from-[#12b48b] to-[#0e9673] text-white py-4 px-5 uppercase font-bold text-sm tracking-wide text-left flex justify-between items-center hover:from-[#0e9673] hover:to-[#0a7857] transition-all duration-300 shadow-lg hover:shadow-xl rounded-lg border-l-4 border-l-[#204066] transform hover:scale-105 relative overflow-hidden group">
                                 <span className="relative z-10">Publication Ethics <br />& Malpractice Statement</span>
                             </button>
-                            <button className="w-full bg-gradient-to-r from-[#0d2a4f] to-[#1a3a63] text-white py-3 px-4 uppercase font-bold text-sm tracking-wide text-center hover:from-[#112233] hover:to-[#1a3352] transition-colors shadow-md relative overflow-hidden group">
+                            <button className="w-full bg-gradient-to-r from-[#0d2a4f] to-[#1a3a63] text-white py-4 px-5 uppercase font-bold text-sm tracking-wide text-center hover:from-[#112233] hover:to-[#1a3352] transition-all duration-300 shadow-lg hover:shadow-xl rounded-lg transform hover:scale-105 relative overflow-hidden group">
                                 <Link to="mailto:info@elkjournals.com" className="flex items-center justify-center gap-2">
                                     <span className="relative z-10 text-white">Contact Editorial Office</span>
                                     <FaEnvelope className="relative z-10 text-white text-lg" />
@@ -78,14 +78,14 @@ const JournalInner = ({ journalData }) => {
                         </h1>
 
                         {/* Tabs Navigation */}
-                        <div className="flex border-b border-gray-300 mb-6">
+                        <div className="flex border-b-2 border-gray-300 mb-6">
                             {['journals', 'areas', 'editorial'].map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`relative py-3 px-6 text-sm font-medium transition-colors duration-300 border border-gray-300 border-b-0 mr-1 ${activeTab === tab
-                                        ? 'bg-[#204066] text-white after:content-[""] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-t-[8px] after:border-t-[#204066] after:border-x-[8px] after:border-x-transparent'
-                                        : 'bg-gray-200 text-[#204066] hover:bg-gray-300'
+                                    className={`relative py-3 px-6 text-sm font-bold transition-all duration-300 rounded-t-lg mr-2 ${activeTab === tab
+                                        ? 'bg-gradient-to-b from-[#204066] to-[#1a3352] text-white shadow-lg transform -translate-y-0.5 after:content-[""] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-t-[10px] after:border-t-[#1a3352] after:border-x-[10px] after:border-x-transparent'
+                                        : 'bg-gray-100 text-[#204066] hover:bg-gray-200 hover:shadow-md border border-gray-300'
                                         }`}
                                 >
                                     {tab === 'journals' ? 'About Journals' : tab === 'areas' ? 'Areas Covered' : 'Editorial Board'}
@@ -94,16 +94,16 @@ const JournalInner = ({ journalData }) => {
                         </div>
 
                         {/* Tab Content */}
-                        <div className="bg-white p-6 shadow-sm border border-gray-100 min-h-[500px]">
+                        <div className="bg-white p-8 shadow-xl rounded-lg border border-gray-200 min-h-[500px]">
 
                             {/* ABOUT JOURNALS TAB */}
                             {activeTab === 'journals' && (
                                 <div className="space-y-4 text-gray-700 text-sm leading-relaxed text-justify">
-                                    <p className="font-bold text-[#204066] bg-gray-50 p-3 rounded-md border-l-4 border-[#12b48b]">
-                                        <span className="text-[#12b48b] text-lg">{journalData.stats.volumes}</span> Volumes,
-                                        <span className="text-[#12b48b] text-lg mx-2">{journalData.stats.issues}</span> Issues,
-                                        <span className="text-[#12b48b] text-lg">{journalData.stats.articles}</span> Articles available from {journalData.stats.yearRange}.
-                                    </p>
+                                    <div className="font-bold text-[#204066] bg-gradient-to-r from-gray-50 to-white p-4 rounded-lg border-l-4 border-[#12b48b] shadow-md">
+                                        <span className="text-[#12b48b] text-xl font-extrabold">{journalData.stats.volumes}</span> Volumes,
+                                        <span className="text-[#12b48b] text-xl font-extrabold mx-2">{journalData.stats.issues}</span> Issues,
+                                        <span className="text-[#12b48b] text-xl font-extrabold">{journalData.stats.articles}</span> Articles available from {journalData.stats.yearRange}.
+                                    </div>
 
                                     {Array.isArray(journalData.about) && journalData.about.map((para, index) => (
                                         <p key={index} dangerouslySetInnerHTML={{ __html: para }} />
@@ -191,53 +191,55 @@ const JournalInner = ({ journalData }) => {
                     <div className="w-full lg:w-1/4 space-y-6">
 
                         {/* Metrics Widget */}
-                        <div className="bg-[#12b48b] text-white p-3 font-bold uppercase text-sm">
+                        <div className="bg-gradient-to-r from-[#12b48b] to-[#0e9673] text-white p-4 font-bold uppercase text-sm rounded-t-lg shadow-md">
                             Journal Metrics
                         </div>
-                        <div className="bg-white border border-t-0 p-4 space-y-4 shadow-sm">
-                            <div className="flex items-center gap-3 border-b border-dashed border-gray-300 pb-3">
-                                <div className="bg-gray-200 p-2 rounded-md text-black"><FaPrint size={24} /></div>
-                                <div className="text-[#204066] font-medium">
-                                    {journalData.issn.print} (ISSN Print)
+                        <div className="bg-white rounded-b-lg p-4 space-y-4 shadow-lg border border-t-0 border-gray-200">
+                            <div className="flex items-center gap-4 border-b border-dashed border-gray-300 pb-4 hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                <div className="bg-gradient-to-br from-gray-200 to-gray-300 p-3 rounded-lg text-[#204066] shadow-md"><FaPrint size={24} /></div>
+                                <div className="text-[#204066] font-semibold">
+                                    {journalData.issn.print} <span className="text-sm text-gray-600">(ISSN Print)</span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 border-b border-dashed border-gray-300 pb-3">
-                                <div className="bg-gray-200 p-2 rounded-md text-black"><FaGlobe size={24} /></div>
-                                <div className="text-[#204066] font-medium">
-                                    {journalData.issn.online} (ISSN Online)
+                            <div className="flex items-center gap-4 border-b border-dashed border-gray-300 pb-4 hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                <div className="bg-gradient-to-br from-gray-200 to-gray-300 p-3 rounded-lg text-[#204066] shadow-md"><FaGlobe size={24} /></div>
+                                <div className="text-[#204066] font-semibold">
+                                    {journalData.issn.online} <span className="text-sm text-gray-600">(ISSN Online)</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Impact Factor Widget */}
-                        {journalData?.impactFactors?.length > 0 && <>   <div className="bg-[#00cca3] text-white p-3 font-bold uppercase text-sm">
+                        {journalData?.impactFactors?.length > 0 && <>   <div className="bg-gradient-to-r from-[#00cca3] to-[#00b894] text-white p-4 font-bold uppercase text-sm rounded-t-lg shadow-md">
                             JID Impact Factor
                         </div>
-                            <div className="bg-white border border-t-0 p-2 space-y-1 shadow-sm max-h-[400px] overflow-y-auto custom-scrollbar">
+                            <div className="bg-white rounded-b-lg border border-t-0 border-gray-200 p-3 space-y-2 shadow-lg max-h-[400px] overflow-y-auto custom-scrollbar">
                                 {journalData?.impactFactors?.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-sm hover:shadow-md transition-shadow">
-                                        <FaCalendarAlt className="text-gray-400" />
-                                        <div className="font-medium text-gray-700 text-sm">
-                                            <span className="font-bold">{item.year}:</span> {item.score}
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:shadow-lg hover:border-[#00cca3] transition-all duration-200">
+                                        <div className="bg-[#00cca3] text-white p-2 rounded-lg">
+                                            <FaCalendarAlt className="text-sm" />
+                                        </div>
+                                        <div className="font-semibold text-gray-700 text-sm">
+                                            <span className="font-bold text-[#204066]">{item.year}:</span> <span className="text-[#00cca3] font-bold">{item.score}</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>  </>}
 
                         {/* Submit Manuscript Button */}
-                        <Link to="/submit-manuscript" className="block w-full bg-[#204066] hover:bg-[#1a3352] text-white font-bold py-4 px-4 text-center uppercase tracking-wider transition-colors shadow-lg">
+                        <Link to="/submit-manuscript" className="block w-full bg-gradient-to-r from-[#204066] to-[#1a3352] hover:from-[#12b48b] hover:to-[#0e9673] text-white hover:text-white font-bold py-5 px-4 text-center uppercase tracking-wider transition-all duration-300 shadow-xl hover:shadow-2xl rounded-lg transform hover:scale-105">
                             Submit Your Manuscript →
                         </Link>
 
                         {/* Index & Citations Widget */}
-                        <div className="bg-[#009688] text-white p-3 font-bold uppercase text-sm">
+                        <div className="bg-gradient-to-r from-[#009688] to-[#00796b] text-white p-4 font-bold uppercase text-sm rounded-t-lg shadow-md">
                             Index & Citations
                         </div>
-                        <div className="bg-white border border-t-0 p-4 flex justify-center items-center shadow-sm min-h-[120px]">
+                        <div className="bg-gradient-to-b from-white to-gray-50 rounded-b-lg border border-t-0 border-gray-200 p-6 flex justify-center items-center shadow-lg min-h-[140px]">
                             <img
                                 src={currentCitation}
                                 alt="Index and Citation"
-                                className="max-w-full max-h-[80px] object-contain transition-opacity duration-500"
+                                className="max-w-full max-h-[90px] object-contain transition-all duration-500 hover:scale-110"
                             />
                         </div>
 

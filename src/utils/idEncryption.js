@@ -21,3 +21,23 @@ export const decryptId = (encryptedId) => {
         return null;
     }
 };
+
+// Create URL-friendly slug from conference name
+export const createSlug = (name) => {
+    if (!name) return 'conference';
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '_')     // Replace spaces with underscores
+        .replace(/-+/g, '_')      // Replace hyphens with underscores
+        .replace(/_+/g, '_')      // Replace multiple underscores with single
+        .substring(0, 100);       // Limit length
+};
+
+// Generate conference URL with slug and encrypted ID
+export const generateConferenceUrl = (name, id) => {
+    const slug = createSlug(name);
+    const encryptedId = encryptId(id);
+    return `/${slug}/${encryptedId}`;
+};

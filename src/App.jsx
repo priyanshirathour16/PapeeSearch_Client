@@ -106,7 +106,7 @@ function App() {
           </Route>
 
           {/* Standalone Route for Conference Details (No WebsiteLayout) */}
-          <Route path="/conference/:id" element={<ConferenceDetailsPage />} />
+          <Route path="/:conferenceSlug/:encryptedId" element={<ConferenceDetailsPage />} />
 
           <Route element={<PublicRoute />}>
             <Route path="/admin/login" element={<Login />} />

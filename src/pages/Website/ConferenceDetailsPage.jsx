@@ -1,67 +1,84 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Spin, Tabs, Card, Row, Col, Typography, Button, Table, Alert } from 'antd';
-import { HomeOutlined, DownloadOutlined, EnvironmentOutlined, TeamOutlined, ScheduleOutlined, InfoCircleOutlined, FileTextOutlined, PhoneOutlined } from '@ant-design/icons';
-import { conferenceTemplateApi } from '../../services/api'; // Adjust path if needed
-import { ImageURl } from '../../services/serviceApi'; // Adjust path if needed
+import { Spin, Tabs, Card, Row, Col, Typography, Button, Divider, Tag, Space, Alert } from 'antd';
+import {
+    CalendarOutlined,
+    EnvironmentOutlined,
+    ShareAltOutlined,
+    UserOutlined,
+    MailOutlined,
+    GlobalOutlined,
+    ArrowRightOutlined,
+    InfoCircleOutlined,
+    TeamOutlined,
+    FileTextOutlined,
+    SafetyCertificateOutlined,
+    ScheduleOutlined,
+    TrophyOutlined,
+    FieldTimeOutlined,
+    LeftOutlined,
+    RightOutlined
+} from '@ant-design/icons';
+import { Carousel } from 'antd'; // Added for Keynote Speakers
+import { conferenceTemplateApi } from '../../services/api'; // Ensure this path is correct based on original file
+import { ImageURl } from '../../services/serviceApi'; // Ensure this path is correct
 import DOMPurify from 'dompurify';
-import moment from 'moment';
-import logo from "../../assets/images/elk-logo.png"; // Assuming standard logo path
+import Logo from "../../assets/images/elk-logo.png"; // check relative path
+import { decryptId } from '../../utils/idEncryption';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
+
+const SlickArrowLeft = ({ currentSlide, slideCount, ...props }) => (
+    <div
+        {...props}
+        className={
+            "slick-prev slick-arrow !bg-blue-600 !h-10 !w-10 !flex !items-center !justify-center !rounded-full !left-[-15px] !z-10 hover:!bg-blue-700 custom-slick-arrow-left" +
+            (props.className ? " " + props.className : "")
+        }
+        aria-hidden="true"
+        aria-disabled={currentSlide === 0 ? true : false}
+        type="button"
+    >
+        <LeftOutlined />
+    </div>
+);
+
+const SlickArrowRight = ({ currentSlide, slideCount, ...props }) => (
+    <div
+        {...props}
+        className={
+            "slick-next slick-arrow !bg-blue-600 !h-10 !w-10 !flex !items-center !justify-center !rounded-full !right-[-15px] !z-10 hover:!bg-blue-700 custom-slick-arrow-right" +
+            (props.className ? " " + props.className : "")
+        }
+        aria-hidden="true"
+        aria-disabled={currentSlide === slideCount - 1 ? true : false}
+        type="button"
+    >
+        <RightOutlined />
+    </div>
+);
 
 const ConferenceDetailsPage = () => {
-    const { id } = useParams();
+    const { encryptedId } = useParams();
     const navigate = useNavigate();
     const [conferenceData, setConferenceData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const id = decryptId(encryptedId);
+
     useEffect(() => {
         const fetchDetails = async () => {
+            // Mock Data structure logic removed as per request to use real API flow, but keeping the fetch logic.
+            if (!id) {
+                setError('Invalid conference URL');
+                setLoading(false);
+                return;
+            }
             try {
                 const response = await conferenceTemplateApi.getById(id);
                 if (response.data && response.data.success) {
-                    const data = response.data.success;
-
-                    // Helper to safely parse JSON or return original if array
-                    const safeJsonParse = (field) => {
-                        if (Array.isArray(field)) return field;
-                        if (typeof field === 'string') {
-                            try {
-                                const parsed = JSON.parse(field);
-                                if (Array.isArray(parsed)) return parsed;
-                            } catch (e) {
-                                // If not valid JSON, return empty array for safety
-                                console.warn('Failed to parse JSON field:', e);
-                            }
-                        }
-                        return [];
-                    };
-
-                    // Helper for string arrays (comma separated or JSON)
-                    const safeStringArrayParse = (field) => {
-                        if (Array.isArray(field)) return field;
-                        if (typeof field === 'string') {
-                            try {
-                                const parsed = JSON.parse(field);
-                                if (Array.isArray(parsed)) return parsed;
-                            } catch (e) {
-                                // Not JSON, try comma separation
-                                return field.split(',').map(item => item.trim()).filter(item => item);
-                            }
-                        }
-                        return [];
-                    };
-
-                    // Apply safe parsing to specific fields suspected to be JSON strings
-                    data.steering_committee = safeJsonParse(data.steering_committee);
-                    data.review_board = safeJsonParse(data.review_board);
-                    data.keynote_speakers = safeJsonParse(data.keynote_speakers);
-                    data.key_benefits = safeStringArrayParse(data.key_benefits);
-
-                    setConferenceData(data);
+                    setConferenceData(response.data.success);
                 } else {
                     setError('Failed to load conference details.');
                 }
@@ -72,357 +89,519 @@ const ConferenceDetailsPage = () => {
                 setLoading(false);
             }
         };
-
-        if (id) fetchDetails();
+        fetchDetails();
     }, [id]);
 
     if (loading) return <div className="flex justify-center items-center h-screen"><Spin size="large" /></div>;
     if (error) return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
     if (!conferenceData) return null;
 
-    // Destructure data for easier access
     const {
         conference,
-        venue, // object {name, map_link}
         description,
-        conference_objectives,
-        organizer_image,
-        organizer_logo,
-        important_dates,
-        call_for_papers,
         organizing_committee,
+        important_dates,
+        key_benefits,
+        who_should_join,
+        organizer_logo,
+        partner_image,
+        conference_objectives,
+        program_schedule,
+        themes,
+        keynote_speakers,
+        venue,
+        venue_image,
+        past_conferences,
+        organisers,
         steering_committee,
         review_board,
-        keynote_speakers,
-        organisers,
-        guidelines,
-        themes,
-        key_benefits
+        call_for_papers,
+        guidelines
     } = conferenceData;
 
-    // Helper to safely render HTML
-    const createMarkup = (html) => {
-        return { __html: DOMPurify.sanitize(html) };
+    // Helper to safely parse JSON strings from the API response
+    const parseJSON = (data, fallback = null) => {
+        try {
+            if (typeof data === 'object' && data !== null) return data;
+            return typeof data === 'string' ? JSON.parse(data) : data;
+        } catch (e) {
+            console.error("JSON Parse Error", e);
+            return fallback;
+        }
     };
 
-    // Prepare Important Dates for Table
-    const dateColumns = [
-        { title: 'Event', dataIndex: 'event', key: 'event', render: text => <span className="font-semibold text-gray-700">{text}</span> },
-        { title: 'Date', dataIndex: 'date', key: 'date', render: text => <span className="text-red-600 font-bold">{text}</span> },
-    ];
+    const parsedImportantDates = parseJSON(important_dates, {});
+    const parsedKeyBenefits = parseJSON(key_benefits, []);
+    const parsedVenue = parseJSON(venue, {});
+    const parsedKeynoteSpeakers = parseJSON(keynote_speakers, []);
 
-    const dateData = [];
-    if (important_dates) {
-        const formatDateRange = (item) => {
-            if (!item) return 'TBA';
-            const start = item.startDate ? item.startDate : '';
-            const end = item.lastDate ? item.lastDate : '';
-            if (start && end) return `${start} - ${end}`;
-            return end || start || 'TBA';
-        };
+    // Note: User asked to render "all these details", so I should try to render steering/review if they have content. 
+    const parsedSteeringCommittee = parseJSON(steering_committee, []);
+    const parsedReviewBoard = parseJSON(review_board, []);
 
-        if (important_dates.abstract_submission) {
-            dateData.push({ key: '1', event: 'Abstract Submission Deadline', date: formatDateRange(important_dates.abstract_submission) });
-        }
-        if (important_dates.full_paper_submission) {
-            dateData.push({ key: '2', event: 'Full Paper Submission Deadline', date: formatDateRange(important_dates.full_paper_submission) });
-        }
-        if (important_dates.registration) {
-            dateData.push({ key: '3', event: 'Registration Deadline', date: formatDateRange(important_dates.registration) });
-        }
-    }
+
+    const createMarkup = (html) => ({ __html: DOMPurify.sanitize(html) });
+    const formattedDate = conference?.start_date ? new Date(conference.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Date TBA';
+
+    // Helper component for content sections
+    const ContentSection = ({ title, content, icon }) => {
+        if (!content || content === 'null' || content === 'undefined') return null;
+        return (
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8" id={title.toLowerCase().replace(/\s/g, '-')}>
+                <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                    {icon && <div className="text-blue-600 text-2xl">{icon}</div>}
+                    <h3 className="text-xl font-bold text-gray-800 m-0">{title}</h3>
+                </div>
+                <div className="text-gray-600 leading-relaxed ql-editor">
+                    <div dangerouslySetInnerHTML={createMarkup(content)} />
+                </div>
+            </div>
+        );
+    };
+
+    const importantDateKeys = Object.keys(parsedImportantDates);
 
     return (
-        <div className="bg-gray-50 min-h-screen flex flex-col font-sans">
-            {/* Custom Header */}
-            <div className="bg-[#2c4a6e] text-white py-4 px-4 shadow-md">
-                <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    {/* Left: ELK Logo (Home Link) */}
-                    <Link to="/" className="flex-shrink-0 hover:opacity-90 transition-opacity">
-                        <img src={`${ImageURl}${organizer_logo}`} alt="ELK Education" className="h-12 md:h-16 bg-white rounded p-1" />
+        <div className="min-h-screen bg-gray-50 font-sans">
+            {/* 1. Header Section */}
+            <header className="bg-gradient-to-r from-[#0b1c2e] to-[#204066] shadow-lg sticky top-0 z-50 border-b border-white/5 backdrop-blur-sm bg-opacity-95">
+                <div className="container mx-auto px-4 h-auto lg:h-20 py-3 lg:py-0 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
+                    <Link to="/" className="flex-shrink-0 flex items-center gap-3 group">
+                        {organizer_logo ? (
+                            <img src={`${ImageURl}${organizer_logo}`} alt="Conference Logo" className="h-10 md:h-12 object-contain bg-white rounded px-2 py-1 shadow-sm group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                            <span className="text-xl font-bold text-white tracking-wide">{conference?.name}</span>
+                        )}
                     </Link>
 
-                    {/* Center: Title & Venue */}
-                    <div className="text-center flex-grow">
-                        <h1 className="text-xl md:text-2xl font-bold text-white uppercase tracking-wide mb-1">
-                            {conference?.name}
-                        </h1>
-                        <div className="flex items-center justify-center gap-2 text-[#45cbb2] font-medium text-sm md:text-base">
-                            <EnvironmentOutlined />
-                            <span>{venue?.name || conference?.organized_by}</span>
-                        </div>
-                    </div>
+                    {/* Basic Nav showing organized by */}
+                    <nav className="hidden lg:flex flex-nowrap justify-center items-center gap-1 text-white">
+                        <span className="font-semibold">{conference?.organized_by}</span>
+                    </nav>
 
-                    {/* Right: Organizer Logo */}
-                    <div className="flex-shrink-0">
+                    <div className="flex items-center gap-3">
                         <Link to="/">
-                            <img src={logo} alt="Logo" />
+                            <img src={Logo} alt="ELK Logo" className="h-8" />
                         </Link>
+                    </div>
+                </div>
+            </header>
+
+            {/* 2. Hero Section */}
+            <div className="relative bg-[#0b1c2e] text-white py-12 lg:py-20 overflow-hidden">
+                {/* Dynamic Background or Fallback */}
+                <div className="absolute inset-0 bg-cover bg-center opacity-10"
+                    style={{ backgroundImage: venue_image ? `url(${ImageURl}${venue_image})` : `url('https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=2070&auto=format&fit=crop')` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0b1c2e] via-[#0b1c2e]/90 to-transparent" />
+
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+                        <div className="lg:w-3/4">
+                            <div className="flex items-center gap-2 text-orange-400 text-sm mb-4">
+                                <Link to="/" className="hover:underline">Home</Link>
+                                <span>&gt;</span>
+                                <span className="truncate max-w-md">{conference?.name}</span>
+                            </div>
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-6">
+                                {conference?.name}
+                            </h1>
+                            <div className="flex flex-wrap items-center gap-6 text-gray-300 mb-8">
+                                <div className="flex items-center gap-2">
+                                    <CalendarOutlined className="text-lg" />
+                                    <span className="font-medium text-white">{formattedDate}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <EnvironmentOutlined className="text-lg" />
+                                    <span className="font-medium text-white">{parsedVenue?.name || conference?.city || 'Venue TBA'}</span>
+                                </div>
+                            </div>
+                            <Button type="primary" size="large" className="bg-blue-600 hover:bg-blue-500 border-none px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2">
+                                Register Now <ArrowRightOutlined />
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content Container */}
-            <div className="container mx-auto px-4 py-8 flex-grow">
+            {/* 3. Main Content Layout */}
 
-                <Tabs defaultActiveKey="home" type="card" className="custom-tabs" size="large">
 
-                    {/* HOME / OVERVIEW TAB */}
-                    <TabPane tab={<span><HomeOutlined /> Overview</span>} key="home">
-                        <div className="bg-white p-6 rounded-b shadow-sm">
-                            {/* Top Row: 3 Columns */}
-                            <Row gutter={[24, 24]} className="mb-8">
-                                {/* Col 1: Conference Details / Objectives */}
-                                <Col xs={24} lg={8}>
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 border-b-2 border-[#45cbb2] inline-block pb-1">
-                                        About Conference
-                                    </h3>
-                                    <div className="prose prose-sm max-w-none text-gray-600">
-                                        {conference_objectives ? (
-                                            <div dangerouslySetInnerHTML={createMarkup(conference_objectives)} />
-                                        ) : (
-                                            <p>Join us for the {conference?.name}, a premier gathering of professionals and scholars.</p>
-                                        )}
-                                    </div>
-                                </Col>
 
-                                {/* Col 2: Organizer Image */}
-                                <Col xs={24} md={12} lg={8} className="flex flex-col items-center">
-                                    {organizer_image ? (
-                                        <div className="w-full h-full min-h-[200px] bg-gray-100 rounded-lg overflow-hidden shadow-sm border border-gray-200">
-                                            <img
-                                                src={`${ImageURl}${organizer_image}`}
-                                                alt="Organizer Banner"
-                                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-400 rounded-lg">
-                                            No Organizer Image
-                                        </div>
-                                    )}
-                                </Col>
 
-                                {/* Col 3: Important Dates */}
-                                <Col xs={24} md={12} lg={8}>
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 border-b-2 border-[#45cbb2] inline-block pb-1">
-                                        Important Dates
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {dateData?.length > 0 && dateData.map((item) => (
-                                            <div key={item.key} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-                                                <div className="flex-shrink-0 bg-blue-50 text-[#1e3a5f] p-3 rounded-lg">
-                                                    <ScheduleOutlined className="text-xl" />
+
+
+
+
+            <div className="container mx-auto px-4 py-12">
+                <Row gutter={[32, 32]}>
+                    <Col xs={24} lg={16}>
+                        {/* Description */}
+                        <ContentSection title="About the Conference" content={description} icon={<InfoCircleOutlined />} />
+
+                        {/* Objectives */}
+                        <ContentSection title="Objectives" content={conference_objectives} icon={<GlobalOutlined />} />
+
+                        {/* Themes */}
+                        <ContentSection title="Conference Themes" content={themes} icon={<FileTextOutlined />} />
+
+                        {/* Call For Papers */}
+                        <ContentSection title="Call for Papers" content={call_for_papers} icon={<ShareAltOutlined />} />
+
+                        {/* Guidelines */}
+                        <ContentSection title="Submission Guidelines" content={guidelines} icon={<SafetyCertificateOutlined />} />
+
+                        {/* Target Audience */}
+                        <ContentSection title="Who Should Join" content={who_should_join} icon={<UserOutlined />} />
+
+
+
+                        {/* Committee Tabs */}
+                        <div className="bg-white rounded-xl shadow-sm border border-blue-100 mb-8 overflow-hidden">
+                            <Tabs defaultActiveKey="organizing" className="px-6 pt-4" items={[
+                                {
+                                    key: 'organizing',
+                                    label: (
+                                        <span className="flex items-center gap-2 py-2 px-1 text-base font-medium">
+                                            <TeamOutlined className="text-lg" /> Organizing Committee
+                                        </span>
+                                    ),
+                                    children: (
+                                        <div className="p-8 bg-gray-50/50 min-h-[200px]">
+                                            {organizing_committee ? (
+                                                <div className="organizing-committee-content">
+                                                    <div
+                                                        dangerouslySetInnerHTML={createMarkup(organizing_committee)}
+                                                        className="text-gray-600 leading-relaxed 
+                                                        [&>p]:bg-white [&>p]:p-4 [&>p]:rounded-lg [&>p]:border-l-4 [&>p]:border-blue-600 [&>p]:shadow-sm [&>p]:mb-3 
+                                                        [&>p]:transition-all [&>p]:hover:shadow-md [&>p]:hover:translate-x-1
+                                                        [&>ul]:list-none [&>ul]:p-0 
+                                                        [&>ul>li]:bg-white [&>ul>li]:p-4 [&>ul>li]:rounded-lg [&>ul>li]:border-l-4 [&>ul>li]:border-blue-600 [&>ul>li]:shadow-sm [&>ul>li]:mb-3
+                                                        [&>ul>li]:transition-all [&>ul>li]:hover:shadow-md [&>ul>li]:hover:translate-x-1
+                                                        [&_strong]:text-blue-900 [&_strong]:font-bold [&_strong]:mr-2
+                                                        [&_b]:text-blue-900 [&_b]:font-bold [&_b]:mr-2"
+                                                    />
                                                 </div>
-                                                <div className="flex-grow">
-                                                    <h4 className="font-bold text-gray-800 text-sm mb-1">{item.event}</h4>
-                                                    <div className="text-[#e63946] font-bold text-xs md:text-sm bg-red-50 inline-block px-2 py-1 rounded border border-red-100">
-                                                        {item.date}
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                                    <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                        <TeamOutlined className="text-2xl" />
                                                     </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Col>
-                            </Row>
-
-                            <hr className="border-gray-100 my-8" />
-
-                            {/* Row 2: Full Description */}
-                            {description && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Detailed Description</h3>
-                                    <div className="p-6 bg-gray-50 rounded-lg border-l-4 border-[#1e3a5f]">
-                                        <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={createMarkup(description)} />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Row 3: Key Benefits / Themes */}
-                            {themes && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Conference Themes</h3>
-                                    <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={createMarkup(themes)} />
-                                </div>
-                            )}
-
-                            {/* Key Benefits List */}
-                            {key_benefits && key_benefits.length > 0 && typeof key_benefits !== 'string' && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Key Benefits</h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        {key_benefits.map((benefit, index) => (
-                                            <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded">
-                                                <div className="mt-1 text-[#45cbb2] font-bold">•</div>
-                                                <div className="text-gray-700">{benefit}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-
-                            {/* Organizers Section for Home Tab */}
-                            {organisers && (
-                                <div className="mb-6">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Organizers</h3>
-                                    <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={createMarkup(organisers)} />
-                                </div>
-                            )}
-
-                        </div>
-                    </TabPane>
-
-                    {/* CALL FOR PAPERS TAB */}
-                    {call_for_papers && (
-                        <TabPane tab={<span><FileTextOutlined /> Call for Papers</span>} key="cfp">
-                            <div className="bg-white p-8 rounded-b shadow-sm min-h-[400px]">
-                                <h2 className="text-2xl font-bold text-[#1e3a5f] mb-6">Call for Papers</h2>
-                                <div className="prose max-w-none" dangerouslySetInnerHTML={createMarkup(call_for_papers)} />
-                                {guidelines && (
-                                    <div className="mt-8 pt-8 border-t border-gray-200">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Submission Guidelines</h3>
-                                        <div className="prose max-w-none" dangerouslySetInnerHTML={createMarkup(guidelines)} />
-                                    </div>
-                                )}
-                            </div>
-                        </TabPane>
-                    )}
-
-                    {/* COMMITTEE TAB */}
-                    {(organizing_committee || steering_committee || review_board) && (
-                        <TabPane tab={<span><TeamOutlined /> Committee</span>} key="committee">
-                            <div className="bg-white p-8 rounded-b shadow-sm">
-                                {organizing_committee && (
-                                    <div className="mb-8">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 bg-gray-100 p-2 border-l-4 border-blue-500">Organizing Committee</h3>
-                                        <div className="prose max-w-none" dangerouslySetInnerHTML={createMarkup(organizing_committee)} />
-                                    </div>
-                                )}
-
-                                {/* Steering Committee List */}
-                                {steering_committee && steering_committee.length > 0 && (
-                                    <div className="mb-8">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 bg-gray-100 p-2 border-l-4 border-blue-500">Steering Committee</h3>
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {steering_committee.map((member, idx) => (
-                                                <Card key={idx} size="small" className="hover:shadow-md transition-shadow">
-                                                    <span className="font-medium text-gray-800">{member.name}</span>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Review Board List */}
-                                {review_board && review_board.length > 0 && (
-                                    <div className="mb-8">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 bg-gray-100 p-2 border-l-4 border-blue-500">Review Board</h3>
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {review_board.map((member, idx) => (
-                                                <Card key={idx} size="small" className="hover:shadow-md transition-shadow">
-                                                    <span className="font-medium text-gray-800">{member.name}</span>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </TabPane>
-                    )}
-
-                    {/* KEYNOTE SPEAKERS TAB */}
-                    {keynote_speakers && keynote_speakers.length > 0 && (
-                        <TabPane tab={<span><TeamOutlined /> Keynote Speakers</span>} key="speakers">
-                            <div className="bg-white p-8 rounded-b shadow-sm">
-                                <h2 className="text-2xl font-bold text-[#1e3a5f] mb-6">Keynote Speakers</h2>
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    {keynote_speakers.map((speaker, index) => (
-                                        <div key={index} className="flex flex-col sm:flex-row gap-6 bg-gray-50 p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
-                                            <div className="flex-shrink-0 mx-auto sm:mx-0">
-                                                {speaker.image ? (
-                                                    <img src={`${ImageURl}${speaker.image}`} alt={speaker.name} className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-sm" />
-                                                ) : (
-                                                    <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-400">
-                                                        {speaker.name.charAt(0)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="text-center sm:text-left">
-                                                <h3 className="text-xl font-bold text-[#1e3a5f]">{speaker.name}</h3>
-                                                <p className="text-[#45cbb2] font-medium mb-2">{speaker.designation}</p>
-                                                <p className="text-gray-600 text-sm italic">{speaker.about}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </TabPane>
-                    )}
-
-                    {/* VENUE TAB */}
-                    {venue && (
-                        <TabPane tab={<span><EnvironmentOutlined /> Venue</span>} key="venue">
-                            <div className="bg-white p-8 rounded-b shadow-sm">
-                                <h2 className="text-2xl font-bold text-[#1e3a5f] mb-6">Conference Venue</h2>
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    <div>
-                                        <h3 className="text-xl font-semibold mb-2">{venue.name}</h3>
-                                        <p className="text-gray-600 mb-6">
-                                            Join us at this prestigious location for an immersive experience.
-                                        </p>
-                                        {/* Venue Image if available */}
-                                        {conferenceData.venue_image && (
-                                            <div className="rounded-lg overflow-hidden shadow-md mb-6">
-                                                <img src={`${ImageURl}${conferenceData.venue_image}`} alt={venue.name} className="w-full h-64 object-cover" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="h-96 bg-gray-100 rounded-lg overflow-hidden shadow-inner border border-gray-200">
-                                        {/* Google Map Embed */}
-                                        {venue.map_link && (
-                                            <iframe
-                                                title="Venue Map"
-                                                width="100%"
-                                                height="100%"
-                                                frameBorder="0"
-                                                style={{ border: 0 }}
-                                                src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(venue.map_link)}`} // Note: USER needs to handle API Key or use simple embed if link is embeddable
-                                            // Fallback to simple iframe if map_link is a directly embeddable URL, usually it is not.
-                                            // For now, let's assume we might need to just render a link or handle it safely.
-                                            // If it's a regular link, we can't embed it directly without manipulation.
-                                            // Simple fallback:
-                                            ></iframe>
-                                        ) || (
-                                                <div className="flex items-center justify-center h-full text-gray-500">
-                                                    Map Unavailable
+                                                    <p>No Record Available</p>
                                                 </div>
                                             )}
-                                        {/* Note: Google Maps Embed usually requires an API key or a specific embed URL structure. 
-                                             If the user provides a standard share link, it might be refused to connect in iframe.
-                                             Let's try to just use a link for now if simple embed fails, but for visual I'll put a placeholder or just the link.
-                                          */}
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: 'steering',
+                                    label: <span className="flex items-center gap-2 font-semibold"><TeamOutlined /> Steering Committee</span>,
+                                    children: (
+                                        <div className="pb-6 pt-2">
+                                            {parsedSteeringCommittee.length > 0 ? (
+                                                <div className="grid md:grid-cols-2 gap-4">
+                                                    {parsedSteeringCommittee.map((item, i) => {
+                                                        const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
+                                                        const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
+
+                                                        return (
+                                                            <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors border border-gray-100">
+                                                                <div className="mt-1 bg-blue-100 text-blue-600 rounded-full p-1.5 shadow-sm">
+                                                                    <UserOutlined />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-semibold text-gray-800">{name}</div>
+                                                                    {subtext && <div className="text-xs text-gray-500">{subtext}</div>}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No Record Available</div>
+                                            )}
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: 'review',
+                                    label: <span className="flex items-center gap-2 font-semibold"><TeamOutlined /> Review Board</span>,
+                                    children: (
+                                        <div className="pb-6 pt-2">
+                                            {parsedReviewBoard.length > 0 ? (
+                                                <div className="grid md:grid-cols-2 gap-4">
+                                                    {parsedReviewBoard.map((item, i) => {
+                                                        const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
+                                                        const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
+
+                                                        return (
+                                                            <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors border border-gray-100">
+                                                                <div className="mt-1 bg-blue-100 text-blue-600 rounded-full p-1.5 shadow-sm">
+                                                                    <UserOutlined />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-semibold text-gray-800">{name}</div>
+                                                                    {subtext && <div className="text-xs text-gray-500">{subtext}</div>}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No Record Available</div>
+                                            )}
+                                        </div>
+                                    )
+                                }
+                            ]} />
+                        </div>
+
+                        {/* Program Schedule */}
+                        {program_schedule && (
+                            <ContentSection title="Program Schedule" content={program_schedule} icon={<ScheduleOutlined />} />
+                        )}
+
+                    </Col>
+
+                    {/* RIGHT COLUMN */}
+                    <Col xs={24} lg={8}>
+                        {/* Important Dates Card */}
+                        {importantDateKeys.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-blue-100 mb-8 overflow-hidden">
+                                <div className="bg-white p-6">
+                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                                        <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
+                                            <CalendarOutlined className="text-xl" />
+                                        </div>
+                                        <h3 className="text-gray-800 font-bold m-0 text-xl">Important Dates</h3>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {importantDateKeys.map((key, idx) => {
+                                            const dateObj = parsedImportantDates[key];
+                                            const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                            if (!dateObj) return null;
+
+                                            // Logic to calculate status and progress
+                                            const startDate = new Date(dateObj.startDate);
+                                            const endDate = new Date(dateObj.lastDate);
+                                            const today = new Date();
+                                            let status = 'UPCOMING';
+                                            let progress = 0;
+                                            let statusColor = 'bg-blue-100 text-blue-600';
+                                            let dotColor = 'bg-blue-500';
+
+                                            if (today < startDate) {
+                                                status = 'UPCOMING';
+                                                progress = 0;
+                                                statusColor = 'bg-gray-200 text-gray-500'; // Darker gray for visibility
+                                                dotColor = 'bg-blue-500';
+                                            } else if (today >= startDate && today <= endDate) {
+                                                status = 'IN PROGRESS';
+                                                const totalDuration = endDate - startDate;
+                                                const elapsed = today - startDate;
+                                                progress = Math.min((elapsed / totalDuration) * 100, 100);
+                                                statusColor = 'bg-blue-100 text-blue-600';
+                                                dotColor = 'bg-blue-600';
+                                            } else {
+                                                status = 'CLOSED';
+                                                progress = 100;
+                                                statusColor = 'bg-gray-100 text-gray-400';
+                                                dotColor = 'bg-gray-400';
+                                            }
+
+                                            // Handle invalid dates
+                                            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                                                progress = 0;
+                                                status = 'TBA';
+                                                statusColor = 'bg-gray-100 text-gray-400';
+                                                dotColor = 'bg-gray-300';
+                                            }
+
+                                            return (
+                                                <div key={idx} className="relative">
+                                                    {/* Header Row: Dot, Title & Status */}
+                                                    <div className="flex items-center justify-between mb-3 px-1">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`h-3 w-3 rounded-full border-2 border-white ring-1 ring-offset-0 ${dotColor.replace('bg-', 'ring-')}`}>
+                                                                <div className={`h-full w-full rounded-full ${dotColor}`}></div>
+                                                            </div>
+                                                            <h4 className="font-bold text-gray-800 text-[15px] m-0">{title}</h4>
+                                                        </div>
+                                                        <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${statusColor}`}>
+                                                            {status}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Details Card */}
+                                                    <div className="bg-[#F8F9FC] rounded-xl p-3 border border-gray-100/50">
+                                                        <div className="space-y-2">
+                                                            {/* Start Date Row */}
+                                                            <div className="flex items-center justify-between text-sm">
+                                                                <div className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-wider">
+                                                                    <CalendarOutlined className="text-gray-400" /> START DATE
+                                                                </div>
+                                                                <div className="font-bold text-gray-600/90 text-xs font-sans">
+                                                                    {dateObj.startDate || 'TBA'}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Deadline Row */}
+                                                            <div className="flex items-center justify-between text-sm">
+                                                                <div className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-wider">
+                                                                    <FieldTimeOutlined /> DEADLINE
+                                                                </div>
+                                                                <div className="font-bold text-red-500 text-xs font-sans">
+                                                                    {dateObj.lastDate || 'TBA'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-                                {venue.map_link && (
-                                    <div className="mt-4 text-center">
-                                        <Button type="primary" icon={<EnvironmentOutlined />} href={venue.map_link} target="_blank" size="large">
-                                            View on Google Maps
-                                        </Button>
+                            </div>
+                        )}
+
+                        {/* Organizers Section from HTML or generic */}
+                        {(organisers || organizer_logo) && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 p-6 mt-6">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Organized By</h3>
+                                {organizer_logo && (
+                                    <div className="mb-4 flex justify-center">
+                                        <img src={`${ImageURl}${organizer_logo}`} alt="Organizer Logo" className="max-h-24 object-contain" />
                                     </div>
                                 )}
+                                {organisers && (
+                                    <div dangerouslySetInnerHTML={createMarkup(organisers)} className="text-gray-600 text-sm" />
+                                )}
                             </div>
-                        </TabPane>
-                    )}
+                        )}
 
-                </Tabs>
+                        {/* Venue / Location Section - Updated */}
+                        {parsedVenue && (parsedVenue.name || typeof venue === 'string') && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 p-6">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Venue Location</h3>
+                                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden relative shadow-inner">
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        frameBorder="0"
+                                        style={{ border: 0 }}
+                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(parsedVenue.name || venue)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                                        allowFullScreen
+                                        title="Venue Map"
+                                    ></iframe>
+                                </div>
+                                <p className="mt-3 text-center font-medium text-gray-700 flex items-center justify-center gap-2">
+                                    <EnvironmentOutlined className="text-red-500" /> {parsedVenue.name || venue}
+                                </p>
+                            </div>
+                        )}
+
+                    </Col>
+                </Row>
             </div>
 
-            {/* Footer Area (Simple) */}
-            <div className="bg-gray-800 text-gray-400 py-6 text-center text-sm">
-                &copy; {new Date().getFullYear()} {conference?.name || 'ELK Education'}. All Rights Reserved.
+            {/* Key Benefits - Full Width with Background */}
+            {parsedKeyBenefits && parsedKeyBenefits.length > 0 && (
+                <div className="w-full bg-blue-50 py-12">
+                    <div className="container mx-auto px-4">
+                        <div className="mb-0">
+                            <h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center justify-center gap-2">
+                                <TrophyOutlined className="text-blue-600" /> Key Benefits
+                            </h3>
+                            <div className="grid md:grid-cols-2 gap-5">
+                                {parsedKeyBenefits.map((benefit, idx) => (
+                                    <div key={idx} className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 border-l-[5px] border-l-blue-600 flex  justify-start gap-4 transition-all hover:shadow-md hover:-translate-y-0.5 duration-300 h-full">
+                                        <div className="text-yellow-500 text-2xl flex-shrink-0 flex ">
+                                            <TrophyOutlined />
+                                        </div>
+                                        <span className="text-[#0b1c2e] font-bold text-[15px] leading-snug text-left">
+                                            {typeof benefit === 'string' ? benefit : JSON.stringify(benefit)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="container mx-auto px-4 py-12">
+                {/* Keynote Speakers - Full Width */}
+                {parsedKeynoteSpeakers && parsedKeynoteSpeakers.length > 0 && (
+                    <div className="mb-14 relative group">
+                        <h3 className="text-xl font-bold text-gray-800 mb-8 text-center">
+                            Keynote Speakers
+                        </h3>
+
+                        <div className="px-4 md:px-12">
+                            <Carousel
+                                arrows={true}
+                                prevArrow={<SlickArrowLeft />}
+                                nextArrow={<SlickArrowRight />}
+                                slidesToShow={3}
+                                slidesToScroll={1}
+                                dots={false}
+                                responsive={[
+                                    { breakpoint: 1024, settings: { slidesToShow: 2 } },
+                                    { breakpoint: 640, settings: { slidesToShow: 1 } }
+                                ]}
+                                className="pb-8 -mx-4"
+                            >
+                                {parsedKeynoteSpeakers.map((speaker, idx) => (
+                                    <div key={idx} className="px-4 h-full">
+                                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-[320px] flex flex-col relative mx-2">
+                                            {/* Header */}
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-blue-100 flex-shrink-0">
+                                                    {speaker.image ? (
+                                                        <img src={`${ImageURl}${speaker.image}`} alt={speaker.name} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <div className="h-full w-full bg-blue-50 flex items-center justify-center text-blue-300">
+                                                            <UserOutlined className="text-2xl" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-gray-800 text-lg leading-tight">{speaker.name}</h4>
+                                                    <p className="text-blue-600 text-sm font-medium m-0 line-clamp-2">{speaker.designation}</p>
+                                                </div>
+                                            </div>
+
+                                            <Divider className="my-3" />
+
+                                            {/* Content */}
+                                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                                <div className="flex gap-3">
+                                                    <div className="flex-shrink-0 mt-1">
+                                                        <span className="text-4xl text-blue-200 leading-none font-serif">“</span>
+                                                    </div>
+                                                    <p className="text-gray-600 text-[13px] leading-relaxed italic">
+                                                        {speaker.about}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                ))}
+                            </Carousel>
+                        </div>
+                    </div>
+                )}
             </div>
-        </div>
+
+
+
+
+
+
+
+        </div >
     );
 };
 

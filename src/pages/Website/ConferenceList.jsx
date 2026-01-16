@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { conferenceTemplateApi, conferenceApi } from "../../services/api";
 import { Spin } from "antd";
 import moment from "moment";
-import { encryptId } from "../../utils/crypto";
+import { generateConferenceUrl } from "../../utils/idEncryption";
 
 const ConferenceList = ({ type }) => {
     const [templates, setTemplates] = useState([]);
@@ -113,7 +113,7 @@ const ConferenceList = ({ type }) => {
     }
 
     return (
-        <div className="py-8 bg-white min-h-screen font-sans">
+        <div className="py-12 bg-gradient-to-b from-gray-50 to-white min-h-screen font-sans">
             <div className="container mx-auto px-4">
                 {/* Header */}
                 {/* <div className="mb-10 ">
@@ -130,7 +130,7 @@ const ConferenceList = ({ type }) => {
                 </div>
 
                 {/* List */}
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6">
                     {templates.length > 0 ? (
                         templates.map((item) => {
                             const { dateStr, label } = getDateDisplay(item);
@@ -144,27 +144,23 @@ const ConferenceList = ({ type }) => {
 
                             return (
                                 <Link
-                                    to={`/conference/${item?.conference_id}`}
+                                    to={generateConferenceUrl(name, item?.conference_id)}
                                     key={item.id}
-                                    className="block bg-white shadow-sm hover:shadow-md transition-shadow duration-300 group overflow-hidden flex flex-col md:flex-row min-h-[100px]"
+                                    className="block bg-white shadow-lg hover:shadow-2xl transition-all duration-300 group overflow-hidden flex flex-col md:flex-row min-h-[120px] rounded-xl border border-gray-200 hover:border-[#12b48b]/50 transform hover:scale-105"
                                 >
                                     {/* Left Date Box */}
-                                    <div className="bg-[#5c6e91] text-white flex flex-col justify-center items-center text-center w-full md:w-56 flex-shrink-0 group-hover:bg-[#4a5a75] transition-colors relative p-3 ">
-                                        <div className="text-xs font-bold mb-1 opacity-90">{dateStr}</div>
-                                        <div className="text-xl font-bold tracking-wider uppercase border-t border-white/30 pt-1 mt-1">{label}</div>
+                                    <div className="bg-gradient-to-br from-[#5c6e91] to-[#3d4f6f] text-white flex flex-col justify-center items-center text-center w-full md:w-64 flex-shrink-0 group-hover:from-[#12b48b] group-hover:to-[#0e9673] transition-all duration-300 relative p-6 rounded-xl md:rounded-none">
+                                        <div className="text-sm font-bold mb-2 opacity-90 tracking-wide">{dateStr}</div>
+                                        <div className="text-2xl font-bold tracking-widest uppercase border-t border-white/30 pt-2 mt-2">{label}</div>
                                     </div>
 
                                     {/* Right Content */}
-                                    <div className="p-4 flex-grow flex flex-col justify-center bg-gray-50 hover:bg-gray-100">
-                                        {/* <div className="mb-2">
-                                            <span className="inline-block bg-gray-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                                                {acronym}
-                                            </span>
-                                        </div> */}
-                                        <h2 className="text-lg font-bold text-[#202020] mb-1 leading-tight group-hover:text-[#45cbb2] transition-colors font-sans hover:text-black capitalize">
+                                    <div className="p-6 flex-grow flex flex-col justify-center bg-gradient-to-r from-white to-gray-50 group-hover:from-gray-50 group-hover:to-white transition-colors duration-300">
+                                        <h2 className="text-xl font-bold text-[#202020] mb-2 leading-tight group-hover:text-[#12b48b] transition-colors font-sans capitalize">
                                             {name}
                                         </h2>
-                                        <div className="text-sm text-[#0097a7] font-medium">
+                                        <div className="flex items-center gap-2 text-sm text-[#0097a7] font-medium">
+                                            <span className="text-lg">📍</span>
                                             {venueName}
                                         </div>
                                     </div>
@@ -172,8 +168,31 @@ const ConferenceList = ({ type }) => {
                             );
                         })
                     ) : (
-                        <div className="text-center py-12 bg-white rounded shadow-sm">
-                            <p className="text-gray-500 text-lg">No {type} conferences found at this time.</p>
+                        <div className="text-center py-20 px-6 bg-gradient-to-br from-white via-gray-50 to-white rounded-2xl shadow-xl border-2 border-gray-200 hover:shadow-2xl transition-all duration-300">
+                            <div className="flex justify-center mb-6">
+                                <div className="text-6xl mb-4 animate-bounce">📭</div>
+                            </div>
+                            <h2 className="text-2xl font-bold text-[#204066] mb-3">No {type} Conferences Available</h2>
+                            <p className="text-gray-600 text-lg max-w-md mx-auto mb-2">
+                                We don't have any {type} conferences listed at the moment.
+                            </p>
+                            <p className="text-[#12b48b] font-semibold mb-8">
+                                ⏰ Check back later for exciting updates!
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                <Link 
+                                    to="/" 
+                                    className="inline-block bg-gradient-to-r from-[#12b48b] to-[#0e9673] hover:from-[#0e9673] hover:to-[#0a7857] text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                                >
+                                    ← Back to Home
+                                </Link>
+                                <a 
+                                    href="mailto:info@elkjournals.com"
+                                    className="inline-block bg-gradient-to-r from-[#204066] to-[#1a3352] hover:from-[#1a3352] hover:to-[#12304a] text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                                >
+                                    📧 Notify Me
+                                </a>
+                            </div>
                         </div>
                     )}
                 </div>
