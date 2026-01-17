@@ -17,7 +17,9 @@ import {
     TrophyOutlined,
     FieldTimeOutlined,
     LeftOutlined,
-    RightOutlined
+    RightOutlined,
+    HistoryOutlined,
+    BankOutlined
 } from '@ant-design/icons';
 import { Carousel } from 'antd'; // Added for Keynote Speakers
 import { conferenceTemplateApi } from '../../services/api'; // Ensure this path is correct based on original file
@@ -28,35 +30,45 @@ import { decryptId } from '../../utils/idEncryption';
 
 const { Title, Text, Paragraph } = Typography;
 
-const SlickArrowLeft = ({ currentSlide, slideCount, ...props }) => (
-    <div
-        {...props}
-        className={
-            "slick-prev slick-arrow !bg-blue-600 !h-10 !w-10 !flex !items-center !justify-center !rounded-full !left-[-15px] !z-10 hover:!bg-blue-700 custom-slick-arrow-left" +
-            (props.className ? " " + props.className : "")
-        }
-        aria-hidden="true"
-        aria-disabled={currentSlide === 0 ? true : false}
-        type="button"
-    >
-        <LeftOutlined />
-    </div>
-);
+const SlickArrowLeft = ({ currentSlide, slideCount, ...props }) => {
+    // Filter out slick-prev to prevent default pseudo-element arrow
+    const filteredClassName = (props.className || "").replace("slick-prev", "").trim();
 
-const SlickArrowRight = ({ currentSlide, slideCount, ...props }) => (
-    <div
-        {...props}
-        className={
-            "slick-next slick-arrow !bg-blue-600 !h-10 !w-10 !flex !items-center !justify-center !rounded-full !right-[-15px] !z-10 hover:!bg-blue-700 custom-slick-arrow-right" +
-            (props.className ? " " + props.className : "")
-        }
-        aria-hidden="true"
-        aria-disabled={currentSlide === slideCount - 1 ? true : false}
-        type="button"
-    >
-        <RightOutlined />
-    </div>
-);
+    return (
+        <div
+            {...props}
+            className={
+                "slick-arrow !bg-[#204066] !h-10 !w-10 !flex !items-center !justify-center !rounded-full !left-[-25px] !absolute !top-1/2 !translate-y-[-50%] !z-10 hover:!bg-[#0b1c2e] custom-slick-arrow-left " +
+                filteredClassName
+            }
+            aria-hidden="true"
+            aria-disabled={currentSlide === 0 ? true : false}
+            type="button"
+        >
+            <LeftOutlined className="text-white text-lg" />
+        </div>
+    );
+};
+
+const SlickArrowRight = ({ currentSlide, slideCount, ...props }) => {
+    // Filter out slick-next to prevent default pseudo-element arrow
+    const filteredClassName = (props.className || "").replace("slick-next", "").trim();
+
+    return (
+        <div
+            {...props}
+            className={
+                "slick-arrow !bg-[#204066] !h-10 !w-10 !flex !items-center !justify-center !rounded-full !right-[-25px] !absolute !top-1/2 !translate-y-[-50%] !z-10 hover:!bg-[#0b1c2e] custom-slick-arrow-right " +
+                filteredClassName
+            }
+            aria-hidden="true"
+            aria-disabled={currentSlide === slideCount - 1 ? true : false}
+            type="button"
+        >
+            <RightOutlined className="text-white text-lg" />
+        </div>
+    );
+};
 
 const ConferenceDetailsPage = () => {
     const { encryptedId } = useParams();
@@ -103,6 +115,7 @@ const ConferenceDetailsPage = () => {
         important_dates,
         key_benefits,
         who_should_join,
+        organizer_image,
         organizer_logo,
         partner_image,
         conference_objectives,
@@ -116,7 +129,7 @@ const ConferenceDetailsPage = () => {
         steering_committee,
         review_board,
         call_for_papers,
-        guidelines
+        guidelines,
     } = conferenceData;
 
     // Helper to safely parse JSON strings from the API response
@@ -138,6 +151,7 @@ const ConferenceDetailsPage = () => {
     // Note: User asked to render "all these details", so I should try to render steering/review if they have content. 
     const parsedSteeringCommittee = parseJSON(steering_committee, []);
     const parsedReviewBoard = parseJSON(review_board, []);
+    const parsedPastConferences = parseJSON(past_conferences, []);
 
 
     const createMarkup = (html) => ({ __html: DOMPurify.sanitize(html) });
@@ -165,25 +179,77 @@ const ConferenceDetailsPage = () => {
         <div className="min-h-screen bg-gray-50 font-sans">
             {/* 1. Header Section */}
             <header className="bg-gradient-to-r from-[#0b1c2e] to-[#204066] shadow-lg sticky top-0 z-50 border-b border-white/5 backdrop-blur-sm bg-opacity-95">
-                <div className="container mx-auto px-4 h-auto lg:h-20 py-3 lg:py-0 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
-                    <Link to="/" className="flex-shrink-0 flex items-center gap-3 group">
-                        {organizer_logo ? (
-                            <img src={`${ImageURl}${organizer_logo}`} alt="Conference Logo" className="h-10 md:h-12 object-contain bg-white rounded px-2 py-1 shadow-sm group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                            <span className="text-xl font-bold text-white tracking-wide">{conference?.name}</span>
-                        )}
-                    </Link>
-
-                    {/* Basic Nav showing organized by */}
-                    <nav className="hidden lg:flex flex-nowrap justify-center items-center gap-1 text-white">
-                        <span className="font-semibold">{conference?.organized_by}</span>
-                    </nav>
-
-                    <div className="flex items-center gap-3">
-                        <Link to="/">
-                            <img src={Logo} alt="ELK Logo" className="h-8" />
+                <div className="container mx-auto px-4">
+                    {/* Top Row - Logo and ELK Logo */}
+                    <div className="h-auto lg:h-16 py-3 lg:py-0 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
+                        <Link to="/" className="flex-shrink-0 flex items-center gap-3 group">
+                            {organizer_logo ? (
+                                <img src={`${ImageURl}${organizer_logo}`} alt="Conference Logo" className="h-10 md:h-12 object-contain bg-white rounded px-2 py-1 shadow-sm group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                                <span className="text-xl font-bold text-white tracking-wide">{conference?.name}</span>
+                            )}
                         </Link>
+
+                        {/* Navigation Menu - Desktop */}
+                        <nav className="hidden xl:flex flex-nowrap justify-center items-center gap-1">
+                            {[
+                                { label: 'About', href: '#about-the-conference' },
+                                { label: 'Call for Papers', href: '#call-for-papers' },
+                                { label: 'Guidelines', href: '#submission-guidelines' },
+                                { label: 'Committee', href: '#committee' },
+                                { label: 'Speakers', href: '#keynote-speakers' },
+                                { label: 'Benefits', href: '#key-benefits' },
+                                { label: 'Venue', href: '#venue' },
+                            ].map((item, idx) => (
+                                <a
+                                    key={idx}
+                                    href={item.href}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        const element = document.querySelector(item.href);
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }
+                                    }}
+                                    className="px-4 py-2 pb-2.5 font-semibold text-sm transition-all duration-300 shadow-md transform hover:-translate-y-1 whitespace-nowrap rounded-tr-3xl rounded-bl-3xl bg-gray-200/90 text-gray-800 hover:bg-[#0b1c2e] hover:text-white hover:shadow-[#0b1c2e]/40"
+                                >
+                                    {item.label}
+                                </a>
+                            ))}
+                        </nav>
+
+                        <div className="flex items-center gap-3">
+                            <Link to="/">
+                                <img src={Logo} alt="ELK Logo" className="h-8" />
+                            </Link>
+                        </div>
                     </div>
+
+                    {/* Navigation Menu - Mobile/Tablet */}
+                    <nav className="xl:hidden flex flex-wrap justify-center items-center gap-1 pb-3">
+                        {[
+                            { label: 'About', href: '#about-the-conference' },
+                            { label: 'Papers', href: '#call-for-papers' },
+                            { label: 'Committee', href: '#committee' },
+                            { label: 'Speakers', href: '#keynote-speakers' },
+                            { label: 'Venue', href: '#venue' },
+                        ].map((item, idx) => (
+                            <a
+                                key={idx}
+                                href={item.href}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const element = document.querySelector(item.href);
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                }}
+                                className="px-3 py-1.5 pb-2 font-semibold text-xs transition-all duration-300 shadow-md transform hover:-translate-y-1 whitespace-nowrap rounded-tr-2xl rounded-bl-2xl bg-gray-200/90 text-gray-800 hover:bg-[#0b1c2e] hover:text-white hover:shadow-[#0b1c2e]/40"
+                            >
+                                {item.label}
+                            </a>
+                        ))}
+                    </nav>
                 </div>
             </header>
 
@@ -198,11 +264,20 @@ const ConferenceDetailsPage = () => {
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
                         <div className="lg:w-3/4">
+                            {/* Breadcrumbs */}
                             <div className="flex items-center gap-2 text-orange-400 text-sm mb-4">
                                 <Link to="/" className="hover:underline">Home</Link>
                                 <span>&gt;</span>
                                 <span className="truncate max-w-md">{conference?.name}</span>
                             </div>
+
+                            {/* Organized By Badge */}
+                            {conference?.organized_by && (
+                                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1 mb-4">
+                                    <span className="text-gray-300 text-xs font-bold uppercase tracking-wider">Organized by</span>
+                                    <span className="text-white text-sm font-semibold">{conference?.organized_by}</span>
+                                </div>
+                            )}
                             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-6">
                                 {conference?.name}
                             </h1>
@@ -216,13 +291,13 @@ const ConferenceDetailsPage = () => {
                                     <span className="font-medium text-white">{parsedVenue?.name || conference?.city || 'Venue TBA'}</span>
                                 </div>
                             </div>
-                            <Button type="primary" size="large" className="bg-blue-600 hover:bg-blue-500 border-none px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2">
+                            <Button type="primary" size="large" className="bg-[#204066] hover:bg-[#0b1c2e] border-none px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2">
                                 Register Now <ArrowRightOutlined />
                             </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        </div >
+                    </div >
+                </div >
+            </div >
 
             {/* 3. Main Content Layout */}
 
@@ -233,127 +308,320 @@ const ConferenceDetailsPage = () => {
 
 
 
-            <div className="container mx-auto px-4 py-12">
+            < div className="container mx-auto px-4 py-12" >
                 <Row gutter={[32, 32]}>
                     <Col xs={24} lg={16}>
-                        {/* Description */}
-                        <ContentSection title="About the Conference" content={description} icon={<InfoCircleOutlined />} />
+                        {/* About the Conference - Enhanced */}
+                        {description && (
+                            <div id="about-the-conference" className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-10">
+                                        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                                    </div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                                <InfoCircleOutlined className="text-white text-xl" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white m-0">About the Conference</h3>
+                                        </div>
+                                        <p className="text-blue-100 text-sm m-0">Learn more about what makes this conference unique</p>
+                                    </div>
+                                </div>
 
-                        {/* Objectives */}
-                        <ContentSection title="Objectives" content={conference_objectives} icon={<GlobalOutlined />} />
-
-                        {/* Themes */}
-                        <ContentSection title="Conference Themes" content={themes} icon={<FileTextOutlined />} />
-
-                        {/* Call For Papers */}
-                        <ContentSection title="Call for Papers" content={call_for_papers} icon={<ShareAltOutlined />} />
-
-                        {/* Guidelines */}
-                        <ContentSection title="Submission Guidelines" content={guidelines} icon={<SafetyCertificateOutlined />} />
-
-                        {/* Target Audience */}
-                        <ContentSection title="Who Should Join" content={who_should_join} icon={<UserOutlined />} />
+                                {/* Content */}
+                                <div className="p-6 lg:p-8">
+                                    <div
+                                        dangerouslySetInnerHTML={createMarkup(description)}
+                                        className="text-gray-600 leading-relaxed text-base ql-editor [&>p]:mb-4"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
 
 
-                        {/* Committee Tabs */}
-                        <div className="bg-white rounded-xl shadow-sm border border-blue-100 mb-8 overflow-hidden">
-                            <Tabs defaultActiveKey="organizing" className="px-6 pt-4" items={[
-                                {
-                                    key: 'organizing',
-                                    label: (
-                                        <span className="flex items-center gap-2 py-2 px-1 text-base font-medium">
-                                            <TeamOutlined className="text-lg" /> Organizing Committee
-                                        </span>
-                                    ),
-                                    children: (
-                                        <div className="p-8 bg-gray-50/50 min-h-[200px]">
-                                            {organizing_committee ? (
-                                                <div className="organizing-committee-content">
-                                                    <div
-                                                        dangerouslySetInnerHTML={createMarkup(organizing_committee)}
-                                                        className="text-gray-600 leading-relaxed 
-                                                        [&>p]:bg-white [&>p]:p-4 [&>p]:rounded-lg [&>p]:border-l-4 [&>p]:border-blue-600 [&>p]:shadow-sm [&>p]:mb-3 
-                                                        [&>p]:transition-all [&>p]:hover:shadow-md [&>p]:hover:translate-x-1
-                                                        [&>ul]:list-none [&>ul]:p-0 
-                                                        [&>ul>li]:bg-white [&>ul>li]:p-4 [&>ul>li]:rounded-lg [&>ul>li]:border-l-4 [&>ul>li]:border-blue-600 [&>ul>li]:shadow-sm [&>ul>li]:mb-3
-                                                        [&>ul>li]:transition-all [&>ul>li]:hover:shadow-md [&>ul>li]:hover:translate-x-1
-                                                        [&_strong]:text-blue-900 [&_strong]:font-bold [&_strong]:mr-2
-                                                        [&_b]:text-blue-900 [&_b]:font-bold [&_b]:mr-2"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
-                                                    <div className="bg-gray-100 p-4 rounded-full mb-3">
-                                                        <TeamOutlined className="text-2xl" />
+
+                        {/* Call For Papers - Enhanced */}
+                        {call_for_papers && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden" id="call-for-papers">
+                                {/* Header with gradient */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-10">
+                                        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                                    </div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                                <ShareAltOutlined className="text-white text-xl" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white m-0">Call for Papers</h3>
+                                        </div>
+                                        <p className="text-gray-300 text-sm m-0">Submit your research work</p>
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-6 lg:p-8">
+                                    <div
+                                        dangerouslySetInnerHTML={createMarkup(call_for_papers)}
+                                        className="text-gray-600 leading-relaxed ql-editor
+                                        [&>ul]:space-y-2 [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0
+                                        [&>ul>li]:bg-gray-50 [&>ul>li]:p-4 [&>ul>li]:rounded-xl [&>ul>li]:border [&>ul>li]:border-gray-100
+                                        [&>ul>li]:hover:bg-white [&>ul>li]:hover:border-[#204066]/30 [&>ul>li]:hover:shadow-md [&>ul>li]:transition-all
+                                        [&>ol]:space-y-2 [&>ol]:list-none [&>ol]:p-0 [&>ol]:m-0
+                                        [&>ol>li]:bg-gray-50 [&>ol>li]:p-4 [&>ol>li]:rounded-xl [&>ol>li]:border [&>ol>li]:border-gray-100
+                                        [&>ol>li]:hover:bg-white [&>ol>li]:hover:border-[#204066]/30 [&>ol>li]:hover:shadow-md [&>ol>li]:transition-all
+                                        [&_strong]:text-[#0b1c2e] [&_strong]:font-bold
+                                        [&>p]:mb-4"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+
+
+                        {/* Who Should Join - Enhanced */}
+                        {/* Who Should Join - Enhanced List View */}
+                        {who_should_join && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-10">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                                    </div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                                <UserOutlined className="text-white text-xl" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white m-0">Who Should Join</h3>
+                                        </div>
+                                        <p className="text-gray-300 text-sm m-0">Target audience for this conference</p>
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-8">
+                                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                                        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-x-12 gap-y-4">
+                                            {(() => {
+                                                // Parse HTML list items into array
+                                                const tempDiv = document.createElement('div');
+                                                tempDiv.innerHTML = who_should_join;
+                                                const listItems = tempDiv.querySelectorAll('li');
+
+                                                if (listItems.length === 0) {
+                                                    // Fallback: render as HTML if no list items
+                                                    return (
+                                                        <div className="col-span-full text-gray-600 leading-relaxed ql-editor">
+                                                            <div dangerouslySetInnerHTML={createMarkup(who_should_join)} />
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return Array.from(listItems).map((li, idx) => (
+                                                    <div key={idx} className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 hover:bg-white hover:pl-2 transition-all duration-300 rounded-lg group">
+                                                        <div className="mt-1.5 h-2 w-2 rounded-full bg-[#204066] flex-shrink-0 group-hover:scale-125 transition-transform"></div>
+                                                        <p className="text-gray-700 text-[15px] leading-relaxed m-0 font-medium group-hover:text-[#0b1c2e] transition-colors text-left">
+                                                            {li.textContent.trim()}
+                                                        </p>
                                                     </div>
-                                                    <p>No Record Available</p>
-                                                </div>
-                                            )}
+                                                ));
+                                            })()}
                                         </div>
-                                    )
-                                },
-                                {
-                                    key: 'steering',
-                                    label: <span className="flex items-center gap-2 font-semibold"><TeamOutlined /> Steering Committee</span>,
-                                    children: (
-                                        <div className="pb-6 pt-2">
-                                            {parsedSteeringCommittee.length > 0 ? (
-                                                <div className="grid md:grid-cols-2 gap-4">
-                                                    {parsedSteeringCommittee.map((item, i) => {
-                                                        const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
-                                                        const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                                                        return (
-                                                            <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors border border-gray-100">
-                                                                <div className="mt-1 bg-blue-100 text-blue-600 rounded-full p-1.5 shadow-sm">
-                                                                    <UserOutlined />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="font-semibold text-gray-800">{name}</div>
-                                                                    {subtext && <div className="text-xs text-gray-500">{subtext}</div>}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ) : (
-                                                <div className="text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No Record Available</div>
-                                            )}
-                                        </div>
-                                    )
-                                },
-                                {
-                                    key: 'review',
-                                    label: <span className="flex items-center gap-2 font-semibold"><TeamOutlined /> Review Board</span>,
-                                    children: (
-                                        <div className="pb-6 pt-2">
-                                            {parsedReviewBoard.length > 0 ? (
-                                                <div className="grid md:grid-cols-2 gap-4">
-                                                    {parsedReviewBoard.map((item, i) => {
-                                                        const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
-                                                        const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
 
-                                                        return (
-                                                            <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors border border-gray-100">
-                                                                <div className="mt-1 bg-blue-100 text-blue-600 rounded-full p-1.5 shadow-sm">
-                                                                    <UserOutlined />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="font-semibold text-gray-800">{name}</div>
-                                                                    {subtext && <div className="text-xs text-gray-500">{subtext}</div>}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ) : (
-                                                <div className="text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No Record Available</div>
-                                            )}
+                        {/* Committee Section - Enhanced UX */}
+                        <div id="committee" className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                            {/* Section Header with theme gradient */}
+                            <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                <div className="absolute inset-0 opacity-10">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="text-xl font-bold text-white m-0 flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <TeamOutlined className="text-2xl" />
                                         </div>
-                                    )
-                                }
-                            ]} />
+                                        Conference Committee
+                                    </h3>
+                                    <p className="text-gray-300 text-sm mt-2 mb-0">Meet the team behind this conference</p>
+                                </div>
+                            </div>
+
+                            <Tabs
+                                defaultActiveKey="organizing"
+                                className="committee-tabs"
+                                tabBarStyle={{
+                                    padding: '0 24px',
+                                    marginBottom: 0,
+                                    background: '#f8fafc',
+                                    borderBottom: '1px solid #e2e8f0'
+                                }}
+                                items={[
+                                    {
+                                        key: 'organizing',
+                                        label: (
+                                            <span className="flex items-center gap-2 py-3 px-4 text-base font-semibold">
+                                                <div className="bg-[#0b1c2e]/10 text-[#0b1c2e] p-1.5 rounded-lg">
+                                                    <TeamOutlined />
+                                                </div>
+                                                Organizing Committee
+                                            </span>
+                                        ),
+                                        children: (
+                                            <div className="p-6 bg-gradient-to-b from-gray-50/50 to-white min-h-[200px]">
+                                                {organizing_committee ? (
+                                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {(() => {
+                                                            // Parse HTML list items into array
+                                                            const tempDiv = document.createElement('div');
+                                                            tempDiv.innerHTML = organizing_committee;
+                                                            const listItems = tempDiv.querySelectorAll('li');
+
+                                                            if (listItems.length === 0) {
+                                                                // Fallback: render as HTML if no list items
+                                                                return (
+                                                                    <div className="col-span-full text-gray-600 leading-relaxed ql-editor">
+                                                                        <div dangerouslySetInnerHTML={createMarkup(organizing_committee)} />
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            return Array.from(listItems).map((li, i) => {
+                                                                // Extract name (usually in strong tag) and role/affiliation
+                                                                const strongTag = li.querySelector('strong');
+                                                                const name = strongTag ? strongTag.textContent.trim() : li.textContent.split(',')[0].trim();
+                                                                const subtext = strongTag
+                                                                    ? li.textContent.replace(strongTag.textContent, '').trim().replace(/^[,:\s-]+/, '')
+                                                                    : li.textContent.includes(',') ? li.textContent.split(',').slice(1).join(',').trim() : null;
+
+                                                                return (
+                                                                    <div key={i} className="group bg-white p-4 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                                                                        <div className="flex items-center gap-4">
+                                                                            <div className="h-12 w-12 bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-md group-hover:scale-110 transition-transform">
+                                                                                {name.charAt(0).toUpperCase()}
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="font-bold text-gray-800 truncate">{name}</div>
+                                                                                {subtext && <div className="text-xs text-gray-500 truncate">{subtext}</div>}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            });
+                                                        })()}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                                        <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                            <TeamOutlined className="text-2xl" />
+                                                        </div>
+                                                        <p>No Record Available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    },
+                                    {
+                                        key: 'steering',
+                                        label: (
+                                            <span className="flex items-center gap-2 py-3 px-4 text-base font-semibold">
+                                                <div className="bg-[#204066]/10 text-[#204066] p-1.5 rounded-lg">
+                                                    <SafetyCertificateOutlined />
+                                                </div>
+                                                Steering Committee
+                                            </span>
+                                        ),
+                                        children: (
+                                            <div className="p-6 bg-gradient-to-b from-gray-50/50 to-white min-h-[200px]">
+                                                {parsedSteeringCommittee.length > 0 ? (
+                                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {parsedSteeringCommittee.map((item, i) => {
+                                                            const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
+                                                            const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
+
+                                                            return (
+                                                                <div key={i} className="group bg-white p-4 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="h-12 w-12 bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-md group-hover:scale-110 transition-transform">
+                                                                            {name.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="font-bold text-gray-800 truncate">{name}</div>
+                                                                            {subtext && <div className="text-xs text-gray-500 truncate">{subtext}</div>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                                        <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                            <TeamOutlined className="text-2xl" />
+                                                        </div>
+                                                        <p>No Record Available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    },
+                                    {
+                                        key: 'review',
+                                        label: (
+                                            <span className="flex items-center gap-2 py-3 px-4 text-base font-semibold">
+                                                <div className="bg-[#0b1c2e]/10 text-[#0b1c2e] p-1.5 rounded-lg">
+                                                    <FileTextOutlined />
+                                                </div>
+                                                Review Board
+                                            </span>
+                                        ),
+                                        children: (
+                                            <div className="p-6 bg-gradient-to-b from-gray-50/50 to-white min-h-[200px]">
+                                                {parsedReviewBoard.length > 0 ? (
+                                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {parsedReviewBoard.map((item, i) => {
+                                                            const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
+                                                            const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
+
+                                                            return (
+                                                                <div key={i} className="group bg-white p-4 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="h-12 w-12 bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-md group-hover:scale-110 transition-transform">
+                                                                            {name.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="font-bold text-gray-800 truncate">{name}</div>
+                                                                            {subtext && <div className="text-xs text-gray-500 truncate">{subtext}</div>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                                        <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                            <TeamOutlined className="text-2xl" />
+                                                        </div>
+                                                        <p>No Record Available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    }
+                                ]} />
                         </div>
 
                         {/* Program Schedule */}
@@ -365,175 +633,518 @@ const ConferenceDetailsPage = () => {
 
                     {/* RIGHT COLUMN */}
                     <Col xs={24} lg={8}>
-                        {/* Important Dates Card */}
+                        {/* Important Dates Card - Enhanced */}
                         {importantDateKeys.length > 0 && (
-                            <div className="bg-white rounded-xl shadow-sm border border-blue-100 mb-8 overflow-hidden">
-                                <div className="bg-white p-6">
-                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                                        <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
-                                            <CalendarOutlined className="text-xl" />
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <CalendarOutlined className="text-white text-xl" />
                                         </div>
-                                        <h3 className="text-gray-800 font-bold m-0 text-xl">Important Dates</h3>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Important Dates</h3>
+                                            <p className="text-gray-300 text-xs m-0">Mark your calendar</p>
+                                        </div>
                                     </div>
+                                </div>
 
-                                    <div className="space-y-6">
-                                        {importantDateKeys.map((key, idx) => {
-                                            const dateObj = parsedImportantDates[key];
-                                            const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                                            if (!dateObj) return null;
+                                <div className="p-5 space-y-4">
+                                    {importantDateKeys.map((key, idx) => {
+                                        const dateObj = parsedImportantDates[key];
+                                        const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                        if (!dateObj) return null;
 
-                                            // Logic to calculate status and progress
-                                            const startDate = new Date(dateObj.startDate);
-                                            const endDate = new Date(dateObj.lastDate);
-                                            const today = new Date();
-                                            let status = 'UPCOMING';
-                                            let progress = 0;
-                                            let statusColor = 'bg-blue-100 text-blue-600';
-                                            let dotColor = 'bg-blue-500';
+                                        // Logic to calculate status and progress
+                                        const startDate = new Date(dateObj.startDate);
+                                        const endDate = new Date(dateObj.lastDate);
+                                        const today = new Date();
+                                        let status = 'UPCOMING';
+                                        let progress = 0;
+                                        let statusColor = 'bg-amber-100 text-amber-700';
+                                        let progressColor = 'bg-amber-500';
+                                        let iconBg = 'bg-amber-100 text-amber-600';
 
-                                            if (today < startDate) {
-                                                status = 'UPCOMING';
-                                                progress = 0;
-                                                statusColor = 'bg-gray-200 text-gray-500'; // Darker gray for visibility
-                                                dotColor = 'bg-blue-500';
-                                            } else if (today >= startDate && today <= endDate) {
-                                                status = 'IN PROGRESS';
-                                                const totalDuration = endDate - startDate;
-                                                const elapsed = today - startDate;
-                                                progress = Math.min((elapsed / totalDuration) * 100, 100);
-                                                statusColor = 'bg-blue-100 text-blue-600';
-                                                dotColor = 'bg-blue-600';
-                                            } else {
-                                                status = 'CLOSED';
-                                                progress = 100;
-                                                statusColor = 'bg-gray-100 text-gray-400';
-                                                dotColor = 'bg-gray-400';
-                                            }
+                                        if (today < startDate) {
+                                            status = 'UPCOMING';
+                                            progress = 0;
+                                            statusColor = 'bg-amber-100 text-amber-700';
+                                            progressColor = 'bg-amber-500';
+                                            iconBg = 'bg-amber-100 text-amber-600';
+                                        } else if (today >= startDate && today <= endDate) {
+                                            status = 'OPEN';
+                                            const totalDuration = endDate - startDate;
+                                            const elapsed = today - startDate;
+                                            progress = Math.min((elapsed / totalDuration) * 100, 100);
+                                            statusColor = 'bg-green-100 text-green-700';
+                                            progressColor = 'bg-green-500';
+                                            iconBg = 'bg-green-100 text-green-600';
+                                        } else {
+                                            status = 'CLOSED';
+                                            progress = 100;
+                                            statusColor = 'bg-gray-100 text-gray-500';
+                                            progressColor = 'bg-gray-400';
+                                            iconBg = 'bg-gray-100 text-gray-400';
+                                        }
 
-                                            // Handle invalid dates
-                                            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                                                progress = 0;
-                                                status = 'TBA';
-                                                statusColor = 'bg-gray-100 text-gray-400';
-                                                dotColor = 'bg-gray-300';
-                                            }
+                                        // Handle invalid dates
+                                        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                                            progress = 0;
+                                            status = 'TBA';
+                                            statusColor = 'bg-gray-100 text-gray-400';
+                                            progressColor = 'bg-gray-300';
+                                            iconBg = 'bg-gray-100 text-gray-400';
+                                        }
 
-                                            return (
-                                                <div key={idx} className="relative">
-                                                    {/* Header Row: Dot, Title & Status */}
-                                                    <div className="flex items-center justify-between mb-3 px-1">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`h-3 w-3 rounded-full border-2 border-white ring-1 ring-offset-0 ${dotColor.replace('bg-', 'ring-')}`}>
-                                                                <div className={`h-full w-full rounded-full ${dotColor}`}></div>
-                                                            </div>
-                                                            <h4 className="font-bold text-gray-800 text-[15px] m-0">{title}</h4>
+                                        // Format dates nicely
+                                        const formatDate = (dateStr) => {
+                                            if (!dateStr) return 'TBA';
+                                            const date = new Date(dateStr);
+                                            if (isNaN(date.getTime())) return dateStr;
+                                            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                        };
+
+                                        return (
+                                            <div key={idx} className="group bg-gray-50 hover:bg-white rounded-xl p-4 border border-gray-100 hover:border-[#204066]/30 hover:shadow-md transition-all duration-300">
+                                                {/* Header Row */}
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${iconBg} transition-colors`}>
+                                                            <CalendarOutlined className="text-lg" />
                                                         </div>
-                                                        <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${statusColor}`}>
-                                                            {status}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Details Card */}
-                                                    <div className="bg-[#F8F9FC] rounded-xl p-3 border border-gray-100/50">
-                                                        <div className="space-y-2">
-                                                            {/* Start Date Row */}
-                                                            <div className="flex items-center justify-between text-sm">
-                                                                <div className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-wider">
-                                                                    <CalendarOutlined className="text-gray-400" /> START DATE
-                                                                </div>
-                                                                <div className="font-bold text-gray-600/90 text-xs font-sans">
-                                                                    {dateObj.startDate || 'TBA'}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Deadline Row */}
-                                                            <div className="flex items-center justify-between text-sm">
-                                                                <div className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-wider">
-                                                                    <FieldTimeOutlined /> DEADLINE
-                                                                </div>
-                                                                <div className="font-bold text-red-500 text-xs font-sans">
-                                                                    {dateObj.lastDate || 'TBA'}
-                                                                </div>
-                                                            </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-800 text-sm m-0">{title}</h4>
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${statusColor}`}>
+                                                                {status}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
+
+                                                {/* Progress Bar */}
+                                                {status !== 'TBA' && (
+                                                    <div className="mb-3">
+                                                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full ${progressColor} rounded-full transition-all duration-500`}
+                                                                style={{ width: `${progress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Dates */}
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-400 font-medium">Opens:</span>
+                                                        <span className="font-semibold text-gray-700">{formatDate(dateObj.startDate)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-400 font-medium">Deadline:</span>
+                                                        <span className="font-bold text-[#0b1c2e]">{formatDate(dateObj.lastDate)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Organizers Section - Enhanced */}
+                        {(organisers || organizer_logo || organizer_image) && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <TeamOutlined className="text-white text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Organized By</h3>
+                                            <p className="text-gray-300 text-xs m-0">Conference organizers</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-5">
+                                    {/* Organizer Cover Image */}
+                                    {organizer_image && (
+                                        <div className="mb-5 rounded-xl overflow-hidden shadow-md">
+                                            <img
+                                                src={`${ImageURl}${organizer_image}`}
+                                                alt="Organizer"
+                                                className="w-full h-44 object-cover hover:scale-105 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Organizer Logo */}
+                                    {organizer_logo && (
+                                        <div className="flex justify-center mb-5">
+                                            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-block">
+                                                <img
+                                                    src={`${ImageURl}${organizer_logo}`}
+                                                    alt="Organizer Logo"
+                                                    className="max-h-20 object-contain"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Organizer Details */}
+                                    {organisers && (
+                                        <div
+                                            dangerouslySetInnerHTML={createMarkup(organisers)}
+                                            className="text-gray-600 text-sm leading-relaxed text-center
+                                            [&>p]:mb-2 [&_strong]:text-gray-800 [&_a]:text-[#204066] [&_a]:hover:underline"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Partners Section - Enhanced */}
+                        {partner_image && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <BankOutlined className="text-white text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Our Partners</h3>
+                                            <p className="text-gray-300 text-xs m-0">Supporting organizations</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-5">
+                                    <div className="flex justify-center items-center">
+                                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 inline-block hover:shadow-md hover:border-[#204066]/30 transition-all duration-300">
+                                            <img
+                                                src={`${ImageURl}${partner_image}`}
+                                                alt="Partner"
+                                                className="max-h-28 object-contain hover:scale-105 transition-transform duration-300"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Organizers Section from HTML or generic */}
-                        {(organisers || organizer_logo) && (
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 p-6 mt-6">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Organized By</h3>
-                                {organizer_logo && (
-                                    <div className="mb-4 flex justify-center">
-                                        <img src={`${ImageURl}${organizer_logo}`} alt="Organizer Logo" className="max-h-24 object-contain" />
-                                    </div>
-                                )}
-                                {organisers && (
-                                    <div dangerouslySetInnerHTML={createMarkup(organisers)} className="text-gray-600 text-sm" />
-                                )}
-                            </div>
-                        )}
-
-                        {/* Venue / Location Section - Updated */}
+                        {/* Venue / Location Section - Enhanced */}
                         {parsedVenue && (parsedVenue.name || typeof venue === 'string') && (
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 p-6">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Venue Location</h3>
-                                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden relative shadow-inner">
-                                    <iframe
-                                        width="100%"
-                                        height="100%"
-                                        frameBorder="0"
-                                        style={{ border: 0 }}
-                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(parsedVenue.name || venue)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
-                                        allowFullScreen
-                                        title="Venue Map"
-                                    ></iframe>
+                            <div id="venue" className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <EnvironmentOutlined className="text-white text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Venue Location</h3>
+                                            <p className="text-gray-300 text-xs m-0">Conference venue</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="mt-3 text-center font-medium text-gray-700 flex items-center justify-center gap-2">
-                                    <EnvironmentOutlined className="text-red-500" /> {parsedVenue.name || venue}
-                                </p>
+
+                                <div className="p-5">
+                                    {/* Map */}
+                                    <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden relative shadow-md mb-4">
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            style={{ border: 0 }}
+                                            src={`https://maps.google.com/maps?q=${encodeURIComponent(parsedVenue.name || venue)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                                            allowFullScreen
+                                            title="Venue Map"
+                                        ></iframe>
+                                    </div>
+
+                                    {/* Location Card */}
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-[#204066]/30 hover:shadow-sm transition-all duration-300">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-red-100 text-red-500 p-2 rounded-lg">
+                                                <EnvironmentOutlined className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-400 m-0 uppercase tracking-wider font-medium">Address</p>
+                                                <p className="font-semibold text-gray-800 m-0">{parsedVenue.name || venue}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
+
+
 
                     </Col>
                 </Row>
-            </div>
+            </div >
 
-            {/* Key Benefits - Full Width with Background */}
-            {parsedKeyBenefits && parsedKeyBenefits.length > 0 && (
-                <div className="w-full bg-blue-50 py-12">
-                    <div className="container mx-auto px-4">
-                        <div className="mb-0">
-                            <h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center justify-center gap-2">
-                                <TrophyOutlined className="text-blue-600" /> Key Benefits
-                            </h3>
-                            <div className="grid md:grid-cols-2 gap-5">
-                                {parsedKeyBenefits.map((benefit, idx) => (
-                                    <div key={idx} className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 border-l-[5px] border-l-blue-600 flex  justify-start gap-4 transition-all hover:shadow-md hover:-translate-y-0.5 duration-300 h-full">
-                                        <div className="text-yellow-500 text-2xl flex-shrink-0 flex ">
-                                            <TrophyOutlined />
+
+            {/* Past Conferences - Premium Dark Section */}
+            {
+                parsedPastConferences && parsedPastConferences.length > 0 && (
+                    <div id="past-conferences" className="w-full bg-[#0b1c2e] py-16 relative overflow-hidden">
+                        {/* Decorative Background Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-[#204066] rounded-full mix-blend-screen filter blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-10 translate-y-1/2 -translate-x-1/2"></div>
+
+                        <div className="container mx-auto px-4 relative z-10">
+                            {/* Header */}
+                            <div className="text-center mb-12">
+
+                                <h3 className="text-3xl font-bold text-white mb-4">Past Conferences</h3>
+                                <div className="w-20 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto"></div>
+                            </div>
+
+                            {/* Horizontal Scroll Container */}
+                            <div className="relative">
+                                {/* Scroll Buttons Hint (optional, can be added if needed) */}
+
+                                <div className="flex overflow-x-auto pb-12 gap-6 snap-x px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                                    {parsedPastConferences.map((conf, idx) => (
+                                        <div key={idx} className="flex-shrink-0 w-80 snap-center group">
+                                            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl h-full hover:bg-white hover:transform hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]">
+
+                                                {/* Hover Gradient Overlay */}
+                                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                                {/* Year Badge */}
+                                                <div className="flex justify-between items-start mb-6 relative z-10">
+                                                    <div className="text-5xl font-bold text-white/10 group-hover:text-[#0b1c2e]/10 transition-colors duration-300 font-heading">
+                                                        {conf.year}
+                                                    </div>
+                                                    <div className="h-10 w-10 rounded-full bg-white/10 group-hover:bg-[#0b1c2e] flex items-center justify-center text-white transition-colors duration-300">
+                                                        <HistoryOutlined />
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="relative z-10">
+                                                    <h4 className="text-xl font-bold text-white group-hover:text-[#0b1c2e] mb-3 transition-colors duration-300">
+                                                        Conference {conf.year}
+                                                    </h4>
+
+                                                    <div className="flex items-start gap-3 text-gray-400 group-hover:text-gray-600 transition-colors duration-300">
+                                                        <EnvironmentOutlined className="mt-1 text-blue-400 group-hover:text-[#204066]" />
+                                                        <span className="text-sm leading-relaxed font-medium">
+                                                            {conf.location}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Bottom Highlight */}
+                                                <div className="absolute bottom-0 left-0 w-0 h-1 bg-[#204066] group-hover:w-full transition-all duration-500"></div>
+                                            </div>
                                         </div>
-                                        <span className="text-[#0b1c2e] font-bold text-[15px] leading-snug text-left">
-                                            {typeof benefit === 'string' ? benefit : JSON.stringify(benefit)}
-                                        </span>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            <div className="container mx-auto px-4 py-12">
+            {/* Submission Guidelines - Full Width Section */}
+            {
+                guidelines && (
+                    <div id="submission-guidelines" className="w-full bg-white py-12">
+                        <div className="container mx-auto px-4">
+                            {/* Header */}
+                            <div className="text-center mb-10">
+                                <div className="inline-flex items-center gap-3 bg-[#0b1c2e] text-white px-6 py-3 rounded-full mb-4">
+                                    <SafetyCertificateOutlined className="text-xl" />
+                                    <span className="font-bold text-lg">Submission Guidelines</span>
+                                </div>
+                                <p className="text-gray-500 max-w-2xl mx-auto text-center">Requirements and instructions for paper submission</p>
+                            </div>
+
+                            {/* Content */}
+                            <div className="max-w-7xl mx-auto">
+                                <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                                    <div
+                                        dangerouslySetInnerHTML={createMarkup(guidelines)}
+                                        className="text-gray-600 leading-relaxed ql-editor
+                                    [&>ul]:space-y-4 [&>ul]:pl-0 [&>ul]:m-0 [&>ul]:list-none [&>ul]:columns-1 [&>ul]:md:columns-2 [&>ul]:gap-8
+                                    [&>ul>li]:relative [&>ul>li]:pl-8 [&>ul>li]:py-3 [&>ul>li]:text-gray-700 [&>ul>li]:break-inside-avoid
+                                    [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-5
+                                    [&>ul>li]:before:w-3 [&>ul>li]:before:h-3 [&>ul>li]:before:bg-[#204066] [&>ul>li]:before:rounded-full
+                                    [&>ol]:space-y-4 [&>ol]:pl-0 [&>ol]:m-0 [&>ol]:list-decimal [&>ol]:list-inside [&>ol]:columns-1 [&>ol]:md:columns-2 [&>ol]:gap-8
+                                    [&>ol>li]:py-3 [&>ol>li]:text-gray-700 [&>ol>li]:marker:text-[#204066] [&>ol>li]:marker:font-bold [&>ol>li]:break-inside-avoid
+                                    [&_strong]:text-[#0b1c2e] [&_strong]:font-bold
+                                    [&>p]:mb-4 [&>p]:text-base"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Conference Objectives - Full Width Section */}
+            {
+                conference_objectives && (
+                    <div id="conference-objectives" className="w-full bg-gradient-to-b from-white to-gray-50 py-12">
+                        <div className="container mx-auto px-4">
+                            {/* Header */}
+                            <div className="text-center mb-10">
+                                <div className="inline-flex items-center gap-3 bg-[#0b1c2e] text-white px-6 py-3 rounded-full mb-4">
+                                    <GlobalOutlined className="text-xl" />
+                                    <span className="font-bold text-lg">Conference Objectives</span>
+                                </div>
+                                <p className="text-gray-500 max-w-2xl mx-auto text-center">What we aim to achieve through this conference</p>
+                            </div>
+
+                            {/* Objectives Grid */}
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                {(() => {
+                                    // Parse HTML list items into objectives array
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = conference_objectives;
+                                    const listItems = tempDiv.querySelectorAll('li');
+
+                                    if (listItems.length === 0) {
+                                        // Fallback: render as HTML if no list items
+                                        return (
+                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm">
+                                                <div dangerouslySetInnerHTML={createMarkup(conference_objectives)} />
+                                            </div>
+                                        );
+                                    }
+
+                                    return Array.from(listItems).map((li, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="group bg-white p-5 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                                        >
+                                            {/* Background Number */}
+                                            <div className="absolute -right-3 -bottom-4 text-8xl font-bold text-gray-50 group-hover:text-[#0b1c2e]/5 transition-colors duration-300 select-none">
+                                                {String(idx + 1).padStart(2, '0')}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="relative z-10">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex-shrink-0">
+                                                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white text-sm font-bold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                                            {String(idx + 1).padStart(2, '0')}
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-gray-700 font-medium text-sm leading-relaxed m-0 pt-2 text-left">
+                                                        {li.textContent.trim()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Conference Themes - Full Width Section */}
+            {
+                themes && (
+                    <div id="conference-themes" className="w-full bg-gradient-to-b from-gray-50 to-white py-12">
+                        <div className="container mx-auto px-4">
+                            {/* Header */}
+                            <div className="text-center mb-10">
+                                <div className="inline-flex items-center gap-3 bg-[#0b1c2e] text-white px-6 py-3 rounded-full mb-4">
+                                    <FileTextOutlined className="text-xl" />
+                                    <span className="font-bold text-lg">Conference Themes</span>
+                                </div>
+                                <p className="text-gray-500 max-w-2xl mx-auto text-center">Explore the key research areas and topics covered in this conference</p>
+                            </div>
+
+                            {/* Themes Grid */}
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                {(() => {
+                                    // Extract text content from HTML list items
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = themes;
+                                    const listItems = tempDiv.querySelectorAll('li');
+                                    const themesArray = Array.from(listItems).map(li => li.textContent.trim());
+
+                                    if (themesArray.length === 0) {
+                                        // Fallback: render as HTML if no list items found
+                                        return (
+                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm">
+                                                <div dangerouslySetInnerHTML={createMarkup(themes)} />
+                                            </div>
+                                        );
+                                    }
+
+                                    return themesArray.map((theme, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="group bg-white p-5 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                                        >
+                                            {/* Background Number */}
+                                            <div className="absolute -right-3 -bottom-4 text-8xl font-bold text-gray-50 group-hover:text-[#0b1c2e]/5 transition-colors duration-300 select-none">
+                                                {String(idx + 1).padStart(2, '0')}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="relative z-10">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex-shrink-0">
+                                                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white text-sm font-bold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                                            {String(idx + 1).padStart(2, '0')}
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-gray-700 font-medium text-sm leading-relaxed m-0 group-hover:text-gray-900 transition-colors text-left pt-2">
+                                                        {theme}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Key Benefits - Full Width with Background */}
+            {
+                parsedKeyBenefits && parsedKeyBenefits.length > 0 && (
+                    <div id="key-benefits" className="w-full bg-[#0b1c2e]/5 py-12">
+                        <div className="container mx-auto px-4">
+                            <div className="mb-0">
+                                <h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center justify-center gap-2">
+                                    <TrophyOutlined className="text-[#204066]" /> Key Benefits
+                                </h3>
+                                <div className="grid md:grid-cols-2 gap-5">
+                                    {parsedKeyBenefits.map((benefit, idx) => (
+                                        <div key={idx} className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 border-l-[5px] border-l-[#204066] flex  justify-start gap-4 transition-all hover:shadow-md hover:-translate-y-0.5 duration-300 h-full">
+                                            <div className="text-[#204066] text-2xl flex-shrink-0 flex ">
+                                                <TrophyOutlined />
+                                            </div>
+                                            <span className="text-[#0b1c2e] font-bold text-[15px] leading-snug text-left">
+                                                {typeof benefit === 'string' ? benefit : JSON.stringify(benefit)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            <div className="container mx-auto px-4 px-4 pt-12 pb-0">
                 {/* Keynote Speakers - Full Width */}
                 {parsedKeynoteSpeakers && parsedKeynoteSpeakers.length > 0 && (
-                    <div className="mb-14 relative group">
+                    <div id="keynote-speakers" className="mb-14 relative group">
                         <h3 className="text-xl font-bold text-gray-800 mb-8 text-center">
                             Keynote Speakers
                         </h3>
@@ -557,28 +1168,28 @@ const ConferenceDetailsPage = () => {
                                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-[320px] flex flex-col relative mx-2">
                                             {/* Header */}
                                             <div className="flex items-center gap-4 mb-4">
-                                                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-blue-100 flex-shrink-0">
+                                                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-[#204066]/20 flex-shrink-0">
                                                     {speaker.image ? (
                                                         <img src={`${ImageURl}${speaker.image}`} alt={speaker.name} className="h-full w-full object-cover" />
                                                     ) : (
-                                                        <div className="h-full w-full bg-blue-50 flex items-center justify-center text-blue-300">
+                                                        <div className="h-full w-full bg-[#0b1c2e]/10 flex items-center justify-center text-[#204066]">
                                                             <UserOutlined className="text-2xl" />
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div>
                                                     <h4 className="font-bold text-gray-800 text-lg leading-tight">{speaker.name}</h4>
-                                                    <p className="text-blue-600 text-sm font-medium m-0 line-clamp-2">{speaker.designation}</p>
+                                                    <p className="text-[#204066] text-sm font-medium m-0 line-clamp-2">{speaker.designation}</p>
                                                 </div>
                                             </div>
 
                                             <Divider className="my-3" />
 
                                             {/* Content */}
-                                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                            <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#204066]/40 transition-[::-webkit-scrollbar-thumb]">
                                                 <div className="flex gap-3">
                                                     <div className="flex-shrink-0 mt-1">
-                                                        <span className="text-4xl text-blue-200 leading-none font-serif">“</span>
+                                                        <span className="text-4xl text-[#204066]/30 leading-none font-serif">“</span>
                                                     </div>
                                                     <p className="text-gray-600 text-[13px] leading-relaxed italic">
                                                         {speaker.about}
@@ -593,11 +1204,80 @@ const ConferenceDetailsPage = () => {
                         </div>
                     </div>
                 )}
+
+
+
+
             </div>
 
+            {/* Footer */}
+            <footer className="bg-[#0b1c2e] text-white pt-16 pb-8 border-t border-[#204066]/30 mt-auto">
+                <div className="container mx-auto px-4">
+                    <div className="grid md:grid-cols-3 gap-12">
+                        {/* About Column - Replaced with Logo */}
+                        <div className="flex flex-col items-start gap-6">
+                            {organizer_logo && (
+                                <div className="p-3 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
+                                    <img
+                                        src={`${ImageURl}${organizer_logo}`}
+                                        alt={conference?.name || "Conference Logo"}
+                                        className="h-16 w-auto object-contain"
+                                    />
+                                </div>
+                            )}
+                        </div>
 
+                        {/* Quick Links Column */}
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
+                                Quick Links
+                            </h4>
+                            <ul className="space-y-3 text-gray-400">
+                                {[
+                                    { id: 'about-the-conference', label: 'About' },
+                                    { id: 'conference-themes', label: 'Themes' },
+                                    { id: 'call-for-papers', label: 'Call for Papers' },
+                                    { id: 'committee', label: 'Committee' },
+                                    { id: 'keynote-speakers', label: 'Speakers' },
+                                    { id: 'venue', label: 'Venue' }
+                                ].map((item) => (
+                                    <li key={item.id}>
+                                        <button
+                                            onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' })}
+                                            className="hover:text-white hover:pl-2 transition-all duration-300 flex items-center gap-2 text-sm"
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#204066] current-color"></span>
+                                            {item.label}
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-
+                        {/* Contact Column - Reduced */}
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
+                                Venue
+                            </h4>
+                            <div className="space-y-4">
+                                {parsedVenue?.name && (
+                                    <div className="flex items-start gap-3 text-gray-400 group">
+                                        <div className="bg-[#204066]/30 p-2 rounded-lg group-hover:bg-[#204066] transition-colors">
+                                            <EnvironmentOutlined className="text-blue-400" />
+                                        </div>
+                                        <span className="text-sm leading-relaxed">
+                                            {parsedVenue.name}
+                                            {parsedVenue.address && <><br />{parsedVenue.address}</>}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
 
 
 
