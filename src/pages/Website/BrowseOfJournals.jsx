@@ -77,29 +77,29 @@ const BrowseOfJournals = () => {
                             {/* <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#12b48b] transform translate-y-1"></span> */}
                         </h1>
 
-                        <div className="overflow-x-auto mt-7">
-                            <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto mt-7 shadow-lg rounded-lg">
+                            <table className="w-full text-left border-collapse bg-white">
                                 <thead>
-                                    <tr className="bg-[#757575] text-white">
-                                        <th className="p-3 text-sm font-bold border-r border-[#888] w-[60px]">S.No</th>
-                                        <th className="p-3 text-sm font-bold border-r border-[#888]">Name of the Journal</th>
-                                        <th className="p-3 text-sm font-bold border-r border-[#888] w-[110px]">Print ISSN</th>
-                                        <th className="p-3 text-sm font-bold border-r border-[#888] w-[110px]">Online ISSN</th>
-                                        <th className="p-3 text-sm font-bold w-[120px]">Frequency/ Year</th>
+                                    <tr className="bg-gradient-to-r from-[#12b48b] to-[#0e9470] text-white">
+                                        <th className="p-4 text-sm font-bold border-r border-white/20 w-[60px]">S.No</th>
+                                        <th className="p-4 text-sm font-bold border-r border-white/20">Name of the Journal</th>
+                                        <th className="p-4 text-sm font-bold border-r border-white/20 w-[110px]">Print ISSN</th>
+                                        <th className="p-4 text-sm font-bold border-r border-white/20 w-[110px]">Online ISSN</th>
+                                        <th className="p-4 text-sm font-bold w-[120px]">Frequency/ Year</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {journals?.length > 0 && journals.map((journal, idx) => (
-                                        <tr key={idx} className={`${idx % 2 === 0 ? 'bg-[#f5f5f5]' : 'bg-white'} border-b border-gray-200`}>
-                                            <td className="p-3 text-sm text-[#555] border-r border-gray-200">{idx + 1}</td>
-                                            <td className="p-3 text-sm text-[#555] border-r border-gray-200">
-                                                <Link to={journal.link} className="text-[#204066] hover:text-[#12b48b] hover:underline transition-colors">
+                                        <tr key={idx} className={`${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} border-b border-gray-200 hover:bg-[#e8f8f4] transition-colors duration-200`}>
+                                            <td className="p-4 text-sm text-gray-700 font-medium border-r border-gray-200">{idx + 1}</td>
+                                            <td className="p-4 text-sm border-r border-gray-200">
+                                                <Link to={journal.link} className="text-[#204066] hover:text-[#12b48b] font-semibold hover:underline transition-all duration-200">
                                                     {journal.name}
                                                 </Link>
                                             </td>
-                                            <td className="p-3 text-sm text-[#555] border-r border-gray-200">{journal.printISSN}</td>
-                                            <td className="p-3 text-sm text-[#555] border-r border-gray-200">{journal.onlineISSN}</td>
-                                            <td className="p-3 text-sm text-[#555]">{journal.freq}</td>
+                                            <td className="p-4 text-sm text-gray-700 border-r border-gray-200">{journal.printISSN}</td>
+                                            <td className="p-4 text-sm text-gray-700 border-r border-gray-200">{journal.onlineISSN}</td>
+                                            <td className="p-4 text-sm text-gray-700">{journal.freq}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -109,7 +109,7 @@ const BrowseOfJournals = () => {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-1/4 mt-8 lg:mt-0">
+                <div className="w-full lg:w-1/4 mt-8 lg:mt-0 lg:pl-6">
                     <NewsWidget />
                 </div>
 

@@ -135,7 +135,7 @@ const WhyPublishWithUs = () => {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-1/4 mt-8 lg:mt-0">
+                <div className="w-full lg:w-1/4 mt-8 lg:mt-0 lg:pl-6">
                     <NewsWidget />
                 </div>
             </div>

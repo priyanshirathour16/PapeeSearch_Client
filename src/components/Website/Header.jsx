@@ -218,7 +218,7 @@ const Header = () => {
                         {/* Main Navigation */}
                         <ul className="flex space-x-6">
                             {menuItems.filter(item => !item.mobileOnly).map((item) => (
-                                <li key={item.id} className={item.type === 'dropdown' ? 'group' : ''}
+                                <li key={item.id} className={item.type === 'dropdown' ? 'group mt-[3px]' : ''}
                                     onMouseEnter={item.type === 'dropdown' ? handleMouseEnter : undefined}
                                     onMouseLeave={item.type === 'dropdown' ? handleMouseLeave : undefined}
                                 >

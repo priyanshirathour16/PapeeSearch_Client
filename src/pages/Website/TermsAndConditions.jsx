@@ -17,7 +17,7 @@ const TermsAndConditions = () => {
                     <div className="lg:col-span-3">
                         <div className="mb-8">
                             <h1 className="text-2xl text-[#12b48b] font-normal mb-2 relative inline-block">
-                                Terms and Condition
+                                Terms and Conditions
                                 {/* <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#12b48b] transform translate-y-1"></span> */}
                             </h1>
                         </div>

@@ -1,67 +1,99 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Spin, Tabs, Card, Row, Col, Typography, Button, Table, Alert } from 'antd';
-import { HomeOutlined, DownloadOutlined, EnvironmentOutlined, TeamOutlined, ScheduleOutlined, InfoCircleOutlined, FileTextOutlined, PhoneOutlined } from '@ant-design/icons';
-import { conferenceTemplateApi } from '../../services/api'; // Adjust path if needed
-import { ImageURl } from '../../services/serviceApi'; // Adjust path if needed
+import { Spin, Tabs, Card, Row, Col, Typography, Button, Divider, Tag, Space, Alert } from 'antd';
+import {
+    CalendarOutlined,
+    EnvironmentOutlined,
+    ShareAltOutlined,
+    UserOutlined,
+    MailOutlined,
+    GlobalOutlined,
+    ArrowRightOutlined,
+    InfoCircleOutlined,
+    TeamOutlined,
+    FileTextOutlined,
+    SafetyCertificateOutlined,
+    ScheduleOutlined,
+    TrophyOutlined,
+    FieldTimeOutlined,
+    LeftOutlined,
+    RightOutlined,
+    CheckCircleFilled,
+    HistoryOutlined,
+    BankOutlined
+} from '@ant-design/icons';
+import { Carousel } from 'antd'; // Added for Keynote Speakers
+import { conferenceTemplateApi } from '../../services/api'; // Ensure this path is correct based on original file
+import { ImageURl } from '../../services/serviceApi'; // Ensure this path is correct
 import DOMPurify from 'dompurify';
-import moment from 'moment';
-import logo from "../../assets/images/elk-logo.png"; // Assuming standard logo path
+import Logo from "../../assets/images/elk-logo.png"; // check relative path
+import { decryptId } from '../../utils/idEncryption';
+import ConferenceRegistrationModal from '../../components/Website/ConferenceRegistrationModal';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
+
+const SlickArrowLeft = ({ currentSlide, slideCount, ...props }) => {
+    // Filter out slick-prev to prevent default pseudo-element arrow
+    const filteredClassName = (props.className || "").replace("slick-prev", "").trim();
+
+    return (
+        <div
+            {...props}
+            className={
+                "slick-arrow !bg-[#204066] !h-10 !w-10 !flex !items-center !justify-center !rounded-full !left-[-25px] !absolute !top-1/2 !translate-y-[-50%] !z-10 hover:!bg-[#0b1c2e] custom-slick-arrow-left " +
+                filteredClassName
+            }
+            aria-hidden="true"
+            aria-disabled={currentSlide === 0 ? true : false}
+            type="button"
+        >
+            <LeftOutlined className="text-white text-lg" />
+        </div>
+    );
+};
+
+const SlickArrowRight = ({ currentSlide, slideCount, ...props }) => {
+    // Filter out slick-next to prevent default pseudo-element arrow
+    const filteredClassName = (props.className || "").replace("slick-next", "").trim();
+
+    return (
+        <div
+            {...props}
+            className={
+                "slick-arrow !bg-[#204066] !h-10 !w-10 !flex !items-center !justify-center !rounded-full !right-[-25px] !absolute !top-1/2 !translate-y-[-50%] !z-10 hover:!bg-[#0b1c2e] custom-slick-arrow-right " +
+                filteredClassName
+            }
+            aria-hidden="true"
+            aria-disabled={currentSlide === slideCount - 1 ? true : false}
+            type="button"
+        >
+            <RightOutlined className="text-white text-lg" />
+        </div>
+    );
+};
 
 const ConferenceDetailsPage = () => {
-    const { id } = useParams();
+    const { encryptedId } = useParams();
     const navigate = useNavigate();
     const [conferenceData, setConferenceData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
     const [error, setError] = useState(null);
+
+    const id = decryptId(encryptedId);
 
     useEffect(() => {
         const fetchDetails = async () => {
+            // Mock Data structure logic removed as per request to use real API flow, but keeping the fetch logic.
+            if (!id) {
+                setError('Invalid conference URL');
+                setLoading(false);
+                return;
+            }
             try {
                 const response = await conferenceTemplateApi.getById(id);
                 if (response.data && response.data.success) {
-                    const data = response.data.success;
-
-                    // Helper to safely parse JSON or return original if array
-                    const safeJsonParse = (field) => {
-                        if (Array.isArray(field)) return field;
-                        if (typeof field === 'string') {
-                            try {
-                                const parsed = JSON.parse(field);
-                                if (Array.isArray(parsed)) return parsed;
-                            } catch (e) {
-                                // If not valid JSON, return empty array for safety
-                                console.warn('Failed to parse JSON field:', e);
-                            }
-                        }
-                        return [];
-                    };
-
-                    // Helper for string arrays (comma separated or JSON)
-                    const safeStringArrayParse = (field) => {
-                        if (Array.isArray(field)) return field;
-                        if (typeof field === 'string') {
-                            try {
-                                const parsed = JSON.parse(field);
-                                if (Array.isArray(parsed)) return parsed;
-                            } catch (e) {
-                                // Not JSON, try comma separation
-                                return field.split(',').map(item => item.trim()).filter(item => item);
-                            }
-                        }
-                        return [];
-                    };
-
-                    // Apply safe parsing to specific fields suspected to be JSON strings
-                    data.steering_committee = safeJsonParse(data.steering_committee);
-                    data.review_board = safeJsonParse(data.review_board);
-                    data.keynote_speakers = safeJsonParse(data.keynote_speakers);
-                    data.key_benefits = safeStringArrayParse(data.key_benefits);
-
-                    setConferenceData(data);
+                    setConferenceData(response.data.success);
                 } else {
                     setError('Failed to load conference details.');
                 }
@@ -72,357 +104,1196 @@ const ConferenceDetailsPage = () => {
                 setLoading(false);
             }
         };
-
-        if (id) fetchDetails();
+        fetchDetails();
     }, [id]);
 
     if (loading) return <div className="flex justify-center items-center h-screen"><Spin size="large" /></div>;
     if (error) return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
     if (!conferenceData) return null;
 
-    // Destructure data for easier access
     const {
         conference,
-        venue, // object {name, map_link}
         description,
-        conference_objectives,
+        organizing_committee,
+        important_dates,
+        key_benefits,
+        who_should_join,
         organizer_image,
         organizer_logo,
-        important_dates,
-        call_for_papers,
-        organizing_committee,
+        partner_image,
+        conference_objectives,
+        program_schedule,
+        themes,
+        keynote_speakers,
+        venue,
+        venue_image,
+        past_conferences,
+        organisers,
         steering_committee,
         review_board,
-        keynote_speakers,
-        organisers,
+        call_for_papers,
         guidelines,
-        themes,
-        key_benefits
     } = conferenceData;
 
-    // Helper to safely render HTML
-    const createMarkup = (html) => {
-        return { __html: DOMPurify.sanitize(html) };
+    // Helper to safely parse JSON strings from the API response
+    const parseJSON = (data, fallback = null) => {
+        try {
+            if (typeof data === 'object' && data !== null) return data;
+            return typeof data === 'string' ? JSON.parse(data) : data;
+        } catch (e) {
+            console.error("JSON Parse Error", e);
+            return fallback;
+        }
     };
 
-    // Prepare Important Dates for Table
-    const dateColumns = [
-        { title: 'Event', dataIndex: 'event', key: 'event', render: text => <span className="font-semibold text-gray-700">{text}</span> },
-        { title: 'Date', dataIndex: 'date', key: 'date', render: text => <span className="text-red-600 font-bold">{text}</span> },
-    ];
+    const parsedImportantDates = parseJSON(important_dates, {});
+    const parsedKeyBenefits = parseJSON(key_benefits, []);
+    const parsedVenue = parseJSON(venue, {});
+    const parsedKeynoteSpeakers = parseJSON(keynote_speakers, []);
 
-    const dateData = [];
-    if (important_dates) {
-        const formatDateRange = (item) => {
-            if (!item) return 'TBA';
-            const start = item.startDate ? item.startDate : '';
-            const end = item.lastDate ? item.lastDate : '';
-            if (start && end) return `${start} - ${end}`;
-            return end || start || 'TBA';
-        };
+    // Note: User asked to render "all these details", so I should try to render steering/review if they have content. 
+    const parsedSteeringCommittee = parseJSON(steering_committee, []);
+    const parsedReviewBoard = parseJSON(review_board, []);
+    const parsedPastConferences = parseJSON(past_conferences, []);
 
-        if (important_dates.abstract_submission) {
-            dateData.push({ key: '1', event: 'Abstract Submission Deadline', date: formatDateRange(important_dates.abstract_submission) });
-        }
-        if (important_dates.full_paper_submission) {
-            dateData.push({ key: '2', event: 'Full Paper Submission Deadline', date: formatDateRange(important_dates.full_paper_submission) });
-        }
-        if (important_dates.registration) {
-            dateData.push({ key: '3', event: 'Registration Deadline', date: formatDateRange(important_dates.registration) });
-        }
-    }
 
-    return (
-        <div className="bg-gray-50 min-h-screen flex flex-col font-sans">
-            {/* Custom Header */}
-            <div className="bg-[#2c4a6e] text-white py-4 px-4 shadow-md">
-                <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    {/* Left: ELK Logo (Home Link) */}
-                    <Link to="/" className="flex-shrink-0 hover:opacity-90 transition-opacity">
-                        <img src={`${ImageURl}${organizer_logo}`} alt="ELK Education" className="h-12 md:h-16 bg-white rounded p-1" />
-                    </Link>
+    const createMarkup = (html) => ({ __html: DOMPurify.sanitize(html) });
+    const formattedDate = conference?.start_date ? new Date(conference.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Date TBA';
 
-                    {/* Center: Title & Venue */}
-                    <div className="text-center flex-grow">
-                        <h1 className="text-xl md:text-2xl font-bold text-white uppercase tracking-wide mb-1">
-                            {conference?.name}
-                        </h1>
-                        <div className="flex items-center justify-center gap-2 text-[#45cbb2] font-medium text-sm md:text-base">
-                            <EnvironmentOutlined />
-                            <span>{venue?.name || conference?.organized_by}</span>
-                        </div>
-                    </div>
-
-                    {/* Right: Organizer Logo */}
-                    <div className="flex-shrink-0">
-                        <Link to="/">
-                            <img src={logo} alt="Logo" />
-                        </Link>
-                    </div>
+    // Helper component for content sections
+    const ContentSection = ({ title, content, icon }) => {
+        if (!content || content === 'null' || content === 'undefined') return null;
+        return (
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8" id={title.toLowerCase().replace(/\s/g, '-')}>
+                <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                    {icon && <div className="text-blue-600 text-2xl">{icon}</div>}
+                    <h3 className="text-xl font-bold text-gray-800 m-0">{title}</h3>
+                </div>
+                <div className="text-gray-600 leading-relaxed ql-editor">
+                    <div dangerouslySetInnerHTML={createMarkup(content)} />
                 </div>
             </div>
+        );
+    };
 
-            {/* Main Content Container */}
-            <div className="container mx-auto px-4 py-8 flex-grow">
+    const importantDateKeys = Object.keys(parsedImportantDates);
 
-                <Tabs defaultActiveKey="home" type="card" className="custom-tabs" size="large">
-
-                    {/* HOME / OVERVIEW TAB */}
-                    <TabPane tab={<span><HomeOutlined /> Overview</span>} key="home">
-                        <div className="bg-white p-6 rounded-b shadow-sm">
-                            {/* Top Row: 3 Columns */}
-                            <Row gutter={[24, 24]} className="mb-8">
-                                {/* Col 1: Conference Details / Objectives */}
-                                <Col xs={24} lg={8}>
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 border-b-2 border-[#45cbb2] inline-block pb-1">
-                                        About Conference
-                                    </h3>
-                                    <div className="prose prose-sm max-w-none text-gray-600">
-                                        {conference_objectives ? (
-                                            <div dangerouslySetInnerHTML={createMarkup(conference_objectives)} />
-                                        ) : (
-                                            <p>Join us for the {conference?.name}, a premier gathering of professionals and scholars.</p>
-                                        )}
-                                    </div>
-                                </Col>
-
-                                {/* Col 2: Organizer Image */}
-                                <Col xs={24} md={12} lg={8} className="flex flex-col items-center">
-                                    {organizer_image ? (
-                                        <div className="w-full h-full min-h-[200px] bg-gray-100 rounded-lg overflow-hidden shadow-sm border border-gray-200">
-                                            <img
-                                                src={`${ImageURl}${organizer_image}`}
-                                                alt="Organizer Banner"
-                                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-400 rounded-lg">
-                                            No Organizer Image
-                                        </div>
-                                    )}
-                                </Col>
-
-                                {/* Col 3: Important Dates */}
-                                <Col xs={24} md={12} lg={8}>
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 border-b-2 border-[#45cbb2] inline-block pb-1">
-                                        Important Dates
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {dateData?.length > 0 && dateData.map((item) => (
-                                            <div key={item.key} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-                                                <div className="flex-shrink-0 bg-blue-50 text-[#1e3a5f] p-3 rounded-lg">
-                                                    <ScheduleOutlined className="text-xl" />
-                                                </div>
-                                                <div className="flex-grow">
-                                                    <h4 className="font-bold text-gray-800 text-sm mb-1">{item.event}</h4>
-                                                    <div className="text-[#e63946] font-bold text-xs md:text-sm bg-red-50 inline-block px-2 py-1 rounded border border-red-100">
-                                                        {item.date}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Col>
-                            </Row>
-
-                            <hr className="border-gray-100 my-8" />
-
-                            {/* Row 2: Full Description */}
-                            {description && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Detailed Description</h3>
-                                    <div className="p-6 bg-gray-50 rounded-lg border-l-4 border-[#1e3a5f]">
-                                        <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={createMarkup(description)} />
-                                    </div>
-                                </div>
+    return (
+        <div className="min-h-screen bg-gray-50 font-sans">
+            {/* 1. Header Section */}
+            <header className="bg-gradient-to-r from-[#0b1c2e] to-[#204066] shadow-lg sticky top-0 z-50 border-b border-white/5 backdrop-blur-sm bg-opacity-95">
+                <div className="container mx-auto px-4">
+                    {/* Top Row - Logo and ELK Logo */}
+                    <div className="h-auto lg:h-16 py-3 lg:py-0 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
+                        <Link to="/" className="flex-shrink-0 flex items-center gap-3 group">
+                            {organizer_logo ? (
+                                <img src={`${ImageURl}${organizer_logo}`} alt="Conference Logo" className="h-10 md:h-12 object-contain bg-white rounded px-2 py-1 shadow-sm group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                                <span className="text-xl font-bold text-white tracking-wide">{conference?.name}</span>
                             )}
+                        </Link>
 
-                            {/* Row 3: Key Benefits / Themes */}
-                            {themes && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Conference Themes</h3>
-                                    <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={createMarkup(themes)} />
-                                </div>
-                            )}
+                        {/* Navigation Menu - Desktop */}
+                        <nav className="hidden xl:flex flex-nowrap justify-center items-center gap-8">
+                            {[
+                                { label: 'About', href: '#about-the-conference' },
+                                { label: 'Call for Papers', href: '#call-for-papers' },
+                                { label: 'Guidelines', href: '#submission-guidelines' },
+                                { label: 'Committee', href: '#committee' },
+                                { label: 'Speakers', href: '#keynote-speakers' },
+                                { label: 'Benefits', href: '#key-benefits' },
+                                { label: 'Venue', href: '#venue' },
+                            ].map((item, idx) => (
+                                <a
+                                    key={idx}
+                                    href={item.href}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        const element = document.querySelector(item.href);
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }
+                                    }}
+                                    className="relative py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 group"
+                                >
+                                    {item.label}
+                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
+                                </a>
+                            ))}
+                        </nav>
 
-                            {/* Key Benefits List */}
-                            {key_benefits && key_benefits.length > 0 && typeof key_benefits !== 'string' && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Key Benefits</h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        {key_benefits.map((benefit, index) => (
-                                            <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded">
-                                                <div className="mt-1 text-[#45cbb2] font-bold">•</div>
-                                                <div className="text-gray-700">{benefit}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-
-                            {/* Organizers Section for Home Tab */}
-                            {organisers && (
-                                <div className="mb-6">
-                                    <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Organizers</h3>
-                                    <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={createMarkup(organisers)} />
-                                </div>
-                            )}
-
+                        <div className="flex items-center gap-3">
+                            <Link to="/">
+                                <img src={Logo} alt="ELK Logo" className="h-8" />
+                            </Link>
                         </div>
-                    </TabPane>
+                    </div>
 
-                    {/* CALL FOR PAPERS TAB */}
-                    {call_for_papers && (
-                        <TabPane tab={<span><FileTextOutlined /> Call for Papers</span>} key="cfp">
-                            <div className="bg-white p-8 rounded-b shadow-sm min-h-[400px]">
-                                <h2 className="text-2xl font-bold text-[#1e3a5f] mb-6">Call for Papers</h2>
-                                <div className="prose max-w-none" dangerouslySetInnerHTML={createMarkup(call_for_papers)} />
-                                {guidelines && (
-                                    <div className="mt-8 pt-8 border-t border-gray-200">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4">Submission Guidelines</h3>
-                                        <div className="prose max-w-none" dangerouslySetInnerHTML={createMarkup(guidelines)} />
-                                    </div>
-                                )}
+                    {/* Navigation Menu - Mobile/Tablet */}
+                    <nav className="xl:hidden flex flex-wrap justify-center items-center gap-x-6 gap-y-2 pb-4">
+                        {[
+                            { label: 'About', href: '#about-the-conference' },
+                            { label: 'Papers', href: '#call-for-papers' },
+                            { label: 'Committee', href: '#committee' },
+                            { label: 'Speakers', href: '#keynote-speakers' },
+                            { label: 'Venue', href: '#venue' },
+                        ].map((item, idx) => (
+                            <a
+                                key={idx}
+                                href={item.href}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const element = document.querySelector(item.href);
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                }}
+                                className="text-xs font-medium text-gray-300 hover:text-white transition-colors duration-300"
+                            >
+                                {item.label}
+                            </a>
+                        ))}
+                    </nav>
+                </div>
+            </header>
+
+            {/* 2. Hero Section */}
+            <div className="relative bg-[#0b1c2e] text-white py-12 lg:py-20 overflow-hidden">
+                {/* Dynamic Background or Fallback */}
+                <div className="absolute inset-0 bg-cover bg-center opacity-10"
+                    style={{ backgroundImage: venue_image ? `url(${ImageURl}${venue_image})` : `url('https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=2070&auto=format&fit=crop')` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0b1c2e] via-[#0b1c2e]/90 to-transparent" />
+
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+                        <div className="lg:w-3/4">
+                            {/* Breadcrumbs */}
+                            <div className="flex items-center gap-2 text-orange-400 text-sm mb-4">
+                                <Link to="/" className="hover:underline">Home</Link>
+                                <span>&gt;</span>
+                                <span className="truncate max-w-md">{conference?.name}</span>
                             </div>
-                        </TabPane>
-                    )}
 
-                    {/* COMMITTEE TAB */}
-                    {(organizing_committee || steering_committee || review_board) && (
-                        <TabPane tab={<span><TeamOutlined /> Committee</span>} key="committee">
-                            <div className="bg-white p-8 rounded-b shadow-sm">
-                                {organizing_committee && (
-                                    <div className="mb-8">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 bg-gray-100 p-2 border-l-4 border-blue-500">Organizing Committee</h3>
-                                        <div className="prose max-w-none" dangerouslySetInnerHTML={createMarkup(organizing_committee)} />
+                            {/* Organized By Badge */}
+                            {conference?.organized_by && (
+                                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1 mb-4">
+                                    <span className="text-gray-300 text-xs font-bold uppercase tracking-wider">Organized by</span>
+                                    <span className="text-white text-sm font-semibold">{conference?.organized_by}</span>
+                                </div>
+                            )}
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-6">
+                                {conference?.name}
+                            </h1>
+                            <div className="flex flex-wrap items-center gap-6 text-gray-300 mb-8">
+                                <div className="flex items-center gap-2">
+                                    <CalendarOutlined className="text-lg" />
+                                    <span className="font-medium text-white">{formattedDate}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <EnvironmentOutlined className="text-lg" />
+                                    <span className="font-medium text-white">{parsedVenue?.name || conference?.city || 'Venue TBA'}</span>
+                                </div>
+                            </div>
+                            <Button
+                                type="primary"
+                                size="large"
+                                className="bg-[#204066] hover:bg-[#0b1c2e] border-none px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2"
+                                onClick={() => setIsRegistrationModalOpen(true)}
+                            >
+                                Register Now <ArrowRightOutlined />
+                            </Button>
+                        </div >
+                    </div >
+                </div >
+            </div >
+
+            {/* 3. Main Content Layout */}
+
+
+
+
+
+
+
+
+            < div className="container mx-auto px-4 py-12" >
+                <Row gutter={[32, 32]}>
+                    <Col xs={24} lg={16}>
+                        {/* About the Conference - Enhanced */}
+                        {description && (
+                            <div id="about-the-conference" className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-10">
+                                        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
                                     </div>
-                                )}
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                                <InfoCircleOutlined className="text-white text-xl" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white m-0">About the Conference</h3>
+                                        </div>
+                                        <p className="text-blue-100 text-sm m-0">Learn more about what makes this conference unique</p>
+                                    </div>
+                                </div>
 
-                                {/* Steering Committee List */}
-                                {steering_committee && steering_committee.length > 0 && (
-                                    <div className="mb-8">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 bg-gray-100 p-2 border-l-4 border-blue-500">Steering Committee</h3>
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {steering_committee.map((member, idx) => (
-                                                <Card key={idx} size="small" className="hover:shadow-md transition-shadow">
-                                                    <span className="font-medium text-gray-800">{member.name}</span>
-                                                </Card>
-                                            ))}
+                                {/* Content */}
+                                <div className="p-6 lg:p-8">
+                                    <div
+                                        dangerouslySetInnerHTML={createMarkup(description)}
+                                        className="text-gray-600 leading-relaxed text-base ql-editor [&>p]:mb-4"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+
+
+
+                        {/* Call For Papers - Enhanced */}
+                        {call_for_papers && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden" id="call-for-papers">
+                                {/* Header with gradient */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-10">
+                                        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                                    </div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                                <ShareAltOutlined className="text-white text-xl" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white m-0">Call for Papers</h3>
+                                        </div>
+                                        <p className="text-gray-300 text-sm m-0">Submit your research work</p>
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-6 lg:p-8">
+                                    <div
+                                        dangerouslySetInnerHTML={createMarkup(call_for_papers)}
+                                        className="text-gray-600 leading-relaxed ql-editor
+                                        [&>ul]:space-y-2 [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0
+                                        [&>ul>li]:bg-gray-50 [&>ul>li]:p-4 [&>ul>li]:rounded-xl [&>ul>li]:border [&>ul>li]:border-gray-100
+                                        [&>ul>li]:hover:bg-white [&>ul>li]:hover:border-[#204066]/30 [&>ul>li]:hover:shadow-md [&>ul>li]:transition-all
+                                        [&>ol]:space-y-2 [&>ol]:list-none [&>ol]:p-0 [&>ol]:m-0
+                                        [&>ol>li]:bg-gray-50 [&>ol>li]:p-4 [&>ol>li]:rounded-xl [&>ol>li]:border [&>ol>li]:border-gray-100
+                                        [&>ol>li]:hover:bg-white [&>ol>li]:hover:border-[#204066]/30 [&>ol>li]:hover:shadow-md [&>ol>li]:transition-all
+                                        [&_strong]:text-[#0b1c2e] [&_strong]:font-bold
+                                        [&>p]:mb-4"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+
+
+                        {/* Who Should Join - Enhanced */}
+                        {/* Who Should Join - Enhanced List View */}
+                        {who_should_join && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                    <div className="absolute inset-0 opacity-10">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                                    </div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                                <UserOutlined className="text-white text-xl" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white m-0">Who Should Join</h3>
+                                        </div>
+                                        <p className="text-gray-300 text-sm m-0">Target audience for this conference</p>
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-8">
+                                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                                        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-x-12 gap-y-4">
+                                            {(() => {
+                                                // Parse HTML list items into array
+                                                const tempDiv = document.createElement('div');
+                                                tempDiv.innerHTML = who_should_join;
+                                                const listItems = tempDiv.querySelectorAll('li');
+
+                                                if (listItems.length === 0) {
+                                                    // Fallback: render as HTML if no list items
+                                                    return (
+                                                        <div className="col-span-full text-gray-600 leading-relaxed ql-editor">
+                                                            <div dangerouslySetInnerHTML={createMarkup(who_should_join)} />
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return Array.from(listItems).map((li, idx) => (
+                                                    <div key={idx} className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 hover:bg-white hover:pl-2 transition-all duration-300 rounded-lg group">
+                                                        <div className="mt-1.5 h-2 w-2 rounded-full bg-[#204066] flex-shrink-0 group-hover:scale-125 transition-transform"></div>
+                                                        <p className="text-gray-700 text-[15px] leading-relaxed m-0 font-medium group-hover:text-[#0b1c2e] transition-colors text-left">
+                                                            {li.textContent.trim()}
+                                                        </p>
+                                                    </div>
+                                                ));
+                                            })()}
                                         </div>
                                     </div>
-                                )}
-
-                                {/* Review Board List */}
-                                {review_board && review_board.length > 0 && (
-                                    <div className="mb-8">
-                                        <h3 className="text-xl font-bold text-[#1e3a5f] mb-4 bg-gray-100 p-2 border-l-4 border-blue-500">Review Board</h3>
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {review_board.map((member, idx) => (
-                                                <Card key={idx} size="small" className="hover:shadow-md transition-shadow">
-                                                    <span className="font-medium text-gray-800">{member.name}</span>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                </div>
                             </div>
-                        </TabPane>
-                    )}
+                        )}
 
-                    {/* KEYNOTE SPEAKERS TAB */}
-                    {keynote_speakers && keynote_speakers.length > 0 && (
-                        <TabPane tab={<span><TeamOutlined /> Keynote Speakers</span>} key="speakers">
-                            <div className="bg-white p-8 rounded-b shadow-sm">
-                                <h2 className="text-2xl font-bold text-[#1e3a5f] mb-6">Keynote Speakers</h2>
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    {keynote_speakers.map((speaker, index) => (
-                                        <div key={index} className="flex flex-col sm:flex-row gap-6 bg-gray-50 p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
-                                            <div className="flex-shrink-0 mx-auto sm:mx-0">
-                                                {speaker.image ? (
-                                                    <img src={`${ImageURl}${speaker.image}`} alt={speaker.name} className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-sm" />
+
+                        {/* Committee Section - Enhanced UX */}
+                        <div id="committee" className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                            {/* Section Header with theme gradient */}
+                            <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-6 relative overflow-hidden">
+                                <div className="absolute inset-0 opacity-10">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/4"></div>
+                                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-1/2 -translate-x-1/4"></div>
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="text-xl font-bold text-white m-0 flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <TeamOutlined className="text-2xl" />
+                                        </div>
+                                        Conference Committee
+                                    </h3>
+                                    <p className="text-gray-300 text-sm mt-2 mb-0">Meet the team behind this conference</p>
+                                </div>
+                            </div>
+
+                            <Tabs
+                                defaultActiveKey="organizing"
+                                className="committee-tabs"
+                                tabBarStyle={{
+                                    padding: '0 24px',
+                                    marginBottom: 0,
+                                    background: '#f8fafc',
+                                    borderBottom: '1px solid #e2e8f0'
+                                }}
+                                items={[
+                                    {
+                                        key: 'organizing',
+                                        label: (
+                                            <span className="flex items-center gap-2 py-3 px-4 text-base font-semibold">
+                                                <div className="bg-[#0b1c2e]/10 text-[#0b1c2e] p-1.5 rounded-lg">
+                                                    <TeamOutlined />
+                                                </div>
+                                                Organizing Committee
+                                            </span>
+                                        ),
+                                        children: (
+                                            <div className="p-6 bg-gradient-to-b from-gray-50/50 to-white min-h-[200px]">
+                                                {organizing_committee ? (
+                                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {(() => {
+                                                            // Parse HTML list items into array
+                                                            const tempDiv = document.createElement('div');
+                                                            tempDiv.innerHTML = organizing_committee;
+                                                            const listItems = tempDiv.querySelectorAll('li');
+
+                                                            if (listItems.length === 0) {
+                                                                // Fallback: render as HTML if no list items
+                                                                return (
+                                                                    <div className="col-span-full text-gray-600 leading-relaxed ql-editor">
+                                                                        <div dangerouslySetInnerHTML={createMarkup(organizing_committee)} />
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            return Array.from(listItems).map((li, i) => {
+                                                                // Extract name (usually in strong tag) and role/affiliation
+                                                                const strongTag = li.querySelector('strong');
+                                                                const name = strongTag ? strongTag.textContent.trim() : li.textContent.split(',')[0].trim();
+                                                                const subtext = strongTag
+                                                                    ? li.textContent.replace(strongTag.textContent, '').trim().replace(/^[,:\s-]+/, '')
+                                                                    : li.textContent.includes(',') ? li.textContent.split(',').slice(1).join(',').trim() : null;
+
+                                                                return (
+                                                                    <div key={i} className="group bg-white p-4 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                                                                        <div className="flex items-center gap-4">
+                                                                            <div className="h-12 w-12 bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-md group-hover:scale-110 transition-transform">
+                                                                                {name.charAt(0).toUpperCase()}
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="font-bold text-gray-800 truncate">{name}</div>
+                                                                                {subtext && <div className="text-xs text-gray-500 truncate">{subtext}</div>}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            });
+                                                        })()}
+                                                    </div>
                                                 ) : (
-                                                    <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-400">
-                                                        {speaker.name.charAt(0)}
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                                        <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                            <TeamOutlined className="text-2xl" />
+                                                        </div>
+                                                        <p>No Record Available</p>
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="text-center sm:text-left">
-                                                <h3 className="text-xl font-bold text-[#1e3a5f]">{speaker.name}</h3>
-                                                <p className="text-[#45cbb2] font-medium mb-2">{speaker.designation}</p>
-                                                <p className="text-gray-600 text-sm italic">{speaker.about}</p>
+                                        )
+                                    },
+                                    {
+                                        key: 'steering',
+                                        label: (
+                                            <span className="flex items-center gap-2 py-3 px-4 text-base font-semibold">
+                                                <div className="bg-[#204066]/10 text-[#204066] p-1.5 rounded-lg">
+                                                    <SafetyCertificateOutlined />
+                                                </div>
+                                                Steering Committee
+                                            </span>
+                                        ),
+                                        children: (
+                                            <div className="p-6 bg-gradient-to-b from-gray-50/50 to-white min-h-[200px]">
+                                                {parsedSteeringCommittee.length > 0 ? (
+                                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {parsedSteeringCommittee.map((item, i) => {
+                                                            const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
+                                                            const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
+
+                                                            return (
+                                                                <div key={i} className="group bg-white p-4 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="h-12 w-12 bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-md group-hover:scale-110 transition-transform">
+                                                                            {name.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="font-bold text-gray-800 truncate">{name}</div>
+                                                                            {subtext && <div className="text-xs text-gray-500 truncate">{subtext}</div>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                                        <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                            <TeamOutlined className="text-2xl" />
+                                                        </div>
+                                                        <p>No Record Available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    },
+                                    {
+                                        key: 'review',
+                                        label: (
+                                            <span className="flex items-center gap-2 py-3 px-4 text-base font-semibold">
+                                                <div className="bg-[#0b1c2e]/10 text-[#0b1c2e] p-1.5 rounded-lg">
+                                                    <FileTextOutlined />
+                                                </div>
+                                                Review Board
+                                            </span>
+                                        ),
+                                        children: (
+                                            <div className="p-6 bg-gradient-to-b from-gray-50/50 to-white min-h-[200px]">
+                                                {parsedReviewBoard.length > 0 ? (
+                                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {parsedReviewBoard.map((item, i) => {
+                                                            const name = typeof item === 'object' ? (item.name || JSON.stringify(item)) : item;
+                                                            const subtext = typeof item === 'object' && item.affiliation ? item.affiliation : null;
+
+                                                            return (
+                                                                <div key={i} className="group bg-white p-4 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="h-12 w-12 bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-md group-hover:scale-110 transition-transform">
+                                                                            {name.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="font-bold text-gray-800 truncate">{name}</div>
+                                                                            {subtext && <div className="text-xs text-gray-500 truncate">{subtext}</div>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                                                        <div className="bg-gray-100 p-4 rounded-full mb-3">
+                                                            <TeamOutlined className="text-2xl" />
+                                                        </div>
+                                                        <p>No Record Available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    }
+                                ]} />
+                        </div>
+
+                        {/* Program Schedule */}
+                        {program_schedule && (
+                            <ContentSection title="Program Schedule" content={program_schedule} icon={<ScheduleOutlined />} />
+                        )}
+
+                    </Col>
+
+                    {/* RIGHT COLUMN */}
+                    <Col xs={24} lg={8}>
+                        {/* Important Dates Card - Enhanced */}
+                        {importantDateKeys.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <CalendarOutlined className="text-white text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Important Dates</h3>
+                                            <p className="text-gray-300 text-xs m-0">Mark your calendar</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-5 space-y-4">
+                                    {importantDateKeys.map((key, idx) => {
+                                        const dateObj = parsedImportantDates[key];
+                                        const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                        if (!dateObj) return null;
+
+                                        // Logic to calculate status and progress
+                                        const startDate = new Date(dateObj.startDate);
+                                        const endDate = new Date(dateObj.lastDate);
+                                        const today = new Date();
+                                        let status = 'UPCOMING';
+                                        let progress = 0;
+                                        let statusColor = 'bg-amber-100 text-amber-700';
+                                        let progressColor = 'bg-amber-500';
+                                        let iconBg = 'bg-amber-100 text-amber-600';
+
+                                        if (today < startDate) {
+                                            status = 'UPCOMING';
+                                            progress = 0;
+                                            statusColor = 'bg-amber-100 text-amber-700';
+                                            progressColor = 'bg-amber-500';
+                                            iconBg = 'bg-amber-100 text-amber-600';
+                                        } else if (today >= startDate && today <= endDate) {
+                                            status = 'OPEN';
+                                            const totalDuration = endDate - startDate;
+                                            const elapsed = today - startDate;
+                                            progress = Math.min((elapsed / totalDuration) * 100, 100);
+                                            statusColor = 'bg-green-100 text-green-700';
+                                            progressColor = 'bg-green-500';
+                                            iconBg = 'bg-green-100 text-green-600';
+                                        } else {
+                                            status = 'CLOSED';
+                                            progress = 100;
+                                            statusColor = 'bg-gray-100 text-gray-500';
+                                            progressColor = 'bg-gray-400';
+                                            iconBg = 'bg-gray-100 text-gray-400';
+                                        }
+
+                                        // Handle invalid dates
+                                        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                                            progress = 0;
+                                            status = 'TBA';
+                                            statusColor = 'bg-gray-100 text-gray-400';
+                                            progressColor = 'bg-gray-300';
+                                            iconBg = 'bg-gray-100 text-gray-400';
+                                        }
+
+                                        // Format dates nicely
+                                        const formatDate = (dateStr) => {
+                                            if (!dateStr) return 'TBA';
+                                            const date = new Date(dateStr);
+                                            if (isNaN(date.getTime())) return dateStr;
+                                            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                        };
+
+                                        return (
+                                            <div key={idx} className="group bg-gray-50 hover:bg-white rounded-xl p-4 border border-gray-100 hover:border-[#204066]/30 hover:shadow-md transition-all duration-300">
+                                                {/* Header Row */}
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${iconBg} transition-colors`}>
+                                                            <CalendarOutlined className="text-lg" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-800 text-sm m-0">{title}</h4>
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${statusColor}`}>
+                                                                {status}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Progress Bar */}
+                                                {status !== 'TBA' && (
+                                                    <div className="mb-3">
+                                                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full ${progressColor} rounded-full transition-all duration-500`}
+                                                                style={{ width: `${progress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Dates */}
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-400 font-medium">Opens:</span>
+                                                        <span className="font-semibold text-gray-700">{formatDate(dateObj.startDate)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-400 font-medium">Deadline:</span>
+                                                        <span className="font-bold text-[#0b1c2e]">{formatDate(dateObj.lastDate)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Organizers Section - Enhanced */}
+                        {(organisers || organizer_logo || organizer_image) && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <TeamOutlined className="text-white text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Organized By</h3>
+                                            <p className="text-gray-300 text-xs m-0">Conference organizers</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-5">
+                                    {/* Organizer Cover Image */}
+                                    {organizer_image && (
+                                        <div className="mb-5 rounded-xl overflow-hidden shadow-md">
+                                            <img
+                                                src={`${ImageURl}${organizer_image}`}
+                                                alt="Organizer"
+                                                className="w-full h-44 object-cover hover:scale-105 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Organizer Logo */}
+                                    {organizer_logo && (
+                                        <div className="flex justify-center mb-5">
+                                            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-block">
+                                                <img
+                                                    src={`${ImageURl}${organizer_logo}`}
+                                                    alt="Organizer Logo"
+                                                    className="max-h-20 object-contain"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Organizer Details */}
+                                    {organisers && (
+                                        <div
+                                            dangerouslySetInnerHTML={createMarkup(organisers)}
+                                            className="text-gray-600 text-sm leading-relaxed text-center
+                                            [&>p]:mb-2 [&_strong]:text-gray-800 [&_a]:text-[#204066] [&_a]:hover:underline"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Partners Section - Enhanced */}
+                        {partner_image && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <BankOutlined className="text-white text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Our Partners</h3>
+                                            <p className="text-gray-300 text-xs m-0">Supporting organizations</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-5">
+                                    <div className="flex justify-center items-center">
+                                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 inline-block hover:shadow-md hover:border-[#204066]/30 transition-all duration-300">
+                                            <img
+                                                src={`${ImageURl}${partner_image}`}
+                                                alt="Partner"
+                                                className="max-h-28 object-contain hover:scale-105 transition-transform duration-300"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Venue / Location Section - Enhanced */}
+                        {parsedVenue && (parsedVenue.name || typeof venue === 'string') && (
+                            <div id="venue" className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                                {/* Header with gradient matching theme */}
+                                <div className="bg-gradient-to-r from-[#0b1c2e] via-[#204066] to-[#0b1c2e] p-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <EnvironmentOutlined className="text-white text-xl" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold m-0 text-lg">Venue Location</h3>
+                                            <p className="text-gray-300 text-xs m-0">Conference venue</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-5">
+                                    {/* Map */}
+                                    <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden relative shadow-md mb-4">
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            style={{ border: 0 }}
+                                            src={`https://maps.google.com/maps?q=${encodeURIComponent(parsedVenue.name || venue)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                                            allowFullScreen
+                                            title="Venue Map"
+                                        ></iframe>
+                                    </div>
+
+                                    {/* Location Card */}
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-[#204066]/30 hover:shadow-sm transition-all duration-300">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-red-100 text-red-500 p-2 rounded-lg">
+                                                <EnvironmentOutlined className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-400 m-0 uppercase tracking-wider font-medium">Address</p>
+                                                <p className="font-semibold text-gray-800 m-0">{parsedVenue.name || venue}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+
+
+                    </Col>
+                </Row>
+            </div >
+
+
+            {/* Past Conferences - Premium Dark Section */}
+            {
+                parsedPastConferences && parsedPastConferences.length > 0 && (
+                    <div id="past-conferences" className="w-full bg-[#0b1c2e] py-16 relative overflow-hidden">
+                        {/* Decorative Background Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-[#204066] rounded-full mix-blend-screen filter blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-10 translate-y-1/2 -translate-x-1/2"></div>
+
+                        <div className="container mx-auto px-4 relative z-10">
+                            {/* Header */}
+                            <div className="text-center mb-12">
+
+                                <h3 className="text-3xl font-bold text-white mb-4">Past Conferences</h3>
+                                <div className="w-20 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto"></div>
+                            </div>
+
+                            {/* Horizontal Scroll Container */}
+                            <div className="relative">
+                                {/* Scroll Buttons Hint (optional, can be added if needed) */}
+
+                                <div className="flex overflow-x-auto pb-12 gap-6 snap-x px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                                    {parsedPastConferences.map((conf, idx) => (
+                                        <div key={idx} className="flex-shrink-0 w-80 snap-center group">
+                                            <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl h-full hover:bg-white hover:transform hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]">
+
+                                                {/* Hover Gradient Overlay */}
+                                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                                {/* Year Badge */}
+                                                <div className="flex justify-between items-start mb-6 relative z-10">
+                                                    <div className="text-5xl font-bold text-white/10 group-hover:text-[#0b1c2e]/10 transition-colors duration-300 font-heading">
+                                                        {conf.year}
+                                                    </div>
+                                                    <div className="h-10 w-10 rounded-full bg-white/10 group-hover:bg-[#0b1c2e] flex items-center justify-center text-white transition-colors duration-300">
+                                                        <HistoryOutlined />
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="relative z-10">
+                                                    <h4 className="text-xl font-bold text-white group-hover:text-[#0b1c2e] mb-3 transition-colors duration-300">
+                                                        Conference {conf.year}
+                                                    </h4>
+
+                                                    <div className="flex items-start gap-3 text-gray-400 group-hover:text-gray-600 transition-colors duration-300">
+                                                        <EnvironmentOutlined className="mt-1 text-blue-400 group-hover:text-[#204066]" />
+                                                        <span className="text-sm leading-relaxed font-medium">
+                                                            {conf.location}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Bottom Highlight */}
+                                                <div className="absolute bottom-0 left-0 w-0 h-1 bg-[#204066] group-hover:w-full transition-all duration-500"></div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        </TabPane>
-                    )}
+                        </div>
+                    </div>
+                )
+            }
 
-                    {/* VENUE TAB */}
-                    {venue && (
-                        <TabPane tab={<span><EnvironmentOutlined /> Venue</span>} key="venue">
-                            <div className="bg-white p-8 rounded-b shadow-sm">
-                                <h2 className="text-2xl font-bold text-[#1e3a5f] mb-6">Conference Venue</h2>
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    <div>
-                                        <h3 className="text-xl font-semibold mb-2">{venue.name}</h3>
-                                        <p className="text-gray-600 mb-6">
-                                            Join us at this prestigious location for an immersive experience.
-                                        </p>
-                                        {/* Venue Image if available */}
-                                        {conferenceData.venue_image && (
-                                            <div className="rounded-lg overflow-hidden shadow-md mb-6">
-                                                <img src={`${ImageURl}${conferenceData.venue_image}`} alt={venue.name} className="w-full h-64 object-cover" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="h-96 bg-gray-100 rounded-lg overflow-hidden shadow-inner border border-gray-200">
-                                        {/* Google Map Embed */}
-                                        {venue.map_link && (
-                                            <iframe
-                                                title="Venue Map"
-                                                width="100%"
-                                                height="100%"
-                                                frameBorder="0"
-                                                style={{ border: 0 }}
-                                                src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(venue.map_link)}`} // Note: USER needs to handle API Key or use simple embed if link is embeddable
-                                            // Fallback to simple iframe if map_link is a directly embeddable URL, usually it is not.
-                                            // For now, let's assume we might need to just render a link or handle it safely.
-                                            // If it's a regular link, we can't embed it directly without manipulation.
-                                            // Simple fallback:
-                                            ></iframe>
-                                        ) || (
-                                                <div className="flex items-center justify-center h-full text-gray-500">
-                                                    Map Unavailable
-                                                </div>
-                                            )}
-                                        {/* Note: Google Maps Embed usually requires an API key or a specific embed URL structure. 
-                                             If the user provides a standard share link, it might be refused to connect in iframe.
-                                             Let's try to just use a link for now if simple embed fails, but for visual I'll put a placeholder or just the link.
-                                          */}
-                                    </div>
+            {/* Submission Guidelines - Full Width Section */}
+            {
+                guidelines && (
+                    <div id="submission-guidelines" className="w-full bg-white py-12">
+                        <div className="container mx-auto px-4">
+                            {/* Header */}
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-[#0b1c2e] mb-3 flex items-center justify-center gap-3">
+                                    <SafetyCertificateOutlined className="text-[#204066]" />
+                                    Submission Guidelines
+                                </h2>
+                                <div className="h-1 w-20 bg-[#204066] mx-auto rounded-full mb-4"></div>
+                                <p className="text-gray-500 max-w-2xl mx-auto text-center">Requirements and instructions for paper submission</p>
+                            </div>
+
+                            {/* Content */}
+                            <div className="max-w-7xl mx-auto">
+                                <div className="p-4 md:p-0">
+                                    <div
+                                        dangerouslySetInnerHTML={createMarkup(guidelines)}
+                                        className="text-gray-600 leading-relaxed ql-editor
+                                    [&>ul]:space-y-4 [&>ul]:pl-0 [&>ul]:m-0 [&>ul]:list-none [&>ul]:columns-1 [&>ul]:md:columns-2 [&>ul]:gap-12
+                                    [&>ul>li]:relative [&>ul>li]:pl-8 [&>ul>li]:py-2 [&>ul>li]:text-gray-700 [&>ul>li]:break-inside-avoid
+                                    [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-4
+                                    [&>ul>li]:before:w-2.5 [&>ul>li]:before:h-2.5 [&>ul>li]:before:bg-[#204066] [&>ul>li]:before:rounded-full
+                                    [&>ol]:space-y-4 [&>ol]:pl-0 [&>ol]:m-0 [&>ol]:list-decimal [&>ol]:list-inside [&>ol]:columns-1 [&>ol]:md:columns-2 [&>ol]:gap-12
+                                    [&>ol>li]:py-2 [&>ol>li]:text-gray-700 [&>ol>li]:marker:text-[#204066] [&>ol>li]:marker:font-bold [&>ol>li]:break-inside-avoid
+                                    [&_strong]:text-[#0b1c2e] [&_strong]:font-bold
+                                    [&>p]:mb-6 [&>p]:text-gray-600"
+                                    />
                                 </div>
-                                {venue.map_link && (
-                                    <div className="mt-4 text-center">
-                                        <Button type="primary" icon={<EnvironmentOutlined />} href={venue.map_link} target="_blank" size="large">
-                                            View on Google Maps
-                                        </Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Conference Objectives - Full Width Section */}
+            {
+                conference_objectives && (
+                    <div id="conference-objectives" className="w-full bg-gray-100 py-16">
+                        <div className="container mx-auto px-4">
+                            {/* Header */}
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-[#0b1c2e] mb-3 flex items-center justify-center gap-3">
+                                    <GlobalOutlined className="text-[#204066]" />
+                                    Conference Objectives
+                                </h2>
+                                <div className="h-1 w-20 bg-[#204066] mx-auto rounded-full mb-4"></div>
+                                <p className="text-gray-500 max-w-2xl mx-auto text-center">What we aim to achieve through this conference</p>
+                            </div>
+
+                            {/* Objectives Grid - Modern Feature List (No Cards) */}
+                            <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
+                                {(() => {
+                                    // Parse HTML list items into objectives array
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = conference_objectives;
+                                    const listItems = tempDiv.querySelectorAll('li');
+
+                                    if (listItems.length === 0) {
+                                        // Fallback: render as HTML if no list items
+                                        return (
+                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                                                <div dangerouslySetInnerHTML={createMarkup(conference_objectives)} />
+                                            </div>
+                                        );
+                                    }
+
+                                    return Array.from(listItems).map((li, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="flex gap-4 group"
+                                        >
+                                            <div className="flex-shrink-0 mt-1">
+                                                <div className="w-8 h-8 rounded-full bg-[#204066]/10 text-[#204066] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#204066] group-hover:text-white">
+                                                    <CheckCircleFilled className="text-lg" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600 text-lg leading-relaxed m-0 group-hover:text-gray-900 transition-colors duration-300">
+                                                    {li.textContent.trim()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Conference Themes - Full Width Section */}
+            {
+                themes && (
+                    <div id="conference-themes" className="w-full bg-white py-16">
+                        <div className="container mx-auto px-4">
+                            {/* Header */}
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-[#0b1c2e] mb-3 flex items-center justify-center gap-3">
+                                    <FileTextOutlined className="text-[#204066]" />
+                                    Conference Themes
+                                </h2>
+                                <div className="h-1 w-20 bg-[#204066] mx-auto rounded-full mb-4"></div>
+                                <p className="text-gray-500 max-w-2xl mx-auto text-center">Explore the key research areas and topics covered in this conference</p>
+                            </div>
+
+                            {/* Themes Grid - Modern Feature List (No Cards) */}
+                            <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
+                                {(() => {
+                                    // Extract text content from HTML list items
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = themes;
+                                    const listItems = tempDiv.querySelectorAll('li');
+                                    const themesArray = Array.from(listItems).map(li => li.textContent.trim());
+
+                                    if (themesArray.length === 0) {
+                                        // Fallback: render as HTML if no list items found
+                                        return (
+                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                                                <div dangerouslySetInnerHTML={createMarkup(themes)} />
+                                            </div>
+                                        );
+                                    }
+
+                                    return themesArray.map((theme, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="flex gap-4 group"
+                                        >
+                                            <div className="flex-shrink-0 mt-1">
+                                                <div className="w-8 h-8 rounded-full bg-[#204066]/10 text-[#204066] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#204066] group-hover:text-white">
+                                                    <CheckCircleFilled className="text-lg" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600 text-lg leading-relaxed m-0 group-hover:text-gray-900 transition-colors duration-300">
+                                                    {theme}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Key Benefits - Full Width with Background */}
+            {
+                parsedKeyBenefits && parsedKeyBenefits.length > 0 && (
+                    <div id="key-benefits" className="w-full bg-[#0b1c2e]/5 py-12">
+                        <div className="container mx-auto px-4">
+                            <div className="mb-0">
+                                <h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center justify-center gap-2">
+                                    <TrophyOutlined className="text-[#204066]" /> Key Benefits
+                                </h3>
+                                <div className="grid md:grid-cols-2 gap-5">
+                                    {parsedKeyBenefits.map((benefit, idx) => (
+                                        <div key={idx} className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 border-l-[5px] border-l-[#204066] flex  justify-start gap-4 transition-all hover:shadow-md hover:-translate-y-0.5 duration-300 h-full">
+                                            <div className="text-[#204066] text-2xl flex-shrink-0 flex ">
+                                                <TrophyOutlined />
+                                            </div>
+                                            <span className="text-[#0b1c2e] font-bold text-[15px] leading-snug text-left">
+                                                {typeof benefit === 'string' ? benefit : JSON.stringify(benefit)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            <div className="container mx-auto px-4 px-4 pt-12 pb-0">
+                {/* Keynote Speakers - Full Width */}
+                {parsedKeynoteSpeakers && parsedKeynoteSpeakers.length > 0 && (
+                    <div id="keynote-speakers" className="mb-14 relative group">
+                        <h3 className="text-xl font-bold text-gray-800 mb-8 text-center">
+                            Keynote Speakers
+                        </h3>
+
+                        <div className="px-4 md:px-12">
+                            <Carousel
+                                arrows={true}
+                                prevArrow={<SlickArrowLeft />}
+                                nextArrow={<SlickArrowRight />}
+                                slidesToShow={3}
+                                slidesToScroll={1}
+                                dots={false}
+                                responsive={[
+                                    { breakpoint: 1024, settings: { slidesToShow: 2 } },
+                                    { breakpoint: 640, settings: { slidesToShow: 1 } }
+                                ]}
+                                className="pb-8 -mx-4"
+                            >
+                                {parsedKeynoteSpeakers.map((speaker, idx) => (
+                                    <div key={idx} className="px-4 h-full">
+                                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-[320px] flex flex-col relative mx-2">
+                                            {/* Header */}
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-[#204066]/20 flex-shrink-0">
+                                                    {speaker.image ? (
+                                                        <img src={`${ImageURl}${speaker.image}`} alt={speaker.name} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <div className="h-full w-full bg-[#0b1c2e]/10 flex items-center justify-center text-[#204066]">
+                                                            <UserOutlined className="text-2xl" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-gray-800 text-lg leading-tight">{speaker.name}</h4>
+                                                    <p className="text-[#204066] text-sm font-medium m-0 line-clamp-2">{speaker.designation}</p>
+                                                </div>
+                                            </div>
+
+                                            <Divider className="my-3" />
+
+                                            {/* Content */}
+                                            <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#204066]/40 transition-[::-webkit-scrollbar-thumb]">
+                                                <div className="flex gap-3">
+                                                    <div className="flex-shrink-0 mt-1">
+                                                        <span className="text-4xl text-[#204066]/30 leading-none font-serif">“</span>
+                                                    </div>
+                                                    <p className="text-gray-600 text-[13px] leading-relaxed italic">
+                                                        {speaker.about}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                ))}
+                            </Carousel>
+                        </div>
+                    </div>
+                )}
+
+
+
+
+            </div>
+
+            {/* Footer */}
+            {/* Footer - Modern Redesign */}
+            <footer className="bg-[#0b1c2e] text-white pt-20 pb-10 border-t border-white/5 mt-auto relative overflow-hidden">
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#204066] to-transparent opacity-50"></div>
+
+                <div className="container mx-auto px-4">
+                    <div className="grid md:grid-cols-4 gap-12 lg:gap-20">
+                        {/* Brand Column */}
+                        <div className="md:col-span-1 flex flex-col justify-between h-full">
+                            <div>
+                                <h5 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6">Organized By</h5>
+                                {organizer_logo && (
+                                    <div className="bg-white rounded-xl p-4 inline-block w-auto max-w-[200px]">
+                                        <img
+                                            src={`${ImageURl}${organizer_logo}`}
+                                            alt={conference?.name || "Conference Logo"}
+                                            className="h-16 w-auto object-contain"
+                                        />
                                     </div>
                                 )}
                             </div>
-                        </TabPane>
-                    )}
+                        </div>
 
-                </Tabs>
-            </div>
+                        {/* Quick Links Column */}
+                        <div className="md:col-span-2">
+                            <h5 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-8">Quick Navigation</h5>
+                            <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+                                {[
+                                    { id: 'about-the-conference', label: 'About Conference' },
+                                    { id: 'conference-themes', label: 'Conference Themes' },
+                                    { id: 'call-for-papers', label: 'Call for Papers' },
+                                    { id: 'committee', label: 'Committee' },
+                                    { id: 'keynote-speakers', label: 'Keynote Speakers' },
+                                    { id: 'venue', label: 'Venue Information' }
+                                ].map((item) => (
+                                    <li key={item.id}>
+                                        <button
+                                            onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' })}
+                                            className="text-gray-400 hover:text-white transition-all duration-300 flex items-center gap-2 group text-sm font-medium"
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#204066] group-hover:bg-blue-400 transition-colors"></span>
+                                            <span className="group-hover:translate-x-1 transition-transform inline-block">{item.label}</span>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-            {/* Footer Area (Simple) */}
-            <div className="bg-gray-800 text-gray-400 py-6 text-center text-sm">
-                &copy; {new Date().getFullYear()} {conference?.name || 'ELK Education'}. All Rights Reserved.
-            </div>
-        </div>
+                        {/* Venue Column */}
+                        <div className="md:col-span-1">
+                            <h5 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-8">Venue</h5>
+                            <div className="space-y-6">
+                                {parsedVenue?.name && (
+                                    <div className="group">
+                                        <div className="flex items-start gap-4 mb-3">
+                                            <div className="w-10 h-10 rounded-lg bg-[#204066]/20 flex items-center justify-center flex-shrink-0 text-[#204066] group-hover:bg-[#204066] group-hover:text-white transition-colors duration-300">
+                                                <EnvironmentOutlined className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-semibold mb-1 leading-tight">{parsedVenue.name}</p>
+                                                <p className="text-gray-400 text-sm leading-relaxed">{parsedVenue.address}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Bar */}
+                    <div className="border-t border-white/5 mt-16 pt-8 flex justify-center items-center">
+                        <p className="text-gray-500 text-sm text-center">
+                            © {new Date().getFullYear()} {conference?.name || 'Conference'}. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            </footer>
+
+            {/* Registration Modal */}
+            <ConferenceRegistrationModal
+                open={isRegistrationModalOpen}
+                onCancel={() => setIsRegistrationModalOpen(false)}
+                conferenceId={id}
+                conferenceName={conference?.name}
+            />
+
+        </div >
     );
 };
 

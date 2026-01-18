@@ -15,7 +15,7 @@ const AuthorGuidlinens = () => {
                 <div className="w-full lg:w-3/4">
                     <div className="">
                         <h1 className="text-2xl text-[#12b48b] font-normal mb-2 relative inline-block">
-                            Terms and Condition
+                            Authors Guidelines
                             {/* <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#12b48b] transform translate-y-1"></span> */}
                         </h1>
 
@@ -206,7 +206,7 @@ const AuthorGuidlinens = () => {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-1/4 mt-8 lg:mt-0">
+                <div className="w-full lg:w-1/4 mt-8 lg:mt-0 lg:pl-6">
                     <NewsWidget />
                 </div>
             </div>

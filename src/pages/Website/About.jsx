@@ -82,18 +82,20 @@ export default function About() {
                         {/* Team list */}
                         <div className="space-y-6">
                             {team?.length > 0 && team.map((member) => (
-                                <div key={member.id} className="flex gap-2">
-                                    <div className="mt-3  text-[#204066]">
-                                        <FaEdit className="text-sm  border-[#204066] p-[1px] rounded-sm" />
+                                <div key={member.id} className="flex items-start gap-4 group">
+                                    <div className="flex-shrink-0 mt-1">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-[#12b48b] to-[#0d9b7a] rounded-full flex items-center justify-center shadow-sm">
+                                            <FaEdit className="text-white text-sm" />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-sm font-bold text-[#666] mb-2">
+                                    <div className="flex-1">
+                                        <h3 className="text-base font-bold text-[#204066] group-hover:text-[#12b48b] transition-colors duration-200">
                                             {member.name}
                                             {member.title && (
-                                                <span className="font-normal text-gray-600">, {member.title}:</span>
+                                                <span className="text-[#12b48b] font-semibold ml-1">- {member.title}</span>
                                             )}
                                         </h3>
-                                        <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                                        <p className="text-sm text-gray-600 leading-relaxed text-justify mt-2">
                                             {member.description}
                                         </p>
                                     </div>

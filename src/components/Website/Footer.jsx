@@ -17,12 +17,12 @@ const Footer = () => {
                             <li><Link to="/privacy-policy">Privacy Policy</Link></li>
                             <li><Link to="/terms-and-conditions">Terms and Conditions</Link></li>
                             <li><Link to="/sitemap">Sitemap</Link></li>
-                            <li><a href="blog" target="_blank" rel="noopener noreferrer">Blog</a></li>
+                            {/* <li><a href="blog" target="_blank" rel="noopener noreferrer">Blog</a></li> */}
                             <li><Link to="/contact-us">Contact Us</Link></li>
                         </ul>
                     </div>
                     <div className="w-full md:w-3/12 flex justify-center md:justify-end">
-                        <ul className="flex items-center gap-4">
+                        {/* <ul className="flex items-center gap-4">
                             <li className="!border-0 !p-0">
                                 <a href="https://www.facebook.com/impactfactorjournal" target="_blank" rel="noopener noreferrer" className="text-2xl">
                                     <FaFacebookSquare />
@@ -33,7 +33,7 @@ const Footer = () => {
                                     <FaLinkedin />
                                 </a>
                             </li>
-                        </ul>
+                        </ul> */}
                     </div>
                 </div>
             </div>
@@ -52,7 +52,7 @@ const Footer = () => {
             <div className="container mt-4">
                 <div className="flex flex-col md:flex-row footer justify-between items-center">
                     <div className="footer-b w-full md:w-1/2 text-center md:text-left">
-                        <p>&copy; ELK-APJ 2024. All Rights Reserved.</p>
+                        <p>&copy; ELK-APJ 2026. All Rights Reserved.</p>
                     </div>
 
                     <div className="footer-c w-full md:w-1/2 text-center md:text-right">

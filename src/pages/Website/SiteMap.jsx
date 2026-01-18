@@ -93,9 +93,9 @@ const SiteMap = () => {
                             </h1>
                         </div>
 
-                        <div className="mb-8 pl-1">
-                            <Link to="/" className="flex items-center gap-2 text-sm text-[#555] hover:text-[#12b48b] transition-colors group">
-                                <FaEdit className="text-[#666] text-xs group-hover:text-[#12b48b]" />
+                        <div className="mb-8">
+                            <Link to="/" className="inline-flex items-center gap-2 text-lg font-bold text-[#204066] pb-2 border-b-2 border-[#12b48b] hover:text-[#12b48b] transition-colors group">
+                                <span className="text-2xl group-hover:scale-110 transition-transform">🏠</span>
                                 Home
                             </Link>
                         </div>
@@ -103,15 +103,29 @@ const SiteMap = () => {
                         <div className="space-y-6">
                             {sections?.length > 0 && sections.map((section, idx) => (
                                 <div key={idx}>
-                                    <h6 className="text-[#204066] font-normal mb-2 text-[14px]">{section.title}</h6>
-                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                    <h2 className="text-lg font-bold text-[#204066] mb-3 pb-2 border-b-2 border-[#12b48b] flex items-center gap-2">
+                                        <span className="text-xl">📌</span>
+                                        {section.title}
+                                    </h2>
+                                    <div className="flex flex-wrap gap-x-8 gap-y-2 pl-2">
                                         {section?.links?.length > 0 && section?.links.map((link, linkIdx) => (
                                             link.isHeader ? (
-                                                <div key={linkIdx} className="w-full text-[#333] text-[12px] font-bold mb-0 mt-1">
+                                                <div key={linkIdx} className="w-full text-[#333] text-sm font-semibold mb-2 mt-2 uppercase tracking-wide">
                                                     {link.label}
                                                 </div>
                                             ) : (
-                                                itemRenderer(link, linkIdx)
+                                                <div key={linkIdx} className="flex items-center gap-2 group">
+                                                    <span className="text-[#12b48b] text-sm group-hover:scale-125 transition-transform">→</span>
+                                                    {link.external ? (
+                                                        <a href={link.to} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-700 hover:text-[#12b48b] hover:font-semibold transition-all duration-200">
+                                                            {link.label}
+                                                        </a>
+                                                    ) : (
+                                                        <Link to={link.to} className="text-sm text-gray-700 hover:text-[#12b48b] hover:font-semibold transition-all duration-200">
+                                                            {link.label}
+                                                        </Link>
+                                                    )}
+                                                </div>
                                             )
                                         ))}
                                     </div>
