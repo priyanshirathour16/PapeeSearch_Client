@@ -18,6 +18,7 @@ import {
     FieldTimeOutlined,
     LeftOutlined,
     RightOutlined,
+    CheckCircleFilled,
     HistoryOutlined,
     BankOutlined
 } from '@ant-design/icons';
@@ -27,6 +28,7 @@ import { ImageURl } from '../../services/serviceApi'; // Ensure this path is cor
 import DOMPurify from 'dompurify';
 import Logo from "../../assets/images/elk-logo.png"; // check relative path
 import { decryptId } from '../../utils/idEncryption';
+import ConferenceRegistrationModal from '../../components/Website/ConferenceRegistrationModal';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -75,6 +77,7 @@ const ConferenceDetailsPage = () => {
     const navigate = useNavigate();
     const [conferenceData, setConferenceData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
     const [error, setError] = useState(null);
 
     const id = decryptId(encryptedId);
@@ -191,7 +194,7 @@ const ConferenceDetailsPage = () => {
                         </Link>
 
                         {/* Navigation Menu - Desktop */}
-                        <nav className="hidden xl:flex flex-nowrap justify-center items-center gap-1">
+                        <nav className="hidden xl:flex flex-nowrap justify-center items-center gap-8">
                             {[
                                 { label: 'About', href: '#about-the-conference' },
                                 { label: 'Call for Papers', href: '#call-for-papers' },
@@ -211,9 +214,10 @@ const ConferenceDetailsPage = () => {
                                             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                         }
                                     }}
-                                    className="px-4 py-2 pb-2.5 font-semibold text-sm transition-all duration-300 shadow-md transform hover:-translate-y-1 whitespace-nowrap rounded-tr-3xl rounded-bl-3xl bg-gray-200/90 text-gray-800 hover:bg-[#0b1c2e] hover:text-white hover:shadow-[#0b1c2e]/40"
+                                    className="relative py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 group"
                                 >
                                     {item.label}
+                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
                                 </a>
                             ))}
                         </nav>
@@ -226,7 +230,7 @@ const ConferenceDetailsPage = () => {
                     </div>
 
                     {/* Navigation Menu - Mobile/Tablet */}
-                    <nav className="xl:hidden flex flex-wrap justify-center items-center gap-1 pb-3">
+                    <nav className="xl:hidden flex flex-wrap justify-center items-center gap-x-6 gap-y-2 pb-4">
                         {[
                             { label: 'About', href: '#about-the-conference' },
                             { label: 'Papers', href: '#call-for-papers' },
@@ -244,7 +248,7 @@ const ConferenceDetailsPage = () => {
                                         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                     }
                                 }}
-                                className="px-3 py-1.5 pb-2 font-semibold text-xs transition-all duration-300 shadow-md transform hover:-translate-y-1 whitespace-nowrap rounded-tr-2xl rounded-bl-2xl bg-gray-200/90 text-gray-800 hover:bg-[#0b1c2e] hover:text-white hover:shadow-[#0b1c2e]/40"
+                                className="text-xs font-medium text-gray-300 hover:text-white transition-colors duration-300"
                             >
                                 {item.label}
                             </a>
@@ -291,7 +295,12 @@ const ConferenceDetailsPage = () => {
                                     <span className="font-medium text-white">{parsedVenue?.name || conference?.city || 'Venue TBA'}</span>
                                 </div>
                             </div>
-                            <Button type="primary" size="large" className="bg-[#204066] hover:bg-[#0b1c2e] border-none px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2">
+                            <Button
+                                type="primary"
+                                size="large"
+                                className="bg-[#204066] hover:bg-[#0b1c2e] border-none px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2"
+                                onClick={() => setIsRegistrationModalOpen(true)}
+                            >
                                 Register Now <ArrowRightOutlined />
                             </Button>
                         </div >
@@ -957,28 +966,29 @@ const ConferenceDetailsPage = () => {
                     <div id="submission-guidelines" className="w-full bg-white py-12">
                         <div className="container mx-auto px-4">
                             {/* Header */}
-                            <div className="text-center mb-10">
-                                <div className="inline-flex items-center gap-3 bg-[#0b1c2e] text-white px-6 py-3 rounded-full mb-4">
-                                    <SafetyCertificateOutlined className="text-xl" />
-                                    <span className="font-bold text-lg">Submission Guidelines</span>
-                                </div>
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-[#0b1c2e] mb-3 flex items-center justify-center gap-3">
+                                    <SafetyCertificateOutlined className="text-[#204066]" />
+                                    Submission Guidelines
+                                </h2>
+                                <div className="h-1 w-20 bg-[#204066] mx-auto rounded-full mb-4"></div>
                                 <p className="text-gray-500 max-w-2xl mx-auto text-center">Requirements and instructions for paper submission</p>
                             </div>
 
                             {/* Content */}
                             <div className="max-w-7xl mx-auto">
-                                <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                                <div className="p-4 md:p-0">
                                     <div
                                         dangerouslySetInnerHTML={createMarkup(guidelines)}
                                         className="text-gray-600 leading-relaxed ql-editor
-                                    [&>ul]:space-y-4 [&>ul]:pl-0 [&>ul]:m-0 [&>ul]:list-none [&>ul]:columns-1 [&>ul]:md:columns-2 [&>ul]:gap-8
-                                    [&>ul>li]:relative [&>ul>li]:pl-8 [&>ul>li]:py-3 [&>ul>li]:text-gray-700 [&>ul>li]:break-inside-avoid
-                                    [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-5
-                                    [&>ul>li]:before:w-3 [&>ul>li]:before:h-3 [&>ul>li]:before:bg-[#204066] [&>ul>li]:before:rounded-full
-                                    [&>ol]:space-y-4 [&>ol]:pl-0 [&>ol]:m-0 [&>ol]:list-decimal [&>ol]:list-inside [&>ol]:columns-1 [&>ol]:md:columns-2 [&>ol]:gap-8
-                                    [&>ol>li]:py-3 [&>ol>li]:text-gray-700 [&>ol>li]:marker:text-[#204066] [&>ol>li]:marker:font-bold [&>ol>li]:break-inside-avoid
+                                    [&>ul]:space-y-4 [&>ul]:pl-0 [&>ul]:m-0 [&>ul]:list-none [&>ul]:columns-1 [&>ul]:md:columns-2 [&>ul]:gap-12
+                                    [&>ul>li]:relative [&>ul>li]:pl-8 [&>ul>li]:py-2 [&>ul>li]:text-gray-700 [&>ul>li]:break-inside-avoid
+                                    [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-4
+                                    [&>ul>li]:before:w-2.5 [&>ul>li]:before:h-2.5 [&>ul>li]:before:bg-[#204066] [&>ul>li]:before:rounded-full
+                                    [&>ol]:space-y-4 [&>ol]:pl-0 [&>ol]:m-0 [&>ol]:list-decimal [&>ol]:list-inside [&>ol]:columns-1 [&>ol]:md:columns-2 [&>ol]:gap-12
+                                    [&>ol>li]:py-2 [&>ol>li]:text-gray-700 [&>ol>li]:marker:text-[#204066] [&>ol>li]:marker:font-bold [&>ol>li]:break-inside-avoid
                                     [&_strong]:text-[#0b1c2e] [&_strong]:font-bold
-                                    [&>p]:mb-4 [&>p]:text-base"
+                                    [&>p]:mb-6 [&>p]:text-gray-600"
                                     />
                                 </div>
                             </div>
@@ -990,19 +1000,20 @@ const ConferenceDetailsPage = () => {
             {/* Conference Objectives - Full Width Section */}
             {
                 conference_objectives && (
-                    <div id="conference-objectives" className="w-full bg-gradient-to-b from-white to-gray-50 py-12">
+                    <div id="conference-objectives" className="w-full bg-gray-100 py-16">
                         <div className="container mx-auto px-4">
                             {/* Header */}
-                            <div className="text-center mb-10">
-                                <div className="inline-flex items-center gap-3 bg-[#0b1c2e] text-white px-6 py-3 rounded-full mb-4">
-                                    <GlobalOutlined className="text-xl" />
-                                    <span className="font-bold text-lg">Conference Objectives</span>
-                                </div>
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-[#0b1c2e] mb-3 flex items-center justify-center gap-3">
+                                    <GlobalOutlined className="text-[#204066]" />
+                                    Conference Objectives
+                                </h2>
+                                <div className="h-1 w-20 bg-[#204066] mx-auto rounded-full mb-4"></div>
                                 <p className="text-gray-500 max-w-2xl mx-auto text-center">What we aim to achieve through this conference</p>
                             </div>
 
-                            {/* Objectives Grid */}
-                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            {/* Objectives Grid - Modern Feature List (No Cards) */}
+                            <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
                                 {(() => {
                                     // Parse HTML list items into objectives array
                                     const tempDiv = document.createElement('div');
@@ -1012,7 +1023,7 @@ const ConferenceDetailsPage = () => {
                                     if (listItems.length === 0) {
                                         // Fallback: render as HTML if no list items
                                         return (
-                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm">
+                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm border border-gray-100">
                                                 <div dangerouslySetInnerHTML={createMarkup(conference_objectives)} />
                                             </div>
                                         );
@@ -1021,25 +1032,17 @@ const ConferenceDetailsPage = () => {
                                     return Array.from(listItems).map((li, idx) => (
                                         <div
                                             key={idx}
-                                            className="group bg-white p-5 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                                            className="flex gap-4 group"
                                         >
-                                            {/* Background Number */}
-                                            <div className="absolute -right-3 -bottom-4 text-8xl font-bold text-gray-50 group-hover:text-[#0b1c2e]/5 transition-colors duration-300 select-none">
-                                                {String(idx + 1).padStart(2, '0')}
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="relative z-10">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="flex-shrink-0">
-                                                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white text-sm font-bold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                                            {String(idx + 1).padStart(2, '0')}
-                                                        </div>
-                                                    </div>
-                                                    <p className="text-gray-700 font-medium text-sm leading-relaxed m-0 pt-2 text-left">
-                                                        {li.textContent.trim()}
-                                                    </p>
+                                            <div className="flex-shrink-0 mt-1">
+                                                <div className="w-8 h-8 rounded-full bg-[#204066]/10 text-[#204066] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#204066] group-hover:text-white">
+                                                    <CheckCircleFilled className="text-lg" />
                                                 </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600 text-lg leading-relaxed m-0 group-hover:text-gray-900 transition-colors duration-300">
+                                                    {li.textContent.trim()}
+                                                </p>
                                             </div>
                                         </div>
                                     ));
@@ -1053,19 +1056,20 @@ const ConferenceDetailsPage = () => {
             {/* Conference Themes - Full Width Section */}
             {
                 themes && (
-                    <div id="conference-themes" className="w-full bg-gradient-to-b from-gray-50 to-white py-12">
+                    <div id="conference-themes" className="w-full bg-white py-16">
                         <div className="container mx-auto px-4">
                             {/* Header */}
-                            <div className="text-center mb-10">
-                                <div className="inline-flex items-center gap-3 bg-[#0b1c2e] text-white px-6 py-3 rounded-full mb-4">
-                                    <FileTextOutlined className="text-xl" />
-                                    <span className="font-bold text-lg">Conference Themes</span>
-                                </div>
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-[#0b1c2e] mb-3 flex items-center justify-center gap-3">
+                                    <FileTextOutlined className="text-[#204066]" />
+                                    Conference Themes
+                                </h2>
+                                <div className="h-1 w-20 bg-[#204066] mx-auto rounded-full mb-4"></div>
                                 <p className="text-gray-500 max-w-2xl mx-auto text-center">Explore the key research areas and topics covered in this conference</p>
                             </div>
 
-                            {/* Themes Grid */}
-                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            {/* Themes Grid - Modern Feature List (No Cards) */}
+                            <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
                                 {(() => {
                                     // Extract text content from HTML list items
                                     const tempDiv = document.createElement('div');
@@ -1076,7 +1080,7 @@ const ConferenceDetailsPage = () => {
                                     if (themesArray.length === 0) {
                                         // Fallback: render as HTML if no list items found
                                         return (
-                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm">
+                                            <div className="col-span-full text-gray-600 leading-relaxed ql-editor bg-white p-8 rounded-xl shadow-sm border border-gray-100">
                                                 <div dangerouslySetInnerHTML={createMarkup(themes)} />
                                             </div>
                                         );
@@ -1085,25 +1089,17 @@ const ConferenceDetailsPage = () => {
                                     return themesArray.map((theme, idx) => (
                                         <div
                                             key={idx}
-                                            className="group bg-white p-5 rounded-xl border border-gray-100 hover:border-[#204066]/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                                            className="flex gap-4 group"
                                         >
-                                            {/* Background Number */}
-                                            <div className="absolute -right-3 -bottom-4 text-8xl font-bold text-gray-50 group-hover:text-[#0b1c2e]/5 transition-colors duration-300 select-none">
-                                                {String(idx + 1).padStart(2, '0')}
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="relative z-10">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="flex-shrink-0">
-                                                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0b1c2e] to-[#204066] text-white text-sm font-bold flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                                            {String(idx + 1).padStart(2, '0')}
-                                                        </div>
-                                                    </div>
-                                                    <p className="text-gray-700 font-medium text-sm leading-relaxed m-0 group-hover:text-gray-900 transition-colors text-left pt-2">
-                                                        {theme}
-                                                    </p>
+                                            <div className="flex-shrink-0 mt-1">
+                                                <div className="w-8 h-8 rounded-full bg-[#204066]/10 text-[#204066] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#204066] group-hover:text-white">
+                                                    <CheckCircleFilled className="text-lg" />
                                                 </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600 text-lg leading-relaxed m-0 group-hover:text-gray-900 transition-colors duration-300">
+                                                    {theme}
+                                                </p>
                                             </div>
                                         </div>
                                     ));
@@ -1211,75 +1207,91 @@ const ConferenceDetailsPage = () => {
             </div>
 
             {/* Footer */}
-            <footer className="bg-[#0b1c2e] text-white pt-16 pb-8 border-t border-[#204066]/30 mt-auto">
+            {/* Footer - Modern Redesign */}
+            <footer className="bg-[#0b1c2e] text-white pt-20 pb-10 border-t border-white/5 mt-auto relative overflow-hidden">
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#204066] to-transparent opacity-50"></div>
+
                 <div className="container mx-auto px-4">
-                    <div className="grid md:grid-cols-3 gap-12">
-                        {/* About Column - Replaced with Logo */}
-                        <div className="flex flex-col items-start gap-6">
-                            {organizer_logo && (
-                                <div className="p-3 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
-                                    <img
-                                        src={`${ImageURl}${organizer_logo}`}
-                                        alt={conference?.name || "Conference Logo"}
-                                        className="h-16 w-auto object-contain"
-                                    />
-                                </div>
-                            )}
+                    <div className="grid md:grid-cols-4 gap-12 lg:gap-20">
+                        {/* Brand Column */}
+                        <div className="md:col-span-1 flex flex-col justify-between h-full">
+                            <div>
+                                <h5 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-6">Organized By</h5>
+                                {organizer_logo && (
+                                    <div className="bg-white rounded-xl p-4 inline-block w-auto max-w-[200px]">
+                                        <img
+                                            src={`${ImageURl}${organizer_logo}`}
+                                            alt={conference?.name || "Conference Logo"}
+                                            className="h-16 w-auto object-contain"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Quick Links Column */}
-                        <div>
-                            <h4 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
-                                Quick Links
-                            </h4>
-                            <ul className="space-y-3 text-gray-400">
+                        <div className="md:col-span-2">
+                            <h5 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-8">Quick Navigation</h5>
+                            <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
                                 {[
-                                    { id: 'about-the-conference', label: 'About' },
-                                    { id: 'conference-themes', label: 'Themes' },
+                                    { id: 'about-the-conference', label: 'About Conference' },
+                                    { id: 'conference-themes', label: 'Conference Themes' },
                                     { id: 'call-for-papers', label: 'Call for Papers' },
                                     { id: 'committee', label: 'Committee' },
-                                    { id: 'keynote-speakers', label: 'Speakers' },
-                                    { id: 'venue', label: 'Venue' }
+                                    { id: 'keynote-speakers', label: 'Keynote Speakers' },
+                                    { id: 'venue', label: 'Venue Information' }
                                 ].map((item) => (
                                     <li key={item.id}>
                                         <button
                                             onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' })}
-                                            className="hover:text-white hover:pl-2 transition-all duration-300 flex items-center gap-2 text-sm"
+                                            className="text-gray-400 hover:text-white transition-all duration-300 flex items-center gap-2 group text-sm font-medium"
                                         >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#204066] current-color"></span>
-                                            {item.label}
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#204066] group-hover:bg-blue-400 transition-colors"></span>
+                                            <span className="group-hover:translate-x-1 transition-transform inline-block">{item.label}</span>
                                         </button>
                                     </li>
                                 ))}
                             </ul>
                         </div>
 
-                        {/* Contact Column - Reduced */}
-                        <div>
-                            <h4 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
-                                Venue
-                            </h4>
-                            <div className="space-y-4">
+                        {/* Venue Column */}
+                        <div className="md:col-span-1">
+                            <h5 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-8">Venue</h5>
+                            <div className="space-y-6">
                                 {parsedVenue?.name && (
-                                    <div className="flex items-start gap-3 text-gray-400 group">
-                                        <div className="bg-[#204066]/30 p-2 rounded-lg group-hover:bg-[#204066] transition-colors">
-                                            <EnvironmentOutlined className="text-blue-400" />
+                                    <div className="group">
+                                        <div className="flex items-start gap-4 mb-3">
+                                            <div className="w-10 h-10 rounded-lg bg-[#204066]/20 flex items-center justify-center flex-shrink-0 text-[#204066] group-hover:bg-[#204066] group-hover:text-white transition-colors duration-300">
+                                                <EnvironmentOutlined className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-semibold mb-1 leading-tight">{parsedVenue.name}</p>
+                                                <p className="text-gray-400 text-sm leading-relaxed">{parsedVenue.address}</p>
+                                            </div>
                                         </div>
-                                        <span className="text-sm leading-relaxed">
-                                            {parsedVenue.name}
-                                            {parsedVenue.address && <><br />{parsedVenue.address}</>}
-                                        </span>
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
+
+                    {/* Bottom Bar */}
+                    <div className="border-t border-white/5 mt-16 pt-8 flex justify-center items-center">
+                        <p className="text-gray-500 text-sm text-center">
+                            © {new Date().getFullYear()} {conference?.name || 'Conference'}. All rights reserved.
+                        </p>
+                    </div>
                 </div>
             </footer>
 
-
+            {/* Registration Modal */}
+            <ConferenceRegistrationModal
+                open={isRegistrationModalOpen}
+                onCancel={() => setIsRegistrationModalOpen(false)}
+                conferenceId={id}
+                conferenceName={conference?.name}
+            />
 
         </div >
     );
