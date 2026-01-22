@@ -172,11 +172,11 @@ const ConferenceList = ({ type }) => {
                             <div className="flex justify-center mb-6">
                                 <div className="text-6xl mb-4 animate-bounce">📭</div>
                             </div>
-                            <h2 className="text-2xl font-bold text-[#204066] mb-3">No {type} Conferences Available</h2>
-                            <p className="text-gray-600 text-lg max-w-md mx-auto mb-2">
+                            <h2 className="text-2xl font-bold text-[#204066] mb-3 text-center">No {type} Conferences Available</h2>
+                            <p className="text-gray-600 text-lg max-w-md mx-auto mb-2 text-center">
                                 We don't have any {type} conferences listed at the moment.
                             </p>
-                            <p className="text-[#12b48b] font-semibold mb-8">
+                            <p className="text-[#12b48b] font-semibold mb-8 text-center">
                                 ⏰ Check back later for exciting updates!
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
