@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // baseURL: 'http://localhost:5000/api',
-  baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
+  baseURL: 'http://localhost:5000/api',
+  // baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
 });
 
 api.interceptors.request.use(
@@ -182,6 +182,15 @@ export const newsApi = {
   getById: (id) => api.get(`/news/${id}`),
   update: (id, data) => api.put(`/news/${id}`, data),
   delete: (id) => api.delete(`/news/${id}`),
+};
+export const conferenceRegistrationApi = {
+  create: (data) => api.post("/conference-registrations", data),
+  getAll: () => api.get("/conference-registrations"),
+  getById: (id) => api.get(`/conference-registrations/${id}`),
+  getByConference: (conferenceId) =>
+    api.get(`/conference-registrations/conference/${conferenceId}`),
+  update: (id, data) => api.put(`/conference-registrations/${id}`, data),
+  delete: (id) => api.delete(`/conference-registrations/${id}`),
 };
 
 export default api;

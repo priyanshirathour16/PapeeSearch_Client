@@ -83,6 +83,12 @@ export const sidebarData = [
                 path: '/dashboard/conference-templates',
                 icon: FaFileAlt,
                 access: ["admin"]
+            },
+            {
+                title: 'Registrations',
+                path: '/dashboard/conference-registrations',
+                icon: FaBook,
+                access: ["admin"]
             }
         ]
     },

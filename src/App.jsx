@@ -57,6 +57,8 @@ const MyManuscriptList = lazy(() => import('./pages/Author/MyManuscriptList'));
 const MyManuscriptDetails = lazy(() => import('./pages/Author/MyManuscriptDetails'));
 const CopyrightForm = lazy(() => import('./pages/Author/CopyrightForm'));
 const AddConference = lazy(() => import('./pages/Admin/AddConference'));
+const ConferenceRegistrationList = lazy(() => import('./pages/Admin/ConferenceRegistrationList')); // Re-import
+const ConferenceRegistrationDetails = lazy(() => import('./pages/Admin/ConferenceRegistrationDetails'));
 const ConferenceTemplateList = lazy(() => import('./pages/Admin/ConferenceTemplateList'));
 const AddConferenceTemplate = lazy(() => import('./pages/Admin/AddConferenceTemplate'));
 const EditConferenceTemplate = lazy(() => import('./pages/Admin/EditConferenceTemplate'));
@@ -145,6 +147,8 @@ function App() {
               <Route path="conference-templates/:id" element={<ConferenceTemplateDetails />} />
               <Route path="manage-news" element={<ManageNews />} />
               <Route path="news/:id" element={<NewsDetails />} />
+              <Route path="conference-registrations" element={<ConferenceRegistrationList />} />
+              <Route path="conference-registrations/:id" element={<ConferenceRegistrationDetails />} />
             </Route>
           </Route>
 
