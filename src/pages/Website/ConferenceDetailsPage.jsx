@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Spin, Tabs, Card, Row, Col, Typography, Button, Divider, Tag, Space, Alert } from 'antd';
+import { Spin, Tabs, Card, Row, Col, Typography, Button, Divider, Tag, Space, Alert, Modal, Form, Upload, message } from 'antd';
 import {
     CalendarOutlined,
     EnvironmentOutlined,
@@ -20,10 +20,11 @@ import {
     RightOutlined,
     CheckCircleFilled,
     HistoryOutlined,
-    BankOutlined
+    BankOutlined,
+    UploadOutlined
 } from '@ant-design/icons';
 import { Carousel } from 'antd'; // Added for Keynote Speakers
-import { conferenceTemplateApi } from '../../services/api'; // Ensure this path is correct based on original file
+import { conferenceTemplateApi, conferenceApi } from '../../services/api'; // Ensure this path is correct based on original file
 import { ImageURl } from '../../services/serviceApi'; // Ensure this path is correct
 import DOMPurify from 'dompurify';
 import Logo from "../../assets/images/elk-logo.png"; // check relative path
@@ -78,6 +79,8 @@ const ConferenceDetailsPage = () => {
     const [conferenceData, setConferenceData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+    const [isAbstractModalOpen, setIsAbstractModalOpen] = useState(false);
+    const [submittingAbstract, setSubmittingAbstract] = useState(false);
     const [error, setError] = useState(null);
 
     const id = decryptId(encryptedId);
@@ -303,10 +306,87 @@ const ConferenceDetailsPage = () => {
                             >
                                 Register Now <ArrowRightOutlined />
                             </Button>
+
+                            {/* Submit Abstract Button for Logged-in Users */}
+                            {localStorage.getItem('token') && (
+                                <Button
+                                    type="default"
+                                    size="large"
+                                    className="mt-4 border-2 border-white text-white hover:bg-white hover:text-[#0b1c2e] bg-transparent px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2 transition-all"
+                                    onClick={() => setIsAbstractModalOpen(true)}
+                                >
+                                    Submit Abstract <FileTextOutlined />
+                                </Button>
+                            )}
                         </div >
                     </div >
                 </div >
             </div >
+
+            <Modal
+                title="Submit Abstract"
+                open={isAbstractModalOpen}
+                onCancel={() => setIsAbstractModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    layout="vertical"
+                    onFinish={async (values) => {
+                        if (!values.abstractFile || values.abstractFile.fileList.length === 0) {
+                            message.error("Please upload your abstract file (PDF).");
+                            return;
+                        }
+                        setSubmittingAbstract(true);
+                        try {
+                            const formData = new FormData();
+                            formData.append("conference_id", conference.id); // Assuming conference object has id
+                            // Append file
+                            formData.append("abstract", values.abstractFile.file.originFileObj);
+
+                            const response = await conferenceApi.submitAbstract(formData);
+
+                            if (response.data && response.data.success) {
+                                message.success("Abstract submitted successfully!");
+                                setIsAbstractModalOpen(false);
+                            } else {
+                                message.error(response.data.message || "Failed to submit abstract.");
+                            }
+                        } catch (error) {
+                            console.error("Abstract submission error:", error);
+                            message.error("An error occurred. Please try again.");
+                        } finally {
+                            setSubmittingAbstract(false);
+                        }
+                    }}
+                >
+                    <Form.Item
+                        label="Upload Abstract (PDF)"
+                        name="abstractFile"
+                        rules={[{ required: true, message: 'Please upload a PDF file' }]}
+                    >
+                        <Upload
+                            beforeUpload={(file) => {
+                                const isPdf = file.type === 'application/pdf';
+                                if (!isPdf) {
+                                    message.error('You can only upload PDF files!');
+                                }
+                                return false; // Prevent auto upload
+                            }}
+                            maxCount={1}
+                            accept=".pdf"
+                        >
+                            <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                        </Upload>
+                    </Form.Item>
+
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button onClick={() => setIsAbstractModalOpen(false)}>Cancel</Button>
+                        <Button type="primary" htmlType="submit" loading={submittingAbstract} className="bg-[#12b48b]">
+                            Submit
+                        </Button>
+                    </div>
+                </Form>
+            </Modal>
 
             {/* 3. Main Content Layout */}
 

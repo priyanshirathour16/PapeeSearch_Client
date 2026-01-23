@@ -151,6 +151,10 @@ export const conferenceApi = {
   delete: (id) => api.delete(`/conferences/${id}`),
   getAll: () => api.get("/conferences"),
   getById: (id) => api.get(`/conferences/${id}`),
+  submitAbstract: (data) => {
+    const headers = { "Content-Type": "multipart/form-data" };
+    return api.post("/conferences/submit-abstract", data, { headers });
+  },
 };
 
 export const conferenceTemplateApi = {

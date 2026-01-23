@@ -60,12 +60,12 @@ export const sidebarData = [
         path: '/dashboard/view-submitter-publications',
         access: ["admin"]
     },
-    {
-        title: 'Manage News',
-        icon: FaNewspaper,
-        path: '/dashboard/manage-news',
-        access: ["admin"]
-    },
+    // {
+    //     title: 'Manage News',
+    //     icon: FaNewspaper,
+    //     path: '/dashboard/manage-news',
+    //     access: ["admin"]
+    // },
     {
         title: 'Conference',
         icon: FaBook,

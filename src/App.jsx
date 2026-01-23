@@ -99,10 +99,11 @@ function App() {
             <Route path="/publication-ethics-and-malpractice-statement" element={<PublicEthicAndMalPractices />} />
             <Route path="/journals/:route" element={<Journals />} />
             <Route path="/thank-you" element={<ThankYou />} />
-            <Route path="/news" element={<AllNewsPage />} />
-            <Route path="/news/:id" element={<NewsDetailPage />} />
+            {/* <Route path="/news" element={<AllNewsPage />} /> */}
+            {/* <Route path="/news/:id" element={<NewsDetailPage />} /> */}
             <Route path="/upcoming-conferences" element={<ConferenceList type="upcoming" />} />
             <Route path="/previous-conferences" element={<ConferenceList type="previous" />} />
+            <Route path="/conferences" element={<ConferenceList type="all" />} />
             {/* 404 Page (within layout) */}
             <Route path="*" element={<PageNotFound />} />
           </Route>
@@ -145,8 +146,8 @@ function App() {
               <Route path="add-conference-template" element={<AddConferenceTemplate />} />
               <Route path="conference-templates/edit/:id" element={<EditConferenceTemplate />} />
               <Route path="conference-templates/:id" element={<ConferenceTemplateDetails />} />
-              <Route path="manage-news" element={<ManageNews />} />
-              <Route path="news/:id" element={<NewsDetails />} />
+              {/* <Route path="manage-news" element={<ManageNews />} /> */}
+              {/* <Route path="news/:id" element={<NewsDetails />} /> */}
               <Route path="conference-registrations" element={<ConferenceRegistrationList />} />
               <Route path="conference-registrations/:id" element={<ConferenceRegistrationDetails />} />
             </Route>

@@ -153,9 +153,8 @@ const Header = () => {
             layout: "conference",
             data: {
                 links: [
-                    { label: "Upcoming Conferences", to: "/upcoming-conferences" },
-                    { label: "Browse Special Issues", to: "/browse-special-issues" },
-                    { label: "Previous Conferences", to: "/previous-conferences" }
+                    { label: "Conferences", to: "/conferences" },
+                    { label: "Browse Special Issues", to: "/browse-special-issues" }
                 ],
                 cta: {
                     label: "REQUEST PROPOSAL",
