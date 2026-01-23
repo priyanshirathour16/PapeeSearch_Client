@@ -47,6 +47,7 @@ const AddConferenceTemplate = () => {
             formData.append('themes', values.themes || '');
             formData.append('organisers', values.organisers || '');
             formData.append('organizing_committee', values.organizing_committee || '');
+            formData.append('organizer_email', values.organizer_email || '');
 
             // Handle Venue (JSON: Name, Map Link)
             // Venue Image is handled separately as a file
@@ -182,6 +183,18 @@ const AddConferenceTemplate = () => {
                                             <Option key={conf.id} value={conf.id}>{conf.name}</Option>
                                         ))}
                                     </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="organizer_email"
+                                    label="Organizer Email"
+                                    rules={[
+                                        { required: true, message: 'Please enter organizer email' },
+                                        { type: 'email', message: 'Please enter a valid email' }
+                                    ]}
+                                >
+                                    <Input placeholder="organizer@example.com" />
                                 </Form.Item>
                             </Col>
                         </Row>
