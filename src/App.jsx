@@ -67,6 +67,8 @@ const ManageNews = lazy(() => import('./pages/Admin/ManageNews'));
 const NewsDetails = lazy(() => import('./pages/Admin/NewsDetails'));
 const NewsDetailPage = lazy(() => import('./pages/Website/NewsDetailPage'));
 const AllNewsPage = lazy(() => import('./pages/Website/AllNewsPage'));
+const AbstractSubmission = lazy(() => import('./pages/Author/AbstractSubmission'));
+const AbstractManagement = lazy(() => import('./pages/Admin/AbstractManagement'));
 function App() {
   return (
     <Router>
@@ -150,6 +152,9 @@ function App() {
               {/* <Route path="news/:id" element={<NewsDetails />} /> */}
               <Route path="conference-registrations" element={<ConferenceRegistrationList />} />
               <Route path="conference-registrations/:id" element={<ConferenceRegistrationDetails />} />
+
+              <Route path="abstract-submission" element={<AbstractSubmission />} />
+              <Route path="abstract-management" element={<AbstractManagement />} />
             </Route>
           </Route>
 

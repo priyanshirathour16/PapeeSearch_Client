@@ -197,4 +197,15 @@ export const conferenceRegistrationApi = {
   delete: (id) => api.delete(`/conference-registrations/${id}`),
 };
 
+export const abstractSubmissionApi = {
+  submit: (data) => {
+    const headers = { "Content-Type": "multipart/form-data" };
+    return api.post("/abstract-submissions/submit-abstract", data, { headers });
+  },
+  getByAuthor: (authorId) => api.get(`/abstract-submissions/author/${authorId}`),
+  getAll: () => api.get("/abstract-submissions"),
+  updateStatus: (id, status) =>
+    api.put(`/abstract-submissions/update-status/${id}`, { status }),
+};
+
 export default api;

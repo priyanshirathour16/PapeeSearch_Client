@@ -104,5 +104,17 @@ export const sidebarData = [
         icon: FaEnvelope,
         path: '/dashboard/submit-manuscript',
         access: ["author"]
+    },
+    {
+        title: 'Abstract Submission',
+        icon: FaFileAlt,
+        path: '/dashboard/abstract-submission',
+        access: ["author"]
+    },
+    {
+        title: 'Abstract Submissions',
+        icon: FaFileAlt,
+        path: '/dashboard/abstract-management',
+        access: ["admin"]
     }
 ];
