@@ -82,7 +82,7 @@ const AdminEditorList = () => {
         {
             title: 'Name',
             key: 'name',
-            render: (_text, record) => <span>{record.title} {record.firstName} {record.lastName}</span>,
+            render: (_text, record) => <span>{record.title == "Not Mentioned" ? "" : record.title} {record.firstName == "Not Mentioned" ? "-" : record.firstName} {record.lastName == "Not Mentioned" ? "-" : record.lastName}</span>,
         },
         {
             title: 'Email',

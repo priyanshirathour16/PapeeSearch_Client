@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { conferenceTemplateApi } from "../../services/api";
+import { conferenceTemplateApi, journalApi } from "../../services/api";
 import { Spin } from "antd";
 import moment from "moment";
 import { generateConferenceUrl } from "../../utils/idEncryption";
@@ -11,13 +11,15 @@ const ConferenceList = ({ type }) => {
     const [previousTemplates, setPreviousTemplates] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [journals, setJournals] = useState([]);
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
+                // Fetch Conferences
                 const response = await conferenceTemplateApi.getAll();
                 let data = [];
-                // Check if response.data.success is an array or single object (just in case)
                 if (response.data && response.data.success) {
                     if (Array.isArray(response.data.success)) {
                         data = response.data.success;
@@ -28,7 +30,6 @@ const ConferenceList = ({ type }) => {
 
                 const today = moment().startOf('day');
 
-                // Filter logic
                 const upcoming = [];
                 const previous = [];
 
@@ -44,17 +45,16 @@ const ConferenceList = ({ type }) => {
                     }
                 });
 
-                // Sort
                 upcoming.sort((a, b) => {
                     const dateA = moment(a.conference?.start_date || 0);
                     const dateB = moment(b.conference?.start_date || 0);
-                    return dateA - dateB; // Ascending
+                    return dateA - dateB;
                 });
 
                 previous.sort((a, b) => {
                     const dateA = moment(a.conference?.start_date || 0);
                     const dateB = moment(b.conference?.start_date || 0);
-                    return dateB - dateA; // Descending
+                    return dateB - dateA;
                 });
 
                 setUpcomingTemplates(upcoming);
@@ -65,12 +65,19 @@ const ConferenceList = ({ type }) => {
                 } else if (type === 'previous') {
                     setTemplates(previous);
                 } else {
-                    // Type 'all' or default - we use the specialized state variables for rendering
                     setTemplates([...upcoming, ...previous]);
                 }
 
+                // Fetch Journals
+                const journalResponse = await journalApi.getAll();
+                if (journalResponse.data && journalResponse.data.success) {
+                    setJournals(journalResponse.data.success);
+                } else if (Array.isArray(journalResponse.data)) { // Fallback if structure is different
+                    setJournals(journalResponse.data);
+                }
+
             } catch (error) {
-                console.error("Failed to fetch conferences", error);
+                console.error("Failed to fetch data", error);
             } finally {
                 setLoading(false);
             }
@@ -86,7 +93,7 @@ const ConferenceList = ({ type }) => {
             try {
                 return JSON.parse(field);
             } catch (e) {
-                return null; // or return field if it's just a string title? regex check?
+                return null;
             }
         }
         return field;
@@ -100,8 +107,6 @@ const ConferenceList = ({ type }) => {
         if (!startDateStr) return { dateStr: 'Date TBA', label: labelText };
 
         const start = moment(startDateStr);
-        // Based on user image "27 MAR 2026 - 28 MAR 2026"
-        // Let's rely on Start Date from conference object.
         const dateStr = start.format("DD MMM YYYY").toUpperCase();
 
         return {
@@ -117,7 +122,7 @@ const ConferenceList = ({ type }) => {
 
     const renderConferenceList = (items, listType, title, forceShowEmpty = false) => {
         if (items.length === 0) {
-            if (type !== 'all' || forceShowEmpty) { // Only show empty state if we are in specific page mode or forced
+            if (type !== 'all' || forceShowEmpty) {
                 return (
                     <div className="text-center py-20 px-6 bg-gradient-to-br from-white via-gray-50 to-white rounded-2xl shadow-xl border-2 border-gray-200 hover:shadow-2xl transition-all duration-300">
                         <div className="flex justify-center mb-6">
@@ -154,9 +159,6 @@ const ConferenceList = ({ type }) => {
         return (
             <div className="grid grid-cols-1 gap-6 mb-12">
                 {items.map((item) => {
-                    // Determine label based on the list functionality, not just the page type props
-                    // If page type is 'all', we need to know if this specific item list is upcoming or previous.
-                    // effectively 'listType' passed in
                     const { dateStr, label } = getDateDisplay(item, listType);
                     const venueName = item?.conference?.organized_by;
                     const name = item.conference?.name || "Conference";
@@ -190,10 +192,49 @@ const ConferenceList = ({ type }) => {
         );
     };
 
+    const renderJournalList = () => {
+        if (!journals || journals.length === 0) return null;
+
+        return (
+            <div className="mt-16">
+                <div className="mb-8 flex items-center gap-3">
+                    <div className="h-8 w-1.5 bg-[#12b48b] rounded-full"></div>
+                    <h1 className="text-2xl text-[#204066] font-bold tracking-tight">
+                        Our Journals
+                    </h1>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {journals.map((journal) => (
+                        <div key={journal.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group flex flex-col h-full transform hover:-translate-y-1">
+                            <div className="p-1 bg-gradient-to-r from-[#12b48b] to-[#204066] opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="p-6 flex-grow flex flex-col">
+                                <h3 className="text-lg font-bold text-[#204066] mb-4 line-clamp-3 group-hover:text-[#12b48b] transition-colors min-h-[3.5rem]">
+                                    {journal.title}
+                                </h3>
+
+                                <div className="mt-auto space-y-3">
+                                    <div className="flex items-center justify-between text-sm bg-gray-50 p-2.5 rounded-lg group-hover:bg-[#12b48b]/5 transition-colors">
+                                        <span className="text-gray-500 font-medium">Print ISSN</span>
+                                        <span className="text-[#204066] font-mono font-semibold">{journal.print_issn || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm bg-gray-50 p-2.5 rounded-lg group-hover:bg-[#12b48b]/5 transition-colors">
+                                        <span className="text-gray-500 font-medium">E-ISSN</span>
+                                        <span className="text-[#204066] font-mono font-semibold">{journal.e_issn || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen bg-gray-50">
-                <Spin size="large" tip="Loading Conferences..." />
+                <Spin size="large" tip="Loading Content..." />
             </div>
         );
     }
@@ -218,6 +259,9 @@ const ConferenceList = ({ type }) => {
                                 {renderConferenceList(previousTemplates, 'previous', "Previous Conferences")}
                             </>
                         )}
+
+                        {/* Journals Section */}
+                        {renderJournalList()}
                     </>
                 ) : (
                     <>
@@ -227,6 +271,15 @@ const ConferenceList = ({ type }) => {
                             </h1>
                         </div>
                         {renderConferenceList(templates, type, type === 'upcoming' ? 'Upcoming Conferences' : 'Previous Conferences')}
+
+                        {/* Journals Display only if type is all? existing layout logic suggests separated pages. 
+                            However user said "On the conference listing page". 
+                            I'll add it here too if they navigate to specific types, but usually specific types are filter pages. 
+                            Let's keep it in all for now as it makes the most sense as a "Landing" for conferences/journals.
+                            Or maybe append it to the bottom of all views? 
+                            I'll append it to all views logic if strictly requested, but standard UX suggests separating.
+                            Limit to 'all' view for now based on code structure.
+                        */}
                     </>
                 )}
 

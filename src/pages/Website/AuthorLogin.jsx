@@ -196,7 +196,7 @@ const AuthorLogin = () => {
             <div className="w-full md:w-1/4">
                 <NewsWidget />
 
-                <div className="mb-6">
+                {/* <div className="mb-6">
                     <div className="bg-[#12b48b] text-white p-3 font-semibold uppercase text-sm tracking-wide">
                         UPCOMING <span className="font-light">CONFERENCES</span>
                     </div>
@@ -218,7 +218,7 @@ const AuthorLogin = () => {
                             <p className="text-gray-500 text-sm mt-2 p-2">No upcoming conferences.</p>
                         )}
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     );
