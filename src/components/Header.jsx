@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { FaUserCircle, FaSignOutAlt, FaKey, FaSpinner } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { FaSignOutAlt, FaKey, FaSpinner, FaHome, FaBars, FaBell, FaChevronDown } from 'react-icons/fa';
+import { useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { authApi } from '../services/api';
 import { getRole } from '../utils/secureStorage';
 
-const Header = () => {
+const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
 
-    // Password Reset States
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [errors, setErrors] = useState({});
@@ -19,9 +18,9 @@ const Header = () => {
     const navigate = useNavigate();
     const user = localStorage.getItem('user');
     const parseUser = user ? JSON.parse(user) : null;
+    const role = getRole();
 
     const handleLogout = () => {
-        const role = getRole();
         localStorage.clear();
         if (role === 'author' || role === 'editor') {
             navigate('/login');
@@ -73,47 +72,107 @@ const Header = () => {
         }
     };
 
+    const getUserInitials = () => {
+        if (parseUser?.firstName && parseUser?.lastName) {
+            return `${parseUser.firstName.charAt(0)}${parseUser.lastName.charAt(0)}`.toUpperCase();
+        }
+        if (parseUser?.firstName) {
+            return parseUser.firstName.charAt(0).toUpperCase();
+        }
+        return role?.charAt(0)?.toUpperCase() || 'U';
+    };
+
     return (
-        <header className="bg-white shadow-md h-16 flex items-center justify-end px-6 relative z-10">
-            <div
-                className="relative"
-                onMouseEnter={() => setIsDropdownOpen(true)}
-                onMouseLeave={() => setIsDropdownOpen(false)}
-            >
+        <header className="bg-white h-16 flex items-center justify-between px-6 border-b border-gray-200 sticky top-0 z-20">
+            {/* Left Section */}
+            <div className="flex items-center gap-4">
                 <button
-                    className="flex items-center space-x-2 focus:outline-none hover:text-blue-600 transition-colors py-2 bg-transparent border-none shadow-none hover:bg-transparent hover:shadow-none"
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
                 >
-                    <span className="font-medium text-gray-700">{`${parseUser?.firstName ? parseUser?.firstName : "Admin"}`}</span>
-                    <FaUserCircle className="text-3xl text-gray-600" />
+                    <FaBars className="text-lg" />
                 </button>
 
-                {isDropdownOpen && (
-                    <div className="absolute right-0 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 top-full">
-                        <button
-                            onClick={() => setIsResetPasswordOpen(true)}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                            <FaKey className="mr-2" />
-                            Reset Password
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                            <FaSignOutAlt className="mr-2" />
-                            Logout
-                        </button>
-                    </div>
-                )}
+                <Link
+                    to="/"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-[#204066] hover:bg-[#204066]/5 transition-all duration-200 group"
+                >
+                    <FaHome className="text-lg group-hover:text-[#12b48b] transition-colors" />
+                    <span className="font-medium text-sm hidden sm:inline">Back to Website</span>
+                </Link>
+            </div>
+
+            {/* Right Section */}
+            <div className="flex items-center gap-3">
+                {/* Notification Bell */}
+                <button className="relative p-2.5 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors">
+                    <FaBell className="text-lg" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#12b48b] rounded-full"></span>
+                </button>
+
+                {/* Divider */}
+                <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+
+                {/* User Profile Dropdown */}
+                <div
+                    className="relative"
+                    onMouseEnter={() => setIsDropdownOpen(true)}
+                    onMouseLeave={() => setIsDropdownOpen(false)}
+                >
+                    <button className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-all duration-200">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#204066] to-[#2c4a6e] flex items-center justify-center shadow-sm">
+                            <span className="text-white text-sm font-semibold">{getUserInitials()}</span>
+                        </div>
+                        <div className="hidden sm:block text-left">
+                            <p className="text-sm font-semibold text-gray-800 leading-tight">
+                                {parseUser?.firstName || 'Admin'}
+                            </p>
+                            <p className="text-xs text-gray-500 capitalize">{role}</p>
+                        </div>
+                        <FaChevronDown className={`text-gray-400 text-xs hidden sm:block transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isDropdownOpen && (
+                        <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 overflow-hidden">
+                            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                                <p className="text-sm font-semibold text-gray-800">
+                                    {parseUser?.firstName} {parseUser?.lastName}
+                                </p>
+                                <p className="text-xs text-gray-500 capitalize">{role} Account</p>
+                            </div>
+
+                            <div className="py-1">
+                                <button
+                                    onClick={() => setIsResetPasswordOpen(true)}
+                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-[#12b48b]/5 hover:text-[#12b48b] transition-colors"
+                                >
+                                    <FaKey className="text-gray-400" />
+                                    <span>Change Password</span>
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                >
+                                    <FaSignOutAlt className="text-gray-400" />
+                                    <span>Sign Out</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Reset Password Modal */}
             {isResetPasswordOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl p-8 w-[400px] shadow-2xl transform transition-all scale-100">
-                        <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">Change Password</h2>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-[420px] shadow-2xl overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-[#204066] to-[#2c4a6e] px-6 py-5">
+                            <h2 className="text-xl font-bold text-white">Change Password</h2>
+                            <p className="text-sm text-[#8ba4c4] mt-1">Update your account password</p>
+                        </div>
 
-                        <form onSubmit={handleChangePassword} className="space-y-5">
+                        <form onSubmit={handleChangePassword} className="p-6 space-y-5">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Current Password <span className="text-red-500">*</span>
@@ -125,10 +184,10 @@ const Header = () => {
                                         setCurrentPassword(e.target.value);
                                         if (errors.currentPassword) setErrors({ ...errors, currentPassword: '' });
                                     }}
-                                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#12b48b]/50 transition-all ${errors.currentPassword ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                                    className={`w-full border-2 rounded-xl px-4 py-3 focus:outline-none focus:border-[#12b48b] transition-all ${errors.currentPassword ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
                                     placeholder="Enter current password"
                                 />
-                                {errors.currentPassword && <p className="text-red-500 text-xs mt-1 font-medium">{errors.currentPassword}</p>}
+                                {errors.currentPassword && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.currentPassword}</p>}
                             </div>
 
                             <div>
@@ -142,19 +201,19 @@ const Header = () => {
                                         setNewPassword(e.target.value);
                                         if (errors.newPassword) setErrors({ ...errors, newPassword: '' });
                                     }}
-                                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#12b48b]/50 transition-all ${errors.newPassword ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                                    placeholder="Min 6 characters"
+                                    className={`w-full border-2 rounded-xl px-4 py-3 focus:outline-none focus:border-[#12b48b] transition-all ${errors.newPassword ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
+                                    placeholder="Minimum 6 characters"
                                 />
-                                {errors.newPassword && <p className="text-red-500 text-xs mt-1 font-medium">{errors.newPassword}</p>}
+                                {errors.newPassword && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.newPassword}</p>}
                             </div>
 
                             {generalError && (
-                                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-100 font-medium">
-                                    {generalError}
+                                <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-4 rounded-xl border border-red-100">
+                                    <span className="font-medium">{generalError}</span>
                                 </div>
                             )}
 
-                            <div className="flex gap-3 justify-end mt-8 pt-2">
+                            <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -164,18 +223,18 @@ const Header = () => {
                                         setCurrentPassword("");
                                         setNewPassword("");
                                     }}
-                                    className="px-5 py-2.5 bg-red-500 text-white font-medium hover:bg-red-600 rounded-lg transition-colors shadow-sm"
+                                    className="flex-1 px-5 py-3 bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 rounded-xl transition-colors"
                                     disabled={isLoading}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-5 py-2.5 bg-[#12b48b] text-white font-medium rounded-lg hover:bg-[#0e9470] flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="flex-1 px-5 py-3 bg-gradient-to-r from-[#12b48b] to-[#0e9470] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#12b48b]/25 flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                                     disabled={isLoading}
                                 >
                                     {isLoading && <FaSpinner className="animate-spin" />}
-                                    Change Password
+                                    Update Password
                                 </button>
                             </div>
                         </form>

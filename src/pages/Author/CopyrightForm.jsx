@@ -7,7 +7,7 @@ import usePrint from '../../hooks/usePrint';
 import './CopyrightForm.css';
 
 // New Imports
-import { copyrightApi } from '../../services/api';
+import { copyrightApi, manuscriptApi } from '../../services/api';
 import FormRenderer from '../../components/DynamicForm/FormRenderer';
 import SignatureCanvas from 'react-signature-canvas';
 
@@ -156,6 +156,19 @@ const CopyrightForm = ({ viewOnly = false }) => {
             const response = await copyrightApi.submit(payload);
             if (response.data.success) {
                 message.success(response.data.data.message || 'Copyright agreement submitted successfully');
+                
+                // Update manuscript status from "Awaiting Copyright" to "Copyright Received"
+                try {
+                    await manuscriptApi.updateStatus(manuscript.manuscript_id, {
+                        status: 'Copyright Received',
+                        comment: 'Copyright form has been submitted by the author',
+                        statusUpdatedBy: "system"
+                    });
+                } catch (statusError) {
+                    console.error("Failed to update manuscript status:", statusError);
+                    // Don't show error to user as copyright was submitted successfully
+                }
+                
                 navigate(-1);
             }
         } catch (error) {

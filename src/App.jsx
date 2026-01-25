@@ -44,8 +44,7 @@ const ConferenceDetailsPage = lazy(() => import('./pages/Website/ConferenceDetai
 const AuthorLogin = lazy(() => import('./pages/Website/AuthorLogin'));
 
 const PageNotFound = lazy(() => import('./pages/Website/PageNotFound'));
-const AdminAuthorList = lazy(() => import('./pages/Admin/AdminAuthorList'));
-const AdminEditorList = lazy(() => import('./pages/Admin/AdminEditorList'));
+const AdminUserList = lazy(() => import('./pages/Admin/AdminAuthorList'));
 const JournalCategories = lazy(() => import('./pages/Admin/JournalCategories'));
 const ManuscriptList = lazy(() => import('./pages/Admin/ManuscriptList'));
 const ManuscriptDetails = lazy(() => import('./pages/Admin/ManuscriptDetails'));
@@ -128,8 +127,7 @@ function App() {
               <Route path="journal-issues/add" element={<AddJournalIssue />} />
               <Route path="journal-issues/:id" element={<JournalIssueDetails />} />
 
-              <Route path="manage-user/author" element={<AdminAuthorList />} />
-              <Route path="manage-user/editor" element={<AdminEditorList />} />
+              <Route path="manage-users" element={<AdminUserList />} />
               <Route path="journal-categories" element={<JournalCategories />} />
 
               <Route path="manuscripts" element={<ManuscriptList />} />
@@ -148,13 +146,10 @@ function App() {
               <Route path="add-conference-template" element={<AddConferenceTemplate />} />
               <Route path="conference-templates/edit/:id" element={<EditConferenceTemplate />} />
               <Route path="conference-templates/:id" element={<ConferenceTemplateDetails />} />
-              {/* <Route path="manage-news" element={<ManageNews />} /> */}
-              {/* <Route path="news/:id" element={<NewsDetails />} /> */}
               <Route path="conference-registrations" element={<ConferenceRegistrationList />} />
               <Route path="conference-registrations/:id" element={<ConferenceRegistrationDetails />} />
-
-              <Route path="abstract-submission" element={<AbstractSubmission />} />
-              <Route path="abstract-management" element={<AbstractManagement />} />
+              <Route path="conference/abstract-submission" element={<AbstractSubmission />} />
+              <Route path="conference/abstract-management" element={<AbstractManagement />} />
             </Route>
           </Route>
 

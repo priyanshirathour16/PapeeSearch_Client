@@ -30,23 +30,9 @@ export const sidebarData = [
     },
     {
         title: 'Manage User',
-        icon: FaBook, // Using FaBook temporarily, can change if needed or import FaUsers
-        path: '#',
-        access: ["admin"],
-        subNav: [
-            {
-                title: 'Author',
-                path: '/dashboard/manage-user/author', // Updated path to match typically admin routes, adjusting to dashboard/admin-authors
-                icon: FaEye,
-                access: ["admin"]
-            },
-            {
-                title: 'Editor',
-                path: '/dashboard/manage-user/editor',
-                icon: FaEye,
-                access: ["admin"]
-            }
-        ]
+        icon: FaBook,
+        path: '/dashboard/manage-users',
+        access: ["admin"]
     },
     {
         title: 'Submitted Manuscript',
@@ -89,6 +75,12 @@ export const sidebarData = [
                 path: '/dashboard/conference-registrations',
                 icon: FaBook,
                 access: ["admin"]
+            },
+            {
+                title: 'Abstract Submissions',
+                path: '/dashboard/conference/abstract-management',
+                icon: FaFileAlt,
+                access: ["admin"]
             }
         ]
     },
@@ -104,17 +96,5 @@ export const sidebarData = [
         icon: FaEnvelope,
         path: '/dashboard/submit-manuscript',
         access: ["author"]
-    },
-    {
-        title: 'Abstract Submission',
-        icon: FaFileAlt,
-        path: '/dashboard/abstract-submission',
-        access: ["author"]
-    },
-    {
-        title: 'Abstract Submissions',
-        icon: FaFileAlt,
-        path: '/dashboard/abstract-management',
-        access: ["admin"]
     }
 ];

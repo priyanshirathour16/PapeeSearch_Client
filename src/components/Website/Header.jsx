@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { journalCategoryApi } from "../../services/api";
 import {
     FaChevronCircleRight,
@@ -19,7 +19,8 @@ import {
     FaMicrochip,
     FaBook,
     FaProjectDiagram,
-    FaIndustry
+    FaIndustry,
+    FaUserCircle
 } from "react-icons/fa";
 import Logo from "../../assets/images/elk-logo.png";
 
@@ -27,6 +28,44 @@ const Header = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState(null);
     const timeoutRef = useRef(null);
+    const location = useLocation();
+
+    // Check if user is logged in - reactive state that updates on route changes
+    const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+    const [userName, setUserName] = useState('');
+
+    // Re-check login status whenever route changes or localStorage updates
+    useEffect(() => {
+        const checkLoginStatus = () => {
+            const token = localStorage.getItem('token');
+            setIsLoggedIn(!!token);
+
+            // Get user name if logged in
+            if (token) {
+                try {
+                    const userStr = localStorage.getItem('user');
+                    if (userStr) {
+                        const user = JSON.parse(userStr);
+                        setUserName(user?.firstName || '');
+                    }
+                } catch (e) {
+                    setUserName('');
+                }
+            } else {
+                setUserName('');
+            }
+        };
+
+        // Check on route change
+        checkLoginStatus();
+
+        // Listen for storage changes (in case of logout from another tab)
+        window.addEventListener('storage', checkLoginStatus);
+
+        return () => {
+            window.removeEventListener('storage', checkLoginStatus);
+        };
+    }, [location.pathname]);
 
     const toggleDropdown = (dropdownName) => {
         if (activeDropdown === dropdownName) {
@@ -149,18 +188,8 @@ const Header = () => {
         {
             id: "conference",
             label: "CONFERENCE SOLUTIONS",
-            type: "dropdown",
-            layout: "conference",
-            data: {
-                links: [
-                    { label: "Conferences", to: "/conferences" },
-                    { label: "Browse Special Issues", to: "/browse-special-issues" }
-                ],
-                cta: {
-                    label: "REQUEST PROPOSAL",
-                    to: "/request-proposal"
-                }
-            }
+            link: "/conferences",
+            type: "link"
         },
         {
             id: "editor",
@@ -204,12 +233,22 @@ const Header = () => {
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link
-                                        to="/login"
-                                        className="bg-[#204066] hover:bg-[#1a3453] border border-white/20 hover:text-white text-white px-6 py-1 rounded flex items-center gap-1 transition-colors uppercase font-medium"
-                                    >
-                                        Login
-                                    </Link>
+                                    {isLoggedIn ? (
+                                        <Link
+                                            to="/dashboard"
+                                            className="bg-[#204066] hover:bg-[#1a3453] border border-white/20 hover:text-white text-white px-6 py-1 rounded flex items-center gap-2 transition-colors font-medium"
+                                        >
+                                            <FaUserCircle className="text-lg" />
+                                            {userName ? `Welcome ${userName}` : 'Dashboard'}
+                                        </Link>
+                                    ) : (
+                                        <Link
+                                            to="/login"
+                                            className="bg-[#204066] hover:bg-[#1a3453] border border-white/20 hover:text-white text-white px-6 py-1 rounded flex items-center gap-1 transition-colors uppercase font-medium"
+                                        >
+                                            Login
+                                        </Link>
+                                    )}
                                 </li>
                             </ul>
                         </div>
@@ -410,6 +449,27 @@ const Header = () => {
                                     )}
                                 </li>
                             ))}
+                            {/* Login/Dashboard Button for Mobile */}
+                            <li className="px-4 pt-4 border-t border-gray-600 mt-2">
+                                {isLoggedIn ? (
+                                    <Link
+                                        to="/dashboard"
+                                        onClick={handleLinkClick}
+                                        className="block bg-[#204066] hover:bg-[#1a3453] text-white py-2 px-4 rounded text-center font-medium flex items-center justify-center gap-2"
+                                    >
+                                        <FaUserCircle className="text-lg" />
+                                        {userName ? `Welcome ${userName}` : 'Dashboard'}
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        to="/login"
+                                        onClick={handleLinkClick}
+                                        className="block bg-[#204066] hover:bg-[#1a3453] text-white py-2 px-4 rounded text-center uppercase font-medium"
+                                    >
+                                        Login
+                                    </Link>
+                                )}
+                            </li>
                         </ul>
                     </div>
                 )}

@@ -4,32 +4,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import Swal from 'sweetalert2';
-import { authApi, conferenceApi } from '../../services/api';
+import { authApi } from '../../services/api';
 import NewsWidget from "../../components/Website/NewsWidget";
-import { generateConferenceUrl } from '../../utils/idEncryption';
 
 const ForgetPassword = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1); // 1: Verify Email, 2: Reset Password
     const [userData, setUserData] = useState(null);
-    const [upcomingConferences, setUpcomingConferences] = useState([]);
-
-    React.useEffect(() => {
-        const fetchConferences = async () => {
-            try {
-                const response = await conferenceApi.getAll();
-                if (response.data && response.data.success && Array.isArray(response.data.success)) {
-                    const upcoming = response.data.success
-                        .filter(c => new Date(c.start_date) > new Date())
-                        .slice(0, 5);
-                    setUpcomingConferences(upcoming);
-                }
-            } catch (error) {
-                console.error("Failed to fetch conferences", error);
-            }
-        };
-        fetchConferences();
-    }, []);
 
     const validationSchemaStep1 = Yup.object({
         email: Yup.string().email('Invalid email address').required('Email is required'),
@@ -195,32 +176,6 @@ const ForgetPassword = () => {
                     {/* RIGHT COLUMN - Sidebar */}
                     <div className="lg:col-span-1 space-y-8">
                         <NewsWidget />
-                        <div>
-                            <h3 className="bg-[#12b48b] text-white font-bold p-3 text-sm uppercase">UPCOMING CONFERENCES</h3>
-                            <div className="bg-white border border-gray-200 p-2 min-h-[100px] flex text-gray-500 text-sm">
-                                {upcomingConferences.length > 0 ? (
-                                    <ul className="space-y-3 mt-2 w-full">
-                                        {upcomingConferences.map((conf, index) => (
-                                            <li key={index} className="flex items-start gap-2 text-sm text-gray-600 border-b border-gray-100 last:border-0 pb-2">
-                                                <div className="w-4 h-4 flex-shrink-0 mt-0.5 text-gray-400">
-                                                    {/* Custom calendar icon to match design if needed, or re-use existing icon */}
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                                                    </svg>
-                                                </div>
-                                                <Link to={generateConferenceUrl(conf.name, conf.id)} className="hover:text-[#12b48b] transition-colors line-clamp-2">
-                                                    {conf.name} {/* Using 'name' property instead of name/title if consistent */}
-                                                </Link>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="text-left w-full p-2">
-                                        <p className="text-xs text-gray-500">No upcoming conferences.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

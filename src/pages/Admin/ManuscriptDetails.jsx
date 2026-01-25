@@ -124,6 +124,7 @@ const ManuscriptDetails = () => {
             case 'accepted': return 'green';
             case 'rejected': return 'red';
             case 'awaiting copyright': return 'purple';
+            case 'copyright received': return 'lime';
             case 'assigned to editor': return 'blue';
             case 'assigned to reviewer': return 'cyan';
             case 'awaiting revised manuscript': return 'orange';
@@ -351,6 +352,7 @@ const ManuscriptDetails = () => {
                                             { value: 'Accepted', label: 'Accepted' },
                                             { value: 'Rejected', label: 'Rejected' },
                                             { value: 'Awaiting Copyright', label: 'Awaiting Copyright' },
+                                            { value: 'Copyright Received', label: 'Copyright Received' },
                                             { value: 'Assigned to Editor', label: 'Assigned to Editor' },
                                             { value: 'Assigned to Reviewer', label: 'Assigned to Reviewer' },
                                             { value: 'Awaiting Revised Manuscript', label: 'Awaiting Revised Manuscript' },
@@ -390,7 +392,7 @@ const ManuscriptDetails = () => {
                                         {manuscript.comment || <span className="italic text-gray-400">No comment provided.</span>}
                                     </div>
                                 </div>
-                                {manuscript.status?.toLowerCase() === 'awaiting copyright' && (
+                                {(manuscript.status?.toLowerCase() === 'awaiting copyright' || manuscript.status?.toLowerCase() === 'copyright received') && (
                                     <Button
                                         type="primary"
                                         block

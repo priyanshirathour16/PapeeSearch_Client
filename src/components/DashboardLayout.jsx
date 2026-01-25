@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 const DashboardLayout = () => {
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
     return (
-        <div className="flex h-screen bg-gray-100 overflow-hidden">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Header />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-                    <Outlet />
+        <div className="flex h-screen bg-[#f0f4f8] overflow-hidden">
+            <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+            <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300">
+                <Header sidebarCollapsed={sidebarCollapsed} setSidebarCollapsed={setSidebarCollapsed} />
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-[#f0f4f8] to-[#e8eef5] p-8">
+                    <div className="max-w-7xl mx-auto">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
         </div>

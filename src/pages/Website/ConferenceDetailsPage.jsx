@@ -24,7 +24,7 @@ import {
     UploadOutlined
 } from '@ant-design/icons';
 import { Carousel } from 'antd'; // Added for Keynote Speakers
-import { conferenceTemplateApi, conferenceApi, abstractSubmissionApi } from '../../services/api'; // Ensure this path is correct based on original file
+import { conferenceTemplateApi, conferenceApi, abstractSubmissionApi, journalApi } from '../../services/api'; // Ensure this path is correct based on original file
 import { ImageURl } from '../../services/serviceApi'; // Ensure this path is correct
 import DOMPurify from 'dompurify';
 import Logo from "../../assets/images/elk-logo.png"; // check relative path
@@ -80,6 +80,7 @@ const ConferenceDetailsPage = () => {
     const { encryptedId } = useParams();
     const navigate = useNavigate();
     const [conferenceData, setConferenceData] = useState(null);
+    const [journal, setJournal] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
     const [isAbstractModalOpen, setIsAbstractModalOpen] = useState(false);
@@ -99,7 +100,20 @@ const ConferenceDetailsPage = () => {
             try {
                 const response = await conferenceTemplateApi.getById(id);
                 if (response.data && response.data.success) {
-                    setConferenceData(response.data.success);
+                    const confData = response.data.success;
+                    setConferenceData(confData);
+                    
+                    // Fetch journal details if journal_id exists
+                    if (confData.conference?.journal_id) {
+                        try {
+                            const journalResponse = await journalApi.getById(confData.conference.journal_id);
+                            if (journalResponse.data && journalResponse.data.success) {
+                                setJournal(journalResponse.data.success);
+                            }
+                        } catch (journalErr) {
+                            console.error('Error fetching journal:', journalErr);
+                        }
+                    }
                 } else {
                     setError('Failed to load conference details.');
                 }
@@ -278,6 +292,12 @@ const ConferenceDetailsPage = () => {
                             <div className="flex items-center gap-2 text-orange-400 text-sm mb-4">
                                 <Link to="/" className="hover:underline">Home</Link>
                                 <span>&gt;</span>
+                                {journal && (
+                                    <>
+                                        <span className="truncate max-w-md">{journal.journal_name}</span>
+                                        <span>&gt;</span>
+                                    </>
+                                )}
                                 <span className="truncate max-w-md">{conference?.name}</span>
                             </div>
 
