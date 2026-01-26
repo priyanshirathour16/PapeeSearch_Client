@@ -1,9 +1,16 @@
 import axios from "axios";
 
 const api = axios.create({
-  // baseURL: 'http://localhost:5000/api',
+  // baseURL: "http://localhost:5000/api",
   baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
 });
+
+// Only push visitors to /unauthorized when they are on a protected area (dashboard/admin)
+const shouldRedirectOn401 = () => {
+  if (typeof window === "undefined") return true;
+  const path = window.location?.pathname || "";
+  return path.startsWith("/dashboard") || path.startsWith("/admin");
+};
 
 api.interceptors.request.use(
   (config) => {
@@ -15,7 +22,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 api.interceptors.response.use(
@@ -23,19 +30,25 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Don't redirect if it's a login attempt
-      if (!error.config.url.includes("/auth/login")) {
-        localStorage.removeItem("token");
-        window.location.href = "/unauthorized";
-      }
+    const status = error.response?.status;
+    const isLoginRequest = error.config?.url?.includes("/auth/login");
+    const skipAuthRedirect = error.config?.skipAuthRedirect;
+
+    if (
+      status === 401 &&
+      !isLoginRequest &&
+      !skipAuthRedirect &&
+      shouldRedirectOn401()
+    ) {
+      localStorage.removeItem("token");
+      window.location.href = "/unauthorized";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export const journalApi = {
-  getAll: () => api.get("/journals"),
+  getAll: (config = {}) => api.get("/journals", config),
   getById: (id) => api.get(`/journals/${id}`),
   create: (data) => {
     const headers =
@@ -202,7 +215,8 @@ export const abstractSubmissionApi = {
     const headers = { "Content-Type": "multipart/form-data" };
     return api.post("/abstract-submissions/submit-abstract", data, { headers });
   },
-  getByAuthor: (authorId) => api.get(`/abstract-submissions/author/${authorId}`),
+  getByAuthor: (authorId) =>
+    api.get(`/abstract-submissions/author/${authorId}`),
   getAll: () => api.get("/abstract-submissions"),
   updateStatus: (id, status) =>
     api.put(`/abstract-submissions/update-status/${id}`, { status }),
