@@ -85,6 +85,7 @@ export const authApi = {
   changePassword: (data) => api.post("/auth/change-password", data),
   verifyUser: (data) => api.post("/auth/verify-user", data),
   resetPassword: (data) => api.post("/auth/reset-password", data),
+  updateEmailTrigger: (data) => api.post("/auth/update-email-trigger", data),
 };
 
 export const applicationApi = {

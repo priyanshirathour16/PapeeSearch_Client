@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaSignOutAlt,
   FaKey,
@@ -12,10 +12,22 @@ import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import { authApi } from "../services/api";
 import { getRole } from "../utils/secureStorage";
+import { Switch, message } from "antd";
 
-const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
+const Header = ({
+  sidebarCollapsed,
+  setSidebarCollapsed,
+  isChangePasswordOpen,
+  setIsChangePasswordOpen,
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+
+  useEffect(() => {
+    if (isChangePasswordOpen) {
+      setIsResetPasswordOpen(true);
+    }
+  }, [isChangePasswordOpen]);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -25,8 +37,16 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
 
   const navigate = useNavigate();
   const user = localStorage.getItem("user");
-  const parseUser = user ? JSON.parse(user) : null;
+  const storedTrigger = localStorage.getItem("email_trigger");
+  const initialUser = user ? JSON.parse(user) : null;
+  const initialTrigger = storedTrigger ? JSON.parse(storedTrigger) : null;
   const role = getRole();
+  const [userProfile, setUserProfile] = useState(initialUser);
+  const [emailTriggerEnabled, setEmailTriggerEnabled] = useState(
+    initialTrigger ??
+      !!(initialUser?.email_trigger ?? initialUser?.emailTrigger),
+  );
+  const [isEmailTriggerLoading, setIsEmailTriggerLoading] = useState(false);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -34,6 +54,53 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
       navigate("/login");
     } else {
       navigate("/admin/login");
+    }
+  };
+
+  const handleEmailTriggerToggle = async (checked) => {
+    if (!userProfile?.id || !role) {
+      message.error("User details not available");
+      return;
+    }
+
+    const previousValue = emailTriggerEnabled;
+    setEmailTriggerEnabled(checked);
+    setIsEmailTriggerLoading(true);
+
+    try {
+      const response = await authApi.updateEmailTrigger({
+        role,
+        id: userProfile.id,
+        email_trigger: checked ? 1 : 0,
+      });
+
+      const updatedUser = response.data?.user || {};
+      const responseEmailTrigger =
+        response.data?.email_trigger ?? updatedUser.email_trigger;
+      const normalizedUser = {
+        ...userProfile,
+        ...updatedUser,
+        email_trigger:
+          typeof responseEmailTrigger === "boolean"
+            ? responseEmailTrigger
+            : !!(responseEmailTrigger ?? checked),
+      };
+
+      localStorage.setItem("user", JSON.stringify(normalizedUser));
+      localStorage.setItem(
+        "email_trigger",
+        JSON.stringify(!!normalizedUser.email_trigger),
+      );
+      setUserProfile(normalizedUser);
+      setEmailTriggerEnabled(!!normalizedUser.email_trigger);
+      message.success(response.data?.message || "Email trigger updated");
+    } catch (error) {
+      setEmailTriggerEnabled(previousValue);
+      message.error(
+        error.response?.data?.message || "Failed to update email trigger",
+      );
+    } finally {
+      setIsEmailTriggerLoading(false);
     }
   };
 
@@ -61,6 +128,7 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
       await authApi.changePassword({ currentPassword, newPassword });
 
       setIsResetPasswordOpen(false);
+      setIsChangePasswordOpen?.(false);
       setCurrentPassword("");
       setNewPassword("");
 
@@ -84,11 +152,11 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
   };
 
   const getUserInitials = () => {
-    if (parseUser?.firstName && parseUser?.lastName) {
-      return `${parseUser.firstName.charAt(0)}${parseUser.lastName.charAt(0)}`.toUpperCase();
+    if (userProfile?.firstName && userProfile?.lastName) {
+      return `${userProfile.firstName.charAt(0)}${userProfile.lastName.charAt(0)}`.toUpperCase();
     }
-    if (parseUser?.firstName) {
-      return parseUser.firstName.charAt(0).toUpperCase();
+    if (userProfile?.firstName) {
+      return userProfile.firstName.charAt(0).toUpperCase();
     }
     return role?.charAt(0)?.toUpperCase() || "U";
   };
@@ -117,6 +185,18 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
 
       {/* Right Section */}
       <div className="flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100 shadow-sm">
+          <span className="text-xs font-semibold text-gray-700">
+            Email Alerts
+          </span>
+          <Switch
+            size="small"
+            checked={emailTriggerEnabled}
+            loading={isEmailTriggerLoading}
+            onChange={handleEmailTriggerToggle}
+          />
+        </div>
+
         {/* Notification Bell */}
         {/* <button className="relative p-2.5 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors">
                     <FaBell className="text-lg" />
@@ -140,7 +220,7 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
             </div>
             <div className="hidden sm:block">
               <p className="text-sm font-semibold text-gray-800 m-0 p-0 h-5 flex items-center">
-                {parseUser?.firstName || "Admin"}
+                {userProfile?.firstName || "Admin"}
               </p>
               <p className="text-xs text-gray-500 capitalize m-0 p-0 h-4 flex items-center">
                 {role}
@@ -155,21 +235,33 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
             <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                 <p className="text-sm font-semibold text-gray-800">
-                  {parseUser?.firstName} {parseUser?.lastName}
+                  {userProfile?.firstName} {userProfile?.lastName}
                 </p>
                 <p className="text-xs text-gray-500 capitalize">
                   {role} Account
                 </p>
               </div>
 
+              <div className="px-4 py-3 border-b border-gray-100">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">
+                      Email Alerts
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Turn notification emails on or off
+                    </p>
+                  </div>
+                  <Switch
+                    size="small"
+                    checked={emailTriggerEnabled}
+                    loading={isEmailTriggerLoading}
+                    onChange={handleEmailTriggerToggle}
+                  />
+                </div>
+              </div>
+
               <div className="py-1">
-                <button
-                  onClick={() => setIsResetPasswordOpen(true)}
-                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-[#12b48b]/5 hover:text-[#12b48b] transition-colors"
-                >
-                  <FaKey className="text-gray-400" />
-                  <span>Change Password</span>
-                </button>
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
@@ -251,6 +343,7 @@ const Header = ({ sidebarCollapsed, setSidebarCollapsed }) => {
                   type="button"
                   onClick={() => {
                     setIsResetPasswordOpen(false);
+                    setIsChangePasswordOpen?.(false);
                     setErrors({});
                     setGeneralError("");
                     setCurrentPassword("");

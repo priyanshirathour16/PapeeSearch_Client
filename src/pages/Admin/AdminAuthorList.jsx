@@ -4,6 +4,7 @@ import {
   editorApplicationApi,
   journalApi,
   applicationApi,
+  authApi,
 } from "../../services/api";
 import {
   FaEye,
@@ -27,6 +28,7 @@ import {
   Row,
   Col,
   Tabs,
+  Switch,
 } from "antd";
 import { scriptUrl } from "../../services/serviceApi";
 import useRefreshOnFocus from "../../hooks/useRefreshOnFocus";
@@ -51,6 +53,7 @@ const AdminUserList = () => {
   const [journals, setJournals] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
+  const [emailToggleLoading, setEmailToggleLoading] = useState(null);
 
   useEffect(() => {
     fetchAuthors();
@@ -101,6 +104,57 @@ const AdminUserList = () => {
     fetchAuthors();
     fetchEditors();
   });
+
+  const handleToggleEmailTrigger = async (role, userId, nextValue) => {
+    const loadingKey = `${role}-${userId}`;
+    setEmailToggleLoading(loadingKey);
+
+    try {
+      const response = await authApi.updateEmailTrigger({
+        role,
+        id: userId,
+        email_trigger: nextValue ? 1 : 0,
+      });
+
+      const updatedUser = response.data?.user || {};
+      const emailTriggerValue =
+        updatedUser.email_trigger ?? updatedUser.emailTrigger ?? nextValue;
+      const normalizedTrigger =
+        emailTriggerValue === 1
+          ? true
+          : emailTriggerValue === 0
+            ? false
+            : !!emailTriggerValue;
+
+      if (role === "author") {
+        setAuthors((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? { ...user, ...updatedUser, email_trigger: normalizedTrigger }
+              : user,
+          ),
+        );
+      }
+
+      if (role === "editor") {
+        setEditors((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? { ...user, ...updatedUser, email_trigger: normalizedTrigger }
+              : user,
+          ),
+        );
+      }
+
+      message.success(response.data?.message || "Email trigger updated");
+    } catch (error) {
+      message.error(
+        error.response?.data?.message || "Failed to update email trigger",
+      );
+    } finally {
+      setEmailToggleLoading(null);
+    }
+  };
 
   // Author handlers
   const handleViewAuthor = (author) => {
@@ -168,6 +222,21 @@ const AdminUserList = () => {
         <Tag color={role === "author" ? "green" : "blue"} className="uppercase">
           {role}
         </Tag>
+      ),
+    },
+    {
+      title: "Email Trigger",
+      key: "email_trigger",
+      align: "center",
+      render: (_text, record) => (
+        <Switch
+          size="small"
+          checked={!!record.email_trigger}
+          loading={emailToggleLoading === `author-${record.id}`}
+          onChange={(checked) =>
+            handleToggleEmailTrigger("author", record.id, checked)
+          }
+        />
       ),
     },
     {
@@ -239,6 +308,21 @@ const AdminUserList = () => {
           </Tag>
         );
       },
+    },
+    {
+      title: "Email Trigger",
+      key: "email_trigger",
+      align: "center",
+      render: (_text, record) => (
+        <Switch
+          size="small"
+          checked={!!record.email_trigger}
+          loading={emailToggleLoading === `editor-${record.id}`}
+          onChange={(checked) =>
+            handleToggleEmailTrigger("editor", record.id, checked)
+          }
+        />
+      ),
     },
     {
       title: "Action",
