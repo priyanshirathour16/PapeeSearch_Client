@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Card,
@@ -44,24 +44,52 @@ const MyManuscriptDetails = () => {
   const [loading, setLoading] = useState(true);
   const [authorModalVisible, setAuthorModalVisible] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState(null);
+  const previousStatusRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
 
-  useEffect(() => {
-    fetchDetails();
-  }, [id]);
-
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async (showLoading = true) => {
     try {
+      if (showLoading) setLoading(true);
       const response = await manuscriptApi.getById(id);
       // Handle both structure types { data: { ... } } or { ... }
       const data = response.data.data ? response.data.data : response.data;
+
+      // Check if status changed (for polling updates)
+      if (previousStatusRef.current && previousStatusRef.current !== data.status) {
+        message.info(`Manuscript status updated to "${data.status}"`);
+      }
+      previousStatusRef.current = data.status;
+
       setManuscript(data);
     } catch (error) {
       console.error("Error fetching manuscript details:", error);
-      message.error("Failed to load manuscript details");
+      if (showLoading) message.error("Failed to load manuscript details");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  };
+  }, [id]);
+
+  // Initial fetch
+  useEffect(() => {
+    if (id) {
+      fetchDetails();
+    }
+  }, [id, fetchDetails]);
+
+  // Polling for status updates (every 10 seconds)
+  useEffect(() => {
+    if (!id || loading) return;
+
+    pollingIntervalRef.current = setInterval(() => {
+      fetchDetails(false); // Silent fetch without loading state
+    }, 10000); // Poll every 10 seconds
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [id, loading, fetchDetails]);
 
   if (loading)
     return (
@@ -323,7 +351,7 @@ const MyManuscriptDetails = () => {
                 <div className="text-right">
                   <Text
                     strong
-                    className="block truncate max-w-[150px]"
+                    className="block max-w-[150px]"
                     title={manuscript.journal?.title}
                   >
                     {manuscript.journal?.title}
@@ -475,21 +503,21 @@ const MyManuscriptDetails = () => {
             {(manuscript.status?.trim().toLowerCase() ===
               "awaiting copyright" ||
               manuscript.status?.trim().toLowerCase() === "accepted") && (
-              <div className="mt-4">
-                <Button
-                  type="primary"
-                  block
-                  className="bg-[#12b48b] hover:bg-[#0e9f7a]"
-                  onClick={() =>
-                    navigate(`/dashboard/submit-manuscript/${id}/copyright`)
-                  }
-                >
-                  {manuscript.status?.trim().toLowerCase() === "accepted"
-                    ? "See Copyright"
-                    : "Write Copyright"}
-                </Button>
-              </div>
-            )}
+                <div className="mt-4">
+                  <Button
+                    type="primary"
+                    block
+                    className="bg-[#12b48b] hover:bg-[#0e9f7a]"
+                    onClick={() =>
+                      navigate(`/dashboard/submit-manuscript/${id}/copyright`)
+                    }
+                  >
+                    {manuscript.status?.trim().toLowerCase() === "accepted"
+                      ? "See Copyright"
+                      : "Write Copyright"}
+                  </Button>
+                </div>
+              )}
           </Card>
         </Col>
       </Row>

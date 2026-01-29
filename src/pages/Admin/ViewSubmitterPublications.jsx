@@ -77,16 +77,17 @@ const ViewSubmitterPublications = () => {
         }
     };
 
-    // Fetch manuscripts with "Awaiting Copyright" status
+    // Fetch manuscripts with "Awaiting Copyright" or "Accepted" status
     const fetchAwaitingCopyrightManuscripts = async () => {
         setLoadingManuscripts(true);
         try {
-            // Using real API - GET /api/manuscripts?status=Awaiting%20Copyright
-            const response = await manuscriptApi.getAll({ status: 'Awaiting Copyright' });
+            // Using real API - GET /api/manuscripts?status=Awaiting%20Copyright,Accepted
+            // This fetches both manuscripts awaiting copyright and accepted manuscripts
+            const response = await manuscriptApi.getAll({ status: 'Awaiting Copyright,Accepted' });
             setAwaitingManuscripts(response.data.data || []);
         } catch (error) {
             console.error("Failed to fetch manuscripts", error);
-            message.error("Failed to load manuscripts awaiting copyright");
+            message.error("Failed to load manuscripts for publication");
         } finally {
             setLoadingManuscripts(false);
         }
@@ -583,7 +584,7 @@ const ViewSubmitterPublications = () => {
             {/* Manuscript Selection Dropdown */}
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Manuscript (Awaiting Copyright)
+                    Select Manuscript (Accepted / Awaiting Copyright)
                 </label>
                 {loadingManuscripts ? (
                     <div className="flex items-center justify-center py-8">
@@ -591,7 +592,7 @@ const ViewSubmitterPublications = () => {
                     </div>
                 ) : awaitingManuscripts.length === 0 ? (
                     <Empty
-                        description="No manuscripts awaiting copyright"
+                        description="No manuscripts available for publication"
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                     />
                 ) : (
@@ -613,6 +614,14 @@ const ViewSubmitterPublications = () => {
                                     <div className="flex items-center gap-2">
                                         <FaFileAlt className="text-blue-500" />
                                         <span className="font-medium">{m.manuscript_id}</span>
+                                        <span className="text-gray-400">|</span>
+                                        <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                                            m.status === 'Accepted' ? 'bg-green-100 text-green-700' :
+                                            m.status === 'Awaiting Copyright' ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-gray-100 text-gray-700'
+                                        }`}>
+                                            {m.status}
+                                        </span>
                                         <span className="text-gray-400">|</span>
                                         <span className="text-gray-600">{m.journal?.title}</span>
                                     </div>

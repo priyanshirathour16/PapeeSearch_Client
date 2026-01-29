@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaArrowLeft, FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { Formik, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { otpApi, manuscriptApi } from '../../services/api';
+import { otpApi, manuscriptApi, authApi } from '../../services/api';
 import { message } from "antd";
 import { numberToWords } from '../../utils/numberToWords';
 
@@ -23,15 +23,16 @@ const manuscriptTypes = [
     "Invited article"
 ];
 
-const IconInput = ({ icon: Icon, ...props }) => (
+const IconInput = ({ icon: Icon, disabled, ...props }) => (
     <div className="flex flex-col">
-        <div className={`flex bg-gray-100 border border-gray-300 rounded overflow-hidden ${props.className}`}>
+        <div className={`flex border border-gray-300 rounded overflow-hidden ${disabled ? 'bg-gray-200' : 'bg-gray-100'} ${props.className}`}>
             <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
                 <Icon className="text-sm" />
             </div>
             <Field
                 {...props}
-                className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
+                disabled={disabled}
+                className={`flex-1 px-3 py-2 focus:outline-none text-sm placeholder-gray-500 ${disabled ? 'bg-gray-200 text-gray-600 cursor-not-allowed' : 'bg-gray-100 focus:bg-white text-gray-700'}`}
             />
         </div>
         <ErrorMessage name={props.name} component="div" className="text-red-500 text-xs mt-1" />
@@ -69,9 +70,10 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [authorProfile, setAuthorProfile] = useState(null);
 
     useEffect(() => {
-        const checkLoginStatus = () => {
+        const checkLoginStatus = async () => {
             const userStr = localStorage.getItem('user');
             const token = localStorage.getItem('token');
             if (isDashboard && userStr && token) {
@@ -86,6 +88,16 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                     setOtpSent(true);
                     setCurrentStep(2);
                     setIsLoggedIn(true);
+
+                    // Fetch full author profile for auto-filling Step 3
+                    try {
+                        const response = await authApi.getProfile();
+                        if (response.data?.success && response.data?.profile) {
+                            setAuthorProfile(response.data.profile);
+                        }
+                    } catch (profileError) {
+                        console.error("Error fetching author profile", profileError);
+                    }
                 } catch (e) {
                     console.error("Error parsing user data", e);
                 }
@@ -193,26 +205,17 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                     manuscriptFile: Yup.mixed().required('Manuscript file is required'),
                 });
             case 7:
+                // Step 7 is optional - no required fields
                 return Yup.object().shape({
-                    reviewerFirstName: Yup.string().required('First name is required'),
-                    reviewerLastName: Yup.string().required('Last name is required'),
-                    reviewerEmail: Yup.string().email('Invalid email').required('Email is required'),
-                    reviewerPhone: Yup.string().matches(/^[0-9]+$/, "Must be only digits").required('Phone is required'),
-                    reviewerCountry: Yup.string().required('Country is required').notOneOf(['Select Country'], 'Please select a country'),
-                    reviewerInstitution: Yup.string().required('Institution is required'),
-                    reviewerDesignation: Yup.string().required('Designation is required'),
-                    reviewerSpecialisation: Yup.string().required('Specialisation is required'),
-                    reviewerDepartment: Yup.string().required('Department is required'),
-                    reviewerState: Yup.string().required('State is required'),
-                    reviewerCity: Yup.string().required('City is required'),
-                    reviewerAddress: Yup.string().required('Address is required'),
+                    reviewerEmail: Yup.string().email('Invalid email format'),
+                    reviewerPhone: Yup.string().matches(/^[0-9]*$/, "Must be only digits"),
                 });
             default:
                 return Yup.object().shape({});
         }
     };
 
-    const initialValues = {
+    const initialValues = useMemo(() => ({
         // Step 1: Personal Details
         name: personalDetails?.name || "",
         email: personalDetails?.email || "",
@@ -225,20 +228,20 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         abstract: "",
         wordCount: "",
 
-        // Step 3: Primary Author
+        // Step 3: Primary Author (auto-filled from author profile when logged in)
         primaryAuthor: {
-            firstName: "",
-            lastName: "",
-            email: "",
-            confirmEmail: "",
-            phone: "",
-            country: "",
-            institution: "",
+            firstName: authorProfile?.firstName || "",
+            lastName: authorProfile?.lastName || "",
+            email: authorProfile?.email || "",
+            confirmEmail: authorProfile?.email || "",
+            phone: authorProfile?.contactNumber || "",
+            country: authorProfile?.country || "",
+            institution: authorProfile?.institute || "",
             department: "",
             designation: "",
-            state: "",
-            city: "",
-            address: "",
+            state: authorProfile?.state || "",
+            city: authorProfile?.city || "",
+            address: authorProfile?.address || "",
             isCorrespondingAuthor: true
         },
 
@@ -273,7 +276,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         reviewerState: "",
         reviewerCity: "",
         reviewerAddress: "",
-    };
+    }), [personalDetails, authorProfile]);
 
     const [currentOtp, setCurrentOtp] = useState(
         ""
@@ -719,32 +722,45 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                     {/* Step 3: Primary Author */}
                     {currentStep === 3 && (
                         <FormSection legend="Primary Author Information">
+                            {authorProfile && (
+                                <p className="text-sm text-gray-500 mb-4 italic">
+                                    Fields pre-filled from your profile are locked. Missing fields can be edited.
+                                </p>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <IconInput icon={FaUser} type="text" name="primaryAuthor.firstName" placeholder="First Name *" />
-                                <IconInput icon={FaUser} type="text" name="primaryAuthor.lastName" placeholder="Last Name *" />
-                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.email" placeholder="Email ID *" />
-                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.confirmEmail" placeholder="Confirm Email ID *" />
-                                <IconInput icon={FaPhone} type="text" name="primaryAuthor.phone" placeholder="Phone No *" />
+                                <IconInput icon={FaUser} type="text" name="primaryAuthor.firstName" placeholder="First Name *" disabled={!!authorProfile?.firstName} />
+                                <IconInput icon={FaUser} type="text" name="primaryAuthor.lastName" placeholder="Last Name *" disabled={!!authorProfile?.lastName} />
+                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.email" placeholder="Email ID *" disabled={!!authorProfile?.email} />
+                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.confirmEmail" placeholder="Confirm Email ID *" disabled={!!authorProfile?.email} />
+                                <IconInput icon={FaPhone} type="text" name="primaryAuthor.phone" placeholder="Phone No *" disabled={!!authorProfile?.contactNumber} />
 
-                                <div className="flex flex-col">
-                                    <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-                                        <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
-                                            <MdLocationOn className="text-sm" />
+                                {authorProfile?.country ? (
+                                    <IconInput icon={MdLocationOn} type="text" name="primaryAuthor.country" placeholder="Country *" disabled={true} />
+                                ) : (
+                                    <div className="flex flex-col">
+                                        <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                                            <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                                <MdLocationOn className="text-sm" />
+                                            </div>
+                                            <Field
+                                                as="select"
+                                                name="primaryAuthor.country"
+                                                className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700"
+                                            >
+                                                {countries.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                                            </Field>
                                         </div>
-                                        <Field as="select" name="primaryAuthor.country" className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700">
-                                            {countries.map((c, i) => <option key={i} value={c}>{c}</option>)}
-                                        </Field>
+                                        <ErrorMessage name="primaryAuthor.country" component="div" className="text-red-500 text-xs mt-1" />
                                     </div>
-                                    <ErrorMessage name="primaryAuthor.country" component="div" className="text-red-500 text-xs mt-1" />
-                                </div>
+                                )}
 
-                                <IconInput icon={MdSchool} type="text" name="primaryAuthor.institution" placeholder="Institution *" />
+                                <IconInput icon={MdSchool} type="text" name="primaryAuthor.institution" placeholder="Institution *" disabled={!!authorProfile?.institute} />
                                 <IconInput icon={FaBuilding} type="text" name="primaryAuthor.department" placeholder="Department *" />
-                                <IconInput icon={FaUniversity} type="text" name="primaryAuthor.state" placeholder="State *" />
-                                <IconInput icon={FaCity} type="text" name="primaryAuthor.city" placeholder="City *" />
+                                <IconInput icon={FaUniversity} type="text" name="primaryAuthor.state" placeholder="State *" disabled={!!authorProfile?.state} />
+                                <IconInput icon={FaCity} type="text" name="primaryAuthor.city" placeholder="City *" disabled={!!authorProfile?.city} />
 
                                 <div className="md:col-span-2">
-                                    <IconInput icon={FaMapMarkerAlt} type="text" name="primaryAuthor.address" placeholder="Address *" />
+                                    <IconInput icon={FaMapMarkerAlt} type="text" name="primaryAuthor.address" placeholder="Address *" disabled={!!authorProfile?.address} />
                                 </div>
                             </div>
                         </FormSection>
@@ -801,10 +817,10 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                                             <IconInput icon={FaMapMarkerAlt} type="text" name={`authors.${index}.address`} placeholder="Address *" />
                                                         </div>
 
-                                                        <div className="md:col-span-2 flex items-center gap-2">
+                                                        {/* <div className="md:col-span-2 flex items-center gap-2">
                                                             <Field type="checkbox" name={`authors.${index}.isCorrespondingAuthor`} className="h-4 w-4" />
                                                             <span className="text-xs text-gray-700">Corresponding Author</span>
-                                                        </div>
+                                                        </div> */}
                                                     </div>
                                                 </div>
                                             ))}
@@ -905,16 +921,16 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                         </FormSection>
                     )}
 
-                    {/* Step 7: Suggested Reviewers */}
+                    {/* Step 7: Suggested Reviewers (Optional) */}
                     {currentStep === 7 && (
-                        <FormSection legend="Suggest Reviewers">
-                            <p className="text-sm text-gray-600 mb-4">Suggest a reviewer belonging to a similar research background</p>
+                        <FormSection legend="Suggest Reviewers (Optional)">
+                            <p className="text-sm text-gray-600 mb-4">Optionally suggest a reviewer belonging to a similar research background</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <IconInput icon={FaUser} type="text" name="reviewerFirstName" placeholder="First Name *" />
-                                <IconInput icon={FaUser} type="text" name="reviewerLastName" placeholder="Last Name *" />
-                                <IconInput icon={FaEnvelope} type="email" name="reviewerEmail" placeholder="Email ID *" />
-                                <IconInput icon={FaPhone} type="text" name="reviewerPhone" placeholder="Phone No *" />
-                                <IconInput icon={FaKeyboard} type="text" name="reviewerSpecialisation" placeholder="Specialisation *" />
+                                <IconInput icon={FaUser} type="text" name="reviewerFirstName" placeholder="First Name" />
+                                <IconInput icon={FaUser} type="text" name="reviewerLastName" placeholder="Last Name" />
+                                <IconInput icon={FaEnvelope} type="email" name="reviewerEmail" placeholder="Email ID" />
+                                <IconInput icon={FaPhone} type="text" name="reviewerPhone" placeholder="Phone No" />
+                                <IconInput icon={FaKeyboard} type="text" name="reviewerSpecialisation" placeholder="Specialisation" />
 
                                 <div className="flex flex-col">
                                     <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
@@ -928,14 +944,14 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                     <ErrorMessage name="reviewerCountry" component="div" className="text-red-500 text-xs mt-1" />
                                 </div>
 
-                                <IconInput icon={MdSchool} type="text" name="reviewerInstitution" placeholder="Institution *" />
-                                <IconInput icon={FaUser} type="text" name="reviewerDesignation" placeholder="Designation *" />
-                                <IconInput icon={FaBuilding} type="text" name="reviewerDepartment" placeholder="Department *" />
-                                <IconInput icon={FaUniversity} type="text" name="reviewerState" placeholder="State *" />
-                                <IconInput icon={FaCity} type="text" name="reviewerCity" placeholder="City *" />
+                                <IconInput icon={MdSchool} type="text" name="reviewerInstitution" placeholder="Institution" />
+                                <IconInput icon={FaUser} type="text" name="reviewerDesignation" placeholder="Designation" />
+                                <IconInput icon={FaBuilding} type="text" name="reviewerDepartment" placeholder="Department" />
+                                <IconInput icon={FaUniversity} type="text" name="reviewerState" placeholder="State" />
+                                <IconInput icon={FaCity} type="text" name="reviewerCity" placeholder="City" />
 
                                 <div className="md:col-span-2">
-                                    <IconInput icon={FaMapMarkerAlt} type="text" name="reviewerAddress" placeholder="Address *" />
+                                    <IconInput icon={FaMapMarkerAlt} type="text" name="reviewerAddress" placeholder="Address" />
                                 </div>
                             </div>
                         </FormSection>
@@ -1016,23 +1032,35 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                 </div>
                             </div>
 
-                            {/* Reviewer */}
-                            <div className="border border-gray-300 rounded p-4">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className="font-semibold text-[#204066]">Suggested Reviewer</h3>
-                                    <button type="button" onClick={() => setCurrentStep(7)} className="text-[#12b48b] text-sm hover:underline">Edit</button>
+                            {/* Reviewer (Optional) */}
+                            {(values.reviewerFirstName || values.reviewerLastName || values.reviewerEmail) ? (
+                                <div className="border border-gray-300 rounded p-4">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-semibold text-[#204066]">Suggested Reviewer</h3>
+                                        <button type="button" onClick={() => setCurrentStep(7)} className="text-[#12b48b] text-sm hover:underline">Edit</button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        {(values.reviewerFirstName || values.reviewerLastName) && <p><strong>Name:</strong> {values.reviewerFirstName} {values.reviewerLastName}</p>}
+                                        {values.reviewerEmail && <p><strong>Email:</strong> {values.reviewerEmail}</p>}
+                                        {values.reviewerPhone && <p><strong>Phone:</strong> {values.reviewerPhone}</p>}
+                                        {values.reviewerDesignation && <p><strong>Designation:</strong> {values.reviewerDesignation}</p>}
+                                        {values.reviewerInstitution && <p><strong>Institution:</strong> {values.reviewerInstitution}</p>}
+                                        {values.reviewerDepartment && <p><strong>Department:</strong> {values.reviewerDepartment}</p>}
+                                        {values.reviewerSpecialisation && <p><strong>Specialisation:</strong> {values.reviewerSpecialisation}</p>}
+                                        {(values.reviewerAddress || values.reviewerCity || values.reviewerState || values.reviewerCountry) && (
+                                            <p><strong>Address:</strong> {[values.reviewerAddress, values.reviewerCity, values.reviewerState, values.reviewerCountry].filter(Boolean).join(', ')}</p>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <p><strong>Name:</strong> {values.reviewerFirstName} {values.reviewerLastName}</p>
-                                    <p><strong>Email:</strong> {values.reviewerEmail}</p>
-                                    <p><strong>Phone:</strong> {values.reviewerPhone}</p>
-                                    <p><strong>Designation:</strong> {values.reviewerDesignation}</p>
-                                    <p><strong>Institution:</strong> {values.reviewerInstitution}</p>
-                                    <p><strong>Department:</strong> {values.reviewerDepartment}</p>
-                                    <p><strong>Specialisation:</strong> {values.reviewerSpecialisation}</p>
-                                    <p><strong>Address:</strong> {values.reviewerAddress}, {values.reviewerCity}, {values.reviewerState}, {values.reviewerCountry}</p>
+                            ) : (
+                                <div className="border border-gray-300 rounded p-4">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-semibold text-[#204066]">Suggested Reviewer (Optional)</h3>
+                                        <button type="button" onClick={() => setCurrentStep(7)} className="text-[#12b48b] text-sm hover:underline">Add</button>
+                                    </div>
+                                    <p className="text-sm text-gray-500 italic">No reviewer suggested</p>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
 

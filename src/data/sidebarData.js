@@ -70,18 +70,18 @@ export const sidebarData = [
                 icon: FaFileAlt,
                 access: ["admin"]
             },
-            {
-                title: 'Registrations',
-                path: '/dashboard/conference-registrations',
-                icon: FaBook,
-                access: ["admin"]
-            },
-            {
-                title: 'Abstract Submissions',
-                path: '/dashboard/conference/abstract-management',
-                icon: FaFileAlt,
-                access: ["admin"]
-            }
+            // {
+            //     title: 'Registrations',
+            //     path: '/dashboard/conference-registrations',
+            //     icon: FaBook,
+            //     access: ["admin"]
+            // },
+            // {
+            //     title: 'Abstract Submissions',
+            //     path: '/dashboard/conference/abstract-management',
+            //     icon: FaFileAlt,
+            //     access: ["admin"]
+            // }
         ]
     },
     {
@@ -96,5 +96,17 @@ export const sidebarData = [
         icon: FaEnvelope,
         path: '/dashboard/submit-manuscript',
         access: ["author"]
+    },
+    {
+        title: 'Full Paper Submission',
+        icon: FaFileAlt,
+        path: '/dashboard/conference/full-paper-submission',
+        access: ["author"]
+    },
+    {
+        title: 'Review Abstractions',
+        icon: FaFileAlt,
+        path: '/dashboard/editor/review-abstracts',
+        access: ["editor"]
     }
 ];

@@ -2,6 +2,7 @@ import React from 'react';
 import SliderImage from "../../assets/images/jm-eapjmrm.jpg";
 import { FaArrowRight } from "react-icons/fa";
 import { Link } from 'react-router-dom';
+import { getSubmitManuscriptUrl } from '../../utils/navigationHelpers';
 
 const JournalSlider = ({ journalData }) => {
     return (
@@ -23,7 +24,7 @@ const JournalSlider = ({ journalData }) => {
 
                     <div className="flex flex-col md:flex-row justify-center gap-6">
                         <Link
-                            to="/submit-manuscript"
+                            to={getSubmitManuscriptUrl()}
                             style={{ background: 'linear-gradient(to bottom, #08c495 0%, #00644b 100%)' }}
                             className="text-white hover:!text-white text-sm md:text-base font-bold py-3 px-8 rounded-full uppercase inline-flex items-center justify-center gap-2 transition-colors duration-300 btn jrnl-btn hover:opacity-90"
                         >

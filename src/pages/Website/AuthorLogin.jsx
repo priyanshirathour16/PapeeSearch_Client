@@ -7,6 +7,7 @@ import { FaTwitter } from "react-icons/fa"; // Assuming react-icons is available
 import "./AuthorLogin.css"; // specialized styles
 import NewsWidget from "../../components/Website/NewsWidget";
 import { generateConferenceUrl } from "../../utils/idEncryption";
+import { getSubmitManuscriptUrl } from "../../utils/navigationHelpers";
 
 const AuthorLogin = () => {
   const [loginRole, setLoginRole] = useState("author"); // 'author' or 'editor'
@@ -249,7 +250,7 @@ const AuthorLogin = () => {
             </Link>
             <span>|</span>
             <Link
-              to="/submit-manuscript"
+              to={getSubmitManuscriptUrl()}
               className="flex items-center hover:underline"
             >
               <svg

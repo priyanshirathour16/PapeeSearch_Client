@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Spin,
@@ -42,25 +42,51 @@ const ManuscriptDetails = () => {
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState(null);
   const [adminComment, setAdminComment] = useState("");
+  const previousStatusRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
 
-  useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const response = await manuscriptApi.getById(id);
-        // The API returns { message: "...", data: { ... } }
-        setManuscript(response.data.data);
-      } catch (error) {
-        console.error("Error fetching manuscript details:", error);
-        message.error("Failed to fetch manuscript details.");
-      } finally {
-        setLoading(false);
+  const fetchDetails = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      const response = await manuscriptApi.getById(id);
+      const data = response.data.data;
+
+      // Check if status changed (for polling updates)
+      if (previousStatusRef.current && previousStatusRef.current !== data.status) {
+        message.info(`Status updated to "${data.status}"`);
       }
-    };
+      previousStatusRef.current = data.status;
 
+      setManuscript(data);
+    } catch (error) {
+      console.error("Error fetching manuscript details:", error);
+      if (showLoading) message.error("Failed to fetch manuscript details.");
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, [id]);
+
+  // Initial fetch
+  useEffect(() => {
     if (id) {
       fetchDetails();
     }
-  }, [id]);
+  }, [id, fetchDetails]);
+
+  // Polling for status updates (every 10 seconds)
+  useEffect(() => {
+    if (!id || loading) return;
+
+    pollingIntervalRef.current = setInterval(() => {
+      fetchDetails(false); // Silent fetch without loading state
+    }, 10000); // Poll every 10 seconds
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [id, loading, fetchDetails]);
 
   const handleUpdateStatus = async () => {
     if (!newStatus) {
@@ -584,20 +610,20 @@ const ManuscriptDetails = () => {
                 </div>
                 {(manuscript.status?.toLowerCase() === "awaiting copyright" ||
                   manuscript.status?.toLowerCase() === "accepted") && (
-                  <Button
-                    type="primary"
-                    block
-                    icon={<FaFileContract />}
-                    onClick={() =>
-                      navigate(
-                        `/dashboard/manuscripts/${manuscript.manuscript_id}/copyright`,
-                      )
-                    }
-                    className="bg-purple-600 border-purple-600 hover:bg-purple-700 h-10"
-                  >
-                    See Copyright
-                  </Button>
-                )}
+                    <Button
+                      type="primary"
+                      block
+                      icon={<FaFileContract />}
+                      onClick={() =>
+                        navigate(
+                          `/dashboard/manuscripts/${manuscript.manuscript_id}/copyright`,
+                        )
+                      }
+                      className="bg-purple-600 border-purple-600 hover:bg-purple-700 h-10"
+                    >
+                      See Copyright
+                    </Button>
+                  )}
               </div>
             )}
           </Card>

@@ -40,6 +40,7 @@ const PublicEthicAndMalPractices = lazy(() => import('./pages/Website/PublicEthi
 const Journals = lazy(() => import('./pages/Website/Journals'));
 const ThankYou = lazy(() => import('./pages/Website/ThankYou'));
 const ConferenceList = lazy(() => import('./pages/Website/ConferenceList')); // Load ConferenceList
+const ConferenceSolutionsPage = lazy(() => import('./pages/Website/ConferenceSolutionsPage'));
 const ConferenceDetailsPage = lazy(() => import('./pages/Website/ConferenceDetailsPage'));
 const AuthorLogin = lazy(() => import('./pages/Website/AuthorLogin'));
 
@@ -68,6 +69,9 @@ const NewsDetailPage = lazy(() => import('./pages/Website/NewsDetailPage'));
 const AllNewsPage = lazy(() => import('./pages/Website/AllNewsPage'));
 const AbstractSubmission = lazy(() => import('./pages/Author/AbstractSubmission'));
 const AbstractManagement = lazy(() => import('./pages/Admin/AbstractManagement'));
+const EditorAbstractReview = lazy(() => import('./pages/Editor/EditorAbstractReview'));
+const FullPaperSubmission = lazy(() => import('./pages/Author/FullPaperSubmission'));
+const JournalEditorApplications = lazy(() => import('./pages/Admin/JournalEditorApplications'));
 function App() {
   return (
     <Router>
@@ -104,7 +108,8 @@ function App() {
             {/* <Route path="/news/:id" element={<NewsDetailPage />} /> */}
             <Route path="/upcoming-conferences" element={<ConferenceList type="upcoming" />} />
             <Route path="/previous-conferences" element={<ConferenceList type="previous" />} />
-            <Route path="/conferences" element={<ConferenceList type="all" />} />
+
+            <Route path="/conferences" element={<ConferenceSolutionsPage />} />
             {/* 404 Page (within layout) */}
             <Route path="*" element={<PageNotFound />} />
           </Route>
@@ -123,6 +128,7 @@ function App() {
               <Route index element={<DashboardHome />} />
               <Route path="view-journal" element={<ViewJournal />} />
               <Route path="view-journal/:id" element={<JournalDetails />} />
+              <Route path="journal-editor-applications/:journalId" element={<JournalEditorApplications />} />
               <Route path="journal-issues" element={<ViewJournalIssues />} />
               <Route path="journal-issues/add" element={<AddJournalIssue />} />
               <Route path="journal-issues/:id" element={<JournalIssueDetails />} />
@@ -149,7 +155,11 @@ function App() {
               <Route path="conference-registrations" element={<ConferenceRegistrationList />} />
               <Route path="conference-registrations/:id" element={<ConferenceRegistrationDetails />} />
               <Route path="conference/abstract-submission" element={<AbstractSubmission />} />
+              <Route path="conference/full-paper-submission" element={<FullPaperSubmission />} />
               <Route path="conference/abstract-management" element={<AbstractManagement />} />
+
+              {/* Editor Routes */}
+              <Route path="editor/review-abstracts" element={<EditorAbstractReview />} />
             </Route>
           </Route>
 

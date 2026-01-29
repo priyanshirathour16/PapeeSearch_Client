@@ -7,9 +7,11 @@ import {
     HistoryOutlined, AuditOutlined, BuildOutlined, DeploymentUnitOutlined,
     SmileOutlined
 } from '@ant-design/icons';
+import { FaFileAlt } from 'react-icons/fa';
 import { conferenceTemplateApi } from '../../services/api';
 import { ImageURl } from '../../services/serviceApi';
 import { decryptId } from '../../utils/crypto';
+import SubmittedAbstractsModal from '../../components/SubmittedAbstractsModal';
 import moment from 'moment';
 
 const { Title, Text, Paragraph } = Typography;
@@ -19,6 +21,7 @@ const ConferenceTemplateDetails = () => {
     const id = decryptId(encryptedId);
     const [template, setTemplate] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [abstractsModalOpen, setAbstractsModalOpen] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -155,7 +158,18 @@ const ConferenceTemplateDetails = () => {
 
             {/* Header */}
             <div className="mx-6 mt-2 mb-6 bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-600">
-                <Title level={3} className="mb-2 mt-0 text-gray-800">{template.conference?.name || 'Conference Name Unavailable'}</Title>
+                <div className="flex justify-between items-start">
+                    <Title level={3} className="mb-2 mt-0 text-gray-800">{template.conference?.name || 'Conference Name Unavailable'}</Title>
+                    <Button
+                        type="primary"
+                        icon={<FaFileAlt />}
+                        onClick={() => setAbstractsModalOpen(true)}
+                        className="bg-[#12b48b] hover:bg-[#0e9a77] border-none flex items-center gap-2"
+                        size="large"
+                    >
+                        Submitted Abstracts
+                    </Button>
+                </div>
                 <div className="flex flex-col gap-4">
                     {parsedVenue.name && (
                         <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded text-gray-600 w-max">
@@ -368,6 +382,14 @@ const ConferenceTemplateDetails = () => {
                     </Col>
                 </Row>
             </div>
+
+            {/* Submitted Abstracts Modal */}
+            <SubmittedAbstractsModal
+                open={abstractsModalOpen}
+                onCancel={() => setAbstractsModalOpen(false)}
+                conferenceId={id}
+                conferenceName={template.conference?.name}
+            />
         </div>
     );
 };

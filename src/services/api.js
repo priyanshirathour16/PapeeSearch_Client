@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // baseURL: "http://localhost:5000/api",
-  baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
+  baseURL: "http://localhost:5000/api",
+  // baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
 });
 
 // Only push visitors to /unauthorized when they are on a protected area (dashboard/admin)
@@ -86,6 +86,7 @@ export const authApi = {
   verifyUser: (data) => api.post("/auth/verify-user", data),
   resetPassword: (data) => api.post("/auth/reset-password", data),
   updateEmailTrigger: (data) => api.post("/auth/update-email-trigger", data),
+  getProfile: () => api.get("/auth/profile"),
 };
 
 export const applicationApi = {
@@ -104,6 +105,12 @@ export const editorApplicationApi = {
   getAll: () => api.get("/editor-applications"),
   getById: (id) => api.get(`/editor-applications/${id}`),
   delete: (id) => api.delete(`/editor-applications/${id}`),
+  updateStatus: (id, status) =>
+    api.patch(`/editor-applications/${id}/status`, { status }),
+  getByJournalId: (journalId) =>
+    api.get(`/editor-applications/journal/${journalId}`),
+  toggleActive: (id, is_active) =>
+    api.patch(`/editor-applications/${id}/active`, { is_active }),
 };
 
 export const journalCategoryApi = {
@@ -221,6 +228,76 @@ export const abstractSubmissionApi = {
   getAll: () => api.get("/abstract-submissions"),
   updateStatus: (id, status) =>
     api.put(`/abstract-submissions/update-status/${id}`, { status }),
+
+  // ========== ABSTRACT WORKFLOW APIs (Admin, Editor, Author) ==========
+
+  // API 1: Get abstracts by conference (Admin)
+  getByConference: (conferenceId) =>
+    api.get(`/abstract-submissions/conference/${conferenceId}`),
+
+  // API 3: Assign editor (Admin) - Stage 1
+  assignEditor: (abstractId, editorId) =>
+    api.post(`/abstract-submissions/${abstractId}/assign-editor`, { editorId }),
+
+  // API 4: Assign conference editor (Admin) - Stage 2
+  assignConferenceEditor: (abstractId, editorId) =>
+    api.post(`/abstract-submissions/${abstractId}/assign-conference-editor`, { editorId }),
+
+  // API 5: Admin final decision (Admin) - Stage 3
+  adminDecision: (abstractId, action, comment) =>
+    api.post(`/abstract-submissions/${abstractId}/admin-decision`, { action, comment }),
+
+  // API 6: Get abstracts assigned to editor (Editor)
+  getEditorAssigned: () =>
+    api.get("/abstract-submissions/editor/assigned"),
+
+  // API 7+8: Editor review - accept/reject (Editor)
+  editorReview: (abstractId, action, comment) =>
+    api.post(`/abstract-submissions/${abstractId}/review`, { action, comment }),
+
+  // API 9: Get accepted abstracts for author (Author - Full Paper)
+  getAuthorAccepted: () =>
+    api.get("/abstract-submissions/author/accepted"),
+
+  // API 10: Submit full paper files (Author)
+  submitFullPaper: (abstractId, formData) => {
+    const headers = { "Content-Type": "multipart/form-data" };
+    return api.post(`/abstract-submissions/${abstractId}/full-paper`, formData, { headers });
+  },
+};
+
+// API 2: Get available editors (Admin)
+export const editorApi = {
+  getEditors: () => api.get("/editor-applications/editors"),
+};
+
+// Proposal Request API
+export const proposalRequestApi = {
+  // Submit a new proposal request (with file upload)
+  submit: (formData) => {
+    const headers = { "Content-Type": "multipart/form-data" };
+    return api.post("/proposal-requests/submit", formData, { headers });
+  },
+  // Get all proposals (admin) - with optional filters
+  getAll: (params) => api.get("/proposal-requests", { params }),
+  // Get proposal by ID
+  getById: (id) => api.get(`/proposal-requests/${id}`),
+  // Track proposal by proposalId (e.g., PROP-2025-0001)
+  track: (proposalId) => api.get(`/proposal-requests/track/${proposalId}`),
+  // Get proposals by email
+  getByEmail: (email) => api.get(`/proposal-requests/email/${email}`),
+  // Update proposal status (admin)
+  updateStatus: (id, status, adminNotes) =>
+    api.patch(`/proposal-requests/${id}/status`, { status, adminNotes }),
+  // Update proposal
+  update: (id, formData) => {
+    const headers = { "Content-Type": "multipart/form-data" };
+    return api.put(`/proposal-requests/${id}`, formData, { headers });
+  },
+  // Delete proposal (admin)
+  delete: (id) => api.delete(`/proposal-requests/${id}`),
+  // Get statistics (admin)
+  getStatistics: () => api.get("/proposal-requests/statistics"),
 };
 
 export default api;

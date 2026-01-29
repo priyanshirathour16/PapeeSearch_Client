@@ -5,11 +5,12 @@ import RequestAccess from '../../components/Website/RequestAccess';
 import Services from '../../components/Website/Services';
 import ServiceImage from '../../components/Website/ServiceImage';
 import SEO from '../../components/SEO';
+import { getSubmitManuscriptUrl } from '../../utils/navigationHelpers';
 
 const Home = () => {
     return (
         <>
-            <SEO 
+            <SEO
                 title="Open Access Journals in India - ELK Asia Pacific Journals"
                 description="ELK Asia Pacific Journals is Expanding Literary Knowledge Base through its reputed Open Access journal published in multiple research areas."
             />
@@ -29,7 +30,7 @@ const Home = () => {
                                 </Link>
 
                                 <Link
-                                    to="/submit-manuscript"
+                                    to={getSubmitManuscriptUrl()}
                                     className="inline-flex items-center justify-center px-8 py-2 text-lg uppercase text-white hover:text-white font-light rounded-full bg-gradient-to-b from-[#08c495] to-[#00644b] hover:from-[#0a9773] hover:to-[#00644b] transition-all duration-300"
                                 >
                                     Submit Your Manuscript
