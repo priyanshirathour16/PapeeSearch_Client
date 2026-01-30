@@ -1,86 +1,92 @@
-import { FaBook, FaEye, FaNewspaper, FaFileAlt, FaEnvelope } from 'react-icons/fa';
+import { FaBook, FaEye, FaNewspaper, FaFileAlt, FaEnvelope, FaUserShield } from 'react-icons/fa';
 
 export const sidebarData = [
     {
         title: 'Manage Journals',
         icon: FaBook, // Storing component reference directly
         path: '#',
-        access: ["admin"],
+        access: ["admin", "subadmin"],
         subNav: [
             {
                 title: 'View Journals',
                 path: '/dashboard/view-journal',
                 icon: FaEye,
-                access: ["admin"]
+                access: ["admin", "subadmin"]
             },
             {
                 title: 'View Journal Issues',
                 path: '/dashboard/journal-issues',
                 icon: FaNewspaper,
-                access: ["admin"]
+                access: ["admin", "subadmin"]
             },
             {
                 title: 'Journal Categories',
                 path: '/dashboard/journal-categories',
                 icon: FaBook,
-                access: ["admin"]
+                access: ["admin", "subadmin"]
             },
 
         ]
     },
     {
+        title: 'Manage Subadmins',
+        icon: FaUserShield,
+        path: '/dashboard/manage-subadmins',
+        access: ["admin"]
+    },
+    {
         title: 'Manage User',
         icon: FaBook,
         path: '/dashboard/manage-users',
-        access: ["admin"]
+        access: ["admin", "subadmin"]
     },
     {
         title: 'Submitted Manuscript',
         icon: FaFileAlt,
         path: '/dashboard/manuscripts',
-        access: ["admin"]
+        access: ["admin", "subadmin"]
     },
     {
         title: 'View Submitted Publication',
         icon: FaNewspaper,
         path: '/dashboard/view-submitter-publications',
-        access: ["admin"]
+        access: ["admin", "subadmin"]
     },
     // {
     //     title: 'Manage News',
     //     icon: FaNewspaper,
     //     path: '/dashboard/manage-news',
-    //     access: ["admin"]
+    //     access: ["admin", "subadmin"]
     // },
     {
         title: 'Conference',
         icon: FaBook,
         path: '#',
-        access: ["admin"],
+        access: ["admin", "subadmin"],
         subNav: [
             {
                 title: 'Add Conference',
                 path: '/dashboard/add-conference',
                 icon: FaFileAlt,
-                access: ["admin"]
+                access: ["admin", "subadmin"]
             },
             {
                 title: 'Conference Template',
                 path: '/dashboard/conference-templates',
                 icon: FaFileAlt,
-                access: ["admin"]
+                access: ["admin", "subadmin"]
             },
             // {
             //     title: 'Registrations',
             //     path: '/dashboard/conference-registrations',
             //     icon: FaBook,
-            //     access: ["admin"]
+            //     access: ["admin", "subadmin"]
             // },
             // {
             //     title: 'Abstract Submissions',
             //     path: '/dashboard/conference/abstract-management',
             //     icon: FaFileAlt,
-            //     access: ["admin"]
+            //     access: ["admin", "subadmin"]
             // }
         ]
     },
@@ -88,7 +94,7 @@ export const sidebarData = [
         title: 'Contact Us Inquiries',
         icon: FaEnvelope,
         path: '/dashboard/contact-us',
-        access: ["admin"]
+        access: ["admin", "subadmin"]
     },
 
     {

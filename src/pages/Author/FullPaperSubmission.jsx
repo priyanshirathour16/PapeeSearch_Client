@@ -132,15 +132,6 @@ const FullPaperSubmission = () => {
                                     </Tooltip>
                                 </div>
                             ))}
-                            <Button
-                                type="link"
-                                size="small"
-                                icon={<FaUpload />}
-                                onClick={() => openUploadModal(record)}
-                                className="text-[#12b48b] hover:text-[#0e9a77] p-0 flex items-center gap-1 text-xs"
-                            >
-                                Upload More
-                            </Button>
                         </div>
                     );
                 }
@@ -164,9 +155,10 @@ const FullPaperSubmission = () => {
                         size="small"
                         icon={<FaUpload />}
                         onClick={() => openUploadModal(record)}
-                        className={`flex items-center gap-1 ${hasFiles ? 'bg-blue-600 hover:bg-blue-700' : 'bg-[#12b48b] hover:bg-[#0e9a77]'} border-none`}
+                        disabled={hasFiles}
+                        className={`flex items-center gap-1 ${hasFiles ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#12b48b] hover:bg-[#0e9a77]'} border-none`}
                     >
-                        {hasFiles ? 'Upload More' : 'Submit Full Paper'}
+                        {hasFiles ? 'Paper Submitted' : 'Submit Full Paper'}
                     </Button>
                 );
             },

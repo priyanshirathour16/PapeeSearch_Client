@@ -72,6 +72,7 @@ const AbstractManagement = lazy(() => import('./pages/Admin/AbstractManagement')
 const EditorAbstractReview = lazy(() => import('./pages/Editor/EditorAbstractReview'));
 const FullPaperSubmission = lazy(() => import('./pages/Author/FullPaperSubmission'));
 const JournalEditorApplications = lazy(() => import('./pages/Admin/JournalEditorApplications'));
+const ManageSubadmins = lazy(() => import('./pages/Admin/ManageSubadmins'));
 function App() {
   return (
     <Router>
@@ -134,6 +135,7 @@ function App() {
               <Route path="journal-issues/:id" element={<JournalIssueDetails />} />
 
               <Route path="manage-users" element={<AdminUserList />} />
+              <Route path="manage-subadmins" element={<ManageSubadmins />} />
               <Route path="journal-categories" element={<JournalCategories />} />
 
               <Route path="manuscripts" element={<ManuscriptList />} />

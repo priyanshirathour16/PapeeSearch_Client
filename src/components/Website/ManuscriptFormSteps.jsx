@@ -59,6 +59,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     const [keywordInput, setKeywordInput] = useState("");
     const [wordCountText, setWordCountText] = useState("");
     const [abstractWordCount, setAbstractWordCount] = useState(0);
+    const [titleWordCount, setTitleWordCount] = useState(0);
     const [otpTimer, setOtpTimer] = useState(0);
     const [verifyOtpError, setVerifyOtpError] = useState("");
     const [sendOtpError, setSendOtpError] = useState("");
@@ -71,6 +72,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authorProfile, setAuthorProfile] = useState(null);
+    const [submitterIpAddress, setSubmitterIpAddress] = useState(null);
 
     useEffect(() => {
         const checkLoginStatus = async () => {
@@ -116,6 +118,21 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         return () => clearInterval(interval);
     }, [otpTimer]);
 
+    // Fetch IP address when component mounts
+    useEffect(() => {
+        const fetchIpAddress = async () => {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                setSubmitterIpAddress(data.ip);
+            } catch (error) {
+                console.error('Error fetching IP address:', error);
+                setSubmitterIpAddress('Unable to detect');
+            }
+        };
+        fetchIpAddress();
+    }, []);
+
     const totalSteps = 8;
 
     const getTouchedFromErrors = (errors) => {
@@ -145,7 +162,13 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                 return Yup.object().shape({
                     journalId: Yup.string().required('Journal selection is required'),
                     manuscriptType: Yup.string().required('Manuscript type is required'),
-                    paperTitle: Yup.string().required('Manuscript title is required'),
+                    paperTitle: Yup.string()
+                        .required('Manuscript title is required')
+                        .test('word-count', 'Title must not exceed 50 words', function (value) {
+                            if (!value) return true;
+                            const wordCount = value.trim().split(/\s+/).filter(word => word.length > 0).length;
+                            return wordCount <= 50;
+                        }),
                     abstract: Yup.string().required('Abstract is required'),
                     wordCount: Yup.number().required('Word count is required').positive('Must be positive'),
                 });
@@ -629,7 +652,36 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                 </div>
 
                                 {/* Manuscript Title */}
-                                <IconInput icon={FaPencilAlt} type="text" name="paperTitle" placeholder="Manuscript Title *" />
+                                <div className="flex flex-col">
+                                    <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                                        <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                            <FaPencilAlt className="text-sm" />
+                                        </div>
+                                        <Field
+                                            type="text"
+                                            name="paperTitle"
+                                            placeholder="Manuscript Title *"
+                                            onChange={(e) => {
+                                                const text = e.target.value;
+                                                const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+
+                                                if (words <= 50) {
+                                                    setFieldValue('paperTitle', text);
+                                                    setTitleWordCount(words);
+                                                } else {
+                                                    message.warning("Manuscript title cannot exceed 50 words");
+                                                }
+                                            }}
+                                            className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700"
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <ErrorMessage name="paperTitle" component="div" className="text-red-500 text-xs" />
+                                        <span className={`text-xs ${titleWordCount > 50 ? 'text-red-500' : 'text-gray-500'}`}>
+                                            {titleWordCount} / 50 words
+                                        </span>
+                                    </div>
+                                </div>
 
                                 {/* Abstract */}
                                 <div className="flex flex-col">
@@ -866,6 +918,26 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Display IP Address */}
+                            {submitterIpAddress && (
+                                <div className="mt-6 pt-4 border-t border-gray-200">
+                                    <div className="flex items-center justify-between bg-blue-50 px-4 py-3 rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <MdLocationOn className="text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700">Your IP Address</p>
+                                                <p className="text-xs text-gray-500">Recorded for submission tracking</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm font-mono font-semibold text-blue-700 bg-white px-3 py-1.5 rounded border border-blue-200">
+                                            {submitterIpAddress}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </FormSection>
                     )}
 
@@ -875,7 +947,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-sm text-gray-700 mb-2 block">
-                                        Manuscript (without author details) * <span className="text-xs text-gray-500">(.doc, .docx, .pdf)</span>
+                                        Manuscript (without author details) * <span className="text-xs text-gray-500">(.doc, .docx only)</span>
                                     </label>
                                     <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
                                         <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
@@ -883,7 +955,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         </div>
                                         <input
                                             type="file"
-                                            accept=".doc,.docx,.pdf"
+                                            accept=".doc,.docx"
                                             onChange={(e) => setFieldValue('manuscriptFile', e.currentTarget.files[0])}
                                             className="flex-1 px-3 py-2 bg-gray-100 text-sm"
                                         />
@@ -898,7 +970,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
 
                                 <div>
                                     <label className="text-sm text-gray-700 mb-2 block">
-                                        Cover Letter for Manuscript (Optional) <span className="text-xs text-gray-500">(.doc, .docx, .pdf)</span>
+                                        Cover Letter for Manuscript (Optional) <span className="text-xs text-gray-500">(.doc, .docx only)</span>
                                     </label>
                                     <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
                                         <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
@@ -906,7 +978,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         </div>
                                         <input
                                             type="file"
-                                            accept=".doc,.docx,.pdf"
+                                            accept=".doc,.docx"
                                             onChange={(e) => setFieldValue('coverLetter', e.currentTarget.files[0])}
                                             className="flex-1 px-3 py-2 bg-gray-100 text-sm"
                                         />
@@ -1078,48 +1150,61 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                             <FaArrowLeft /> Previous
                         </button>
 
-                        {currentStep < totalSteps ? (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (currentStep === 1 && !otpVerified) {
-                                        setVerificationRequiredError("Please verify your email with OTP before proceeding");
-                                        return;
-                                    }
+                        <div className="flex items-center gap-3">
+                            {/* Skip button for optional steps */}
+                            {currentStep < totalSteps && (currentStep === 4 || currentStep === 7) && (
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentStep(currentStep + 1)}
+                                    className="flex items-center gap-2 bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded font-bold"
+                                >
+                                    Skip <FaLongArrowAltRight />
+                                </button>
+                            )}
 
-                                    validateForm().then((errors) => {
-                                        const hasErrors = Object.keys(errors).length > 0;
-                                        if (!hasErrors) {
-                                            setCurrentStep(currentStep + 1);
-                                        } else {
-                                            const errorFields = getTouchedFromErrors(errors);
-                                            setTouched({ ...touched, ...errorFields });
-                                            // message.error("Please fill all required fields correctly");
+                            {currentStep < totalSteps ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (currentStep === 1 && !otpVerified) {
+                                            setVerificationRequiredError("Please verify your email with OTP before proceeding");
+                                            return;
                                         }
-                                    });
-                                }}
-                                className="flex items-center gap-2 bg-[#12b48b] hover:bg-[#0e9470] text-white px-6 py-2 rounded font-bold"
-                            >
-                                Next <FaLongArrowAltRight />
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                disabled={isFinalSubmitting}
-                                onClick={() => handleSubmit(values, { resetForm })}
-                                className={`flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold ${isFinalSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            >
-                                {isFinalSubmitting ? (
-                                    <>
-                                        <FaSpinner className="animate-spin" /> Submitting...
-                                    </>
-                                ) : (
-                                    <>
-                                        Submit Manuscript <FaLongArrowAltRight />
-                                    </>
-                                )}
-                            </button>
-                        )}
+
+                                        validateForm().then((errors) => {
+                                            const hasErrors = Object.keys(errors).length > 0;
+                                            if (!hasErrors) {
+                                                setCurrentStep(currentStep + 1);
+                                            } else {
+                                                const errorFields = getTouchedFromErrors(errors);
+                                                setTouched({ ...touched, ...errorFields });
+                                                // message.error("Please fill all required fields correctly");
+                                            }
+                                        });
+                                    }}
+                                    className="flex items-center gap-2 bg-[#12b48b] hover:bg-[#0e9470] text-white px-6 py-2 rounded font-bold"
+                                >
+                                    Next <FaLongArrowAltRight />
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    disabled={isFinalSubmitting}
+                                    onClick={() => handleSubmit(values, { resetForm })}
+                                    className={`flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold ${isFinalSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                >
+                                    {isFinalSubmitting ? (
+                                        <>
+                                            <FaSpinner className="animate-spin" /> Submitting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Submit Manuscript <FaLongArrowAltRight />
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

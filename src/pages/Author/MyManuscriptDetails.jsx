@@ -30,6 +30,7 @@ import {
   FaEye,
   FaCheckCircle,
   FaDownload,
+  FaGlobe,
 } from "react-icons/fa";
 import { manuscriptApi } from "../../services/api";
 import { scriptUrl } from "../../services/serviceApi";
@@ -398,6 +399,21 @@ const MyManuscriptDetails = () => {
                   </Text>
                 </div>
               </div>
+              {manuscript.submitter_ip_address && (
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <FaGlobe size={12} />
+                  </div>
+                  <div className="overflow-hidden">
+                    <Text className="block text-sm font-medium font-mono">
+                      {manuscript.submitter_ip_address}
+                    </Text>
+                    <Text type="secondary" className="text-xs">
+                      IP Address at Submission
+                    </Text>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
