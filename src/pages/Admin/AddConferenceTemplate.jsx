@@ -178,8 +178,16 @@ const AddConferenceTemplate = () => {
                                     label="Select Conference"
                                     rules={[{ required: true, message: 'Please select a conference' }]}
                                 >
-                                    <Select placeholder="Select a conference" loading={conferences.length === 0}>
-                                        {conferences?.length > 0 && conferences.map(conf => (
+                                    <Select
+                                        placeholder="Select a conference"
+                                        loading={conferences.length === 0}
+                                        showSearch
+                                        optionFilterProp="children"
+                                        filterOption={(input, option) =>
+                                            option.children.toLowerCase().includes(input.toLowerCase())
+                                        }
+                                    >
+                                        {conferences?.length > 0 && [...conferences].reverse().map(conf => (
                                             <Option key={conf.id} value={conf.id}>{conf.name}</Option>
                                         ))}
                                     </Select>

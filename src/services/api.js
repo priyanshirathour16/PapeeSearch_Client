@@ -146,6 +146,26 @@ export const manuscriptApi = {
   updateStatus: (id, data) => api.patch(`/manuscripts/${id}/status`, data),
 };
 
+export const editorManuscriptApi = {
+  // Get approved editors (Admin)
+  getApprovedEditors: () => api.get('/editor-manuscripts/editors/approved'),
+
+  // Assign editor to manuscript (Admin)
+  assignEditor: (manuscriptId, editorId) =>
+    api.post(`/editor-manuscripts/${manuscriptId}/assign-editor`, { editorId }),
+
+  // Get manuscripts assigned to logged-in editor (Editor)
+  getMyAssignedManuscripts: () => api.get('/editor-manuscripts/editor/assigned'),
+
+  // Editor review manuscript (Editor)
+  editorReview: (manuscriptId, action, comment) =>
+    api.post(`/editor-manuscripts/${manuscriptId}/editor-review`, { action, comment }),
+
+  // Admin final decision (Admin)
+  adminFinalDecision: (manuscriptId, decision, comment) =>
+    api.post(`/editor-manuscripts/${manuscriptId}/final-decision`, { decision, comment }),
+};
+
 export const contactUsApi = {
   create: (data) => api.post("/contact-us", data),
   getAll: () => api.get("/contact-us"),

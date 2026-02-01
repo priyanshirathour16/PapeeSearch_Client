@@ -31,9 +31,11 @@ import {
   FaCheckCircle,
   FaDownload,
   FaGlobe,
+  FaFileContract,
 } from "react-icons/fa";
 import { manuscriptApi } from "../../services/api";
 import { scriptUrl } from "../../services/serviceApi";
+import StatusTimeline from "../../components/StatusTimeline";
 import moment from "moment";
 
 const { Title, Text, Paragraph } = Typography;
@@ -450,6 +452,16 @@ const MyManuscriptDetails = () => {
                   Cover Letter
                 </Button>
               )}
+              <Button
+                block
+                icon={<FaFileContract />}
+                onClick={() =>
+                  navigate(`/dashboard/submit-manuscript/${id}/copyright`)
+                }
+                className="h-10 border-[#12b48b] text-[#12b48b] hover:bg-[#12b48b] hover:text-white"
+              >
+                View Copyright Form
+              </Button>
               {!manuscript.manuscript_file_path && (
                 <Text type="secondary" className="text-center block italic">
                   No manuscript file.
@@ -475,6 +487,11 @@ const MyManuscriptDetails = () => {
               </div>
             )}
           </Card>
+
+          {/* Status Timeline */}
+          <div className="mt-6">
+            <StatusTimeline manuscript={manuscript} />
+          </div>
 
           {/* Status Overview Card */}
           <Card
@@ -513,25 +530,6 @@ const MyManuscriptDetails = () => {
                   <Paragraph className="text-gray-600 bg-gray-50 p-3 rounded border border-gray-100 mb-0">
                     {manuscript.comment}
                   </Paragraph>
-                </div>
-              )}
-
-            {(manuscript.status?.trim().toLowerCase() ===
-              "awaiting copyright" ||
-              manuscript.status?.trim().toLowerCase() === "accepted") && (
-                <div className="mt-4">
-                  <Button
-                    type="primary"
-                    block
-                    className="bg-[#12b48b] hover:bg-[#0e9f7a]"
-                    onClick={() =>
-                      navigate(`/dashboard/submit-manuscript/${id}/copyright`)
-                    }
-                  >
-                    {manuscript.status?.trim().toLowerCase() === "accepted"
-                      ? "See Copyright"
-                      : "Write Copyright"}
-                  </Button>
                 </div>
               )}
           </Card>

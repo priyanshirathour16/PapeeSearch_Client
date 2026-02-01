@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Spin,
@@ -15,7 +15,7 @@ import {
   Col,
   Avatar,
   Tooltip,
-  Select,
+  Modal,
   Input,
 } from "antd";
 import {
@@ -23,12 +23,12 @@ import {
   FaDownload,
   FaFilePdf,
   FaCheckCircle,
-  FaTimesCircle,
   FaUser,
   FaInfoCircle,
-  FaEdit,
   FaFileContract,
   FaGlobe,
+  FaThumbsUp,
+  FaThumbsDown,
 } from "react-icons/fa";
 import { manuscriptApi, editorManuscriptApi } from "../../services/api";
 import { scriptUrl } from "../../services/serviceApi";
@@ -36,148 +36,55 @@ import StatusTimeline from "../../components/StatusTimeline";
 
 const { Title, Text, Paragraph } = Typography;
 
-const ManuscriptDetails = () => {
+const EditorManuscriptDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [manuscript, setManuscript] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [newStatus, setNewStatus] = useState(null);
-  const [adminComment, setAdminComment] = useState("");
-  const [editors, setEditors] = useState([]);
-  const [selectedEditor, setSelectedEditor] = useState(null);
-  const [isAssigning, setIsAssigning] = useState(false);
-  const previousStatusRef = useRef(null);
-  const pollingIntervalRef = useRef(null);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [reviewAction, setReviewAction] = useState(null);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const fetchDetails = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      const response = await manuscriptApi.getById(id);
-      const data = response.data.data;
-
-      // Check if status changed (for polling updates)
-      if (previousStatusRef.current && previousStatusRef.current !== data.status) {
-        message.info(`Status updated to "${data.status}"`);
-      }
-      previousStatusRef.current = data.status;
-
-      setManuscript(data);
-    } catch (error) {
-      console.error("Error fetching manuscript details:", error);
-      if (showLoading) message.error("Failed to fetch manuscript details.");
-    } finally {
-      if (showLoading) setLoading(false);
-    }
+  useEffect(() => {
+    fetchDetails();
   }, [id]);
 
-  // Initial fetch
-  useEffect(() => {
-    if (id) {
-      fetchDetails();
+  const fetchDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await manuscriptApi.getById(id);
+      setManuscript(response.data.data);
+    } catch (error) {
+      console.error("Error fetching manuscript details:", error);
+      message.error("Failed to fetch manuscript details.");
+    } finally {
+      setLoading(false);
     }
-  }, [id, fetchDetails]);
+  };
 
-  // Fetch approved editors for assignment dropdown
-  useEffect(() => {
-    const fetchEditors = async () => {
-      try {
-        const response = await editorManuscriptApi.getApprovedEditors();
-        setEditors(response.data.data);
-      } catch (error) {
-        console.error('Error fetching editors:', error);
-      }
-    };
-    fetchEditors();
-  }, []);
+  const handleReviewClick = (action) => {
+    setReviewAction(action);
+    setReviewModalVisible(true);
+  };
 
-  // Polling for status updates (every 10 seconds)
-  useEffect(() => {
-    if (!id || loading) return;
-
-    pollingIntervalRef.current = setInterval(() => {
-      fetchDetails(false); // Silent fetch without loading state
-    }, 10000); // Poll every 10 seconds
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, [id, loading, fetchDetails]);
-
-  const handleUpdateStatus = async () => {
-    if (!newStatus) {
-      message.error("Please select a status");
-      return;
-    }
-    if (!adminComment.trim()) {
+  const handleReviewSubmit = async () => {
+    if (!reviewComment.trim()) {
       message.error("Comment is mandatory");
       return;
     }
 
-    setUpdating(true);
+    setSubmitting(true);
     try {
-      await manuscriptApi.updateStatus(id, {
-        status: newStatus,
-        comment: adminComment,
-        statusUpdatedBy: "1",
-      });
-      message.success("Manuscript status updated successfully");
-
-      // Refresh details
-      const response = await manuscriptApi.getById(id);
-      setManuscript(response.data.data);
-      setNewStatus(null);
-      setAdminComment("");
+      await editorManuscriptApi.editorReview(id, reviewAction, reviewComment);
+      message.success(`Manuscript ${reviewAction}ed successfully`);
+      setReviewModalVisible(false);
+      setReviewComment("");
+      fetchDetails(); // Refresh details
     } catch (error) {
-      console.error("Error updating status:", error);
-      message.error("Failed to update status");
+      message.error(error.response?.data?.error || `Failed to ${reviewAction} manuscript`);
     } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleAssignEditor = async () => {
-    if (!selectedEditor) {
-      message.error('Please select an editor');
-      return;
-    }
-
-    setIsAssigning(true);
-    try {
-      await editorManuscriptApi.assignEditor(id, selectedEditor);
-      message.success('Editor assigned successfully');
-      fetchDetails(); // Refresh manuscript details
-      setSelectedEditor(null);
-    } catch (error) {
-      message.error(error.response?.data?.error || 'Failed to assign editor');
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-
-  const handleFinalDecision = async () => {
-    if (!newStatus) {
-      message.error('Please select a decision');
-      return;
-    }
-    if (!adminComment.trim()) {
-      message.error('Comment is mandatory');
-      return;
-    }
-
-    setUpdating(true);
-    try {
-      await editorManuscriptApi.adminFinalDecision(id, newStatus, adminComment);
-      message.success('Final decision submitted successfully');
-      fetchDetails();
-      setNewStatus(null);
-      setAdminComment('');
-    } catch (error) {
-      message.error(error.response?.data?.error || 'Failed to submit decision');
-    } finally {
-      setUpdating(false);
+      setSubmitting(false);
     }
   };
 
@@ -193,7 +100,7 @@ const ManuscriptDetails = () => {
     return (
       <div className="p-12 text-center bg-gray-50 min-h-screen">
         <Title level={4}>Manuscript not found</Title>
-        <Button onClick={() => navigate("/dashboard/manuscripts")}>
+        <Button onClick={() => navigate("/dashboard/editor/manuscripts")}>
           Back to List
         </Button>
       </div>
@@ -205,13 +112,15 @@ const ManuscriptDetails = () => {
       title: "Name",
       key: "name",
       fixed: "left",
-      width: 200,
+      width: 180,
       render: (text, record) => (
         <div className="flex items-center gap-2">
           <Avatar icon={<FaUser />} size="small" className="bg-[#12b48b]" />
-          <Text strong>
-            {record.first_name} {record.last_name}
-          </Text>
+          <Tooltip title={`${record.first_name} ${record.last_name}`}>
+            <Text strong className="truncate">
+              {record.first_name} {record.last_name}
+            </Text>
+          </Tooltip>
         </div>
       ),
     },
@@ -219,36 +128,65 @@ const ManuscriptDetails = () => {
       title: "Email",
       dataIndex: "email",
       key: "email",
-      width: 220,
-      ellipsis: true,
+      width: 200,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (email) => (
+        <Tooltip placement="topLeft" title={email}>
+          <span>{email}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "Institution",
       dataIndex: "institution",
       key: "institution",
-      responsive: ["lg"],
-      width: 200,
-      ellipsis: true,
+      responsive: ["md"],
+      width: 180,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (institution) => (
+        <Tooltip placement="topLeft" title={institution}>
+          <span>{institution}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "Department",
       dataIndex: "department",
       key: "department",
-      responsive: ["xl"],
-      width: 180,
-      ellipsis: true,
+      responsive: ["lg"],
+      width: 160,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (department) => (
+        <Tooltip placement="topLeft" title={department}>
+          <span>{department}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "Country",
       dataIndex: "country",
       key: "country",
       responsive: ["md"],
-      width: 150,
+      width: 130,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (country) => (
+        <Tooltip placement="topLeft" title={country}>
+          <span>{country}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "Role",
       key: "role",
-      width: 140,
+      width: 130,
       render: (text, record) =>
         record.is_corresponding_author ? (
           <Tag color="blue">Corresponding</Tag>
@@ -270,32 +208,18 @@ const ManuscriptDetails = () => {
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "pending":
-        return "gold";
-      case "accepted":
-        return "green";
-      case "rejected":
-        return "red";
-      case "awaiting copyright":
-        return "purple";
-      case "copyright received":
-        return "lime";
-      case "assigned to editor":
-        return "blue";
-      case "accepted by editor":
-        return "cyan";
-      case "assigned to reviewer":
-        return "processing";
-      case "awaiting revised manuscript":
+      case "pending review":
         return "orange";
-      case "submitted":
-        return "geekblue";
-      case "under review":
-        return "volcano";
+      case "accepted by editor":
+        return "green";
+      case "rejected by editor":
+        return "red";
       default:
-        return "default";
+        return "blue";
     }
   };
+
+  const isPendingReview = !manuscript.editor_status || manuscript.editor_status === 'Pending Review';
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen font-sans">
@@ -303,7 +227,7 @@ const ManuscriptDetails = () => {
       <div className="mb-6 flex justify-between items-center">
         <Button
           icon={<FaArrowLeft />}
-          onClick={() => navigate("/dashboard/manuscripts")}
+          onClick={() => navigate("/dashboard/editor/manuscripts")}
           type="text"
           className="hover:bg-gray-200"
         >
@@ -311,10 +235,10 @@ const ManuscriptDetails = () => {
         </Button>
         <Space>
           <Tag
-            color={getStatusColor(manuscript.status)}
+            color={getStatusColor(manuscript.editor_status)}
             className="px-3 py-1 text-sm font-medium uppercase tracking-wide"
           >
-            {manuscript.status || "Unknown Status"}
+            {manuscript.editor_status || "Pending Review"}
           </Tag>
         </Space>
       </div>
@@ -392,8 +316,9 @@ const ManuscriptDetails = () => {
               pagination={false}
               rowKey="id"
               size="middle"
+              bordered
               className="border-t"
-              scroll={{ x: 'max-content' }}
+              scroll={{ x: 1000 }}
             />
           </Card>
 
@@ -413,11 +338,7 @@ const ManuscriptDetails = () => {
                     key={item.key}
                     className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-100"
                   >
-                    {manuscript.checklist[item.key] ? (
-                      <FaCheckCircle className="text-green-500 text-lg flex-shrink-0" />
-                    ) : (
-                      <FaCheckCircle className="text-green-500 text-lg flex-shrink-0" />
-                    )}
+                    <FaCheckCircle className="text-green-500 text-lg flex-shrink-0" />
                     <Text
                       className={
                         manuscript.checklist[item.key]
@@ -489,14 +410,6 @@ const ManuscriptDetails = () => {
                   </div>
                 </div>
               </div>
-              {/* <div className="flex justify-between border-b border-gray-200 pb-2">
-                                <Text type="secondary">Pages</Text>
-                                <Text strong>{manuscript.page_count ?? 'N/A'}</Text>
-                            </div>
-                            <div className="flex justify-between border-b border-gray-200 pb-2">
-                                <Text type="secondary">Tables / Figures</Text>
-                                <Text strong>{manuscript.table_count || 0} / {manuscript.figure_count || 0}</Text>
-                            </div> */}
               <div className="flex justify-between border-b border-gray-200 pb-2">
                 <Text type="secondary">Journal</Text>
                 <div className="text-right">
@@ -596,17 +509,12 @@ const ManuscriptDetails = () => {
                 block
                 icon={<FaFileContract />}
                 onClick={() =>
-                  navigate(`/dashboard/manuscripts/${id}/copyright`)
+                  navigate(`/dashboard/editor/manuscripts/${id}/copyright`)
                 }
                 className="h-10 border-[#12b48b] text-[#12b48b] hover:bg-[#12b48b] hover:text-white"
               >
                 View Copyright Form
               </Button>
-              {!manuscript.manuscript_file_path && (
-                <Text type="secondary" className="text-center block italic">
-                  No manuscript file.
-                </Text>
-              )}
             </Space>
 
             {manuscript.signature_file_path && (
@@ -631,192 +539,143 @@ const ManuscriptDetails = () => {
           {/* Status Timeline */}
           <StatusTimeline manuscript={manuscript} />
 
-          {/* Status Actions Card */}
+          {/* Review Actions Card */}
           <Card
             title={
               <span className="text-[#204066] font-semibold flex items-center gap-2">
-                <FaEdit /> Status & Actions
+                <FaCheckCircle /> Editor Review
               </span>
             }
             className="shadow-sm border-0 mb-6 rounded-lg bg-white"
           >
-            {manuscript.status?.toLowerCase() === "pending" ? (
-              <div className="space-y-4">
-                {/* Editor Assignment Section */}
-                <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                  <Text className="block mb-2 text-sm font-semibold text-blue-800">
-                    Assign to Editor
-                  </Text>
-                  <Select
-                    placeholder="Select Editor"
-                    style={{ width: "100%" }}
-                    value={selectedEditor}
-                    onChange={setSelectedEditor}
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) =>
-                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                    }
-                    options={editors.map(editor => ({
-                      value: editor.id,
-                      label: `${editor.name} - ${editor.specialization}`,
-                    }))}
-                  />
-                  <Button
-                    type="primary"
-                    block
-                    onClick={handleAssignEditor}
-                    loading={isAssigning}
-                    disabled={!selectedEditor}
-                    className="bg-[#12b48b] border-[#12b48b] hover:bg-[#0e9470] mt-3"
-                  >
-                    Assign Editor
-                  </Button>
-                </div>
-              </div>
-            ) : manuscript.status?.toLowerCase() === 'accepted by editor' ? (
-              <div className="space-y-4">
-                {/* Editor's Decision Display */}
-                <div className="bg-green-50 p-3 rounded border border-green-200">
-                  <Text className="block text-sm font-medium text-green-800 mb-1">
-                    Editor Accepted This Manuscript
-                  </Text>
-                  <Text className="block text-xs text-green-600">
-                    {manuscript.editor_comment}
-                  </Text>
-                  {manuscript.assignedEditor && (
-                    <Text className="block text-xs text-green-600 mt-2">
-                      Editor: {manuscript.assignedEditor.name} - {manuscript.assignedEditor.specialization}
-                    </Text>
-                  )}
-                </div>
-
-                {/* Admin Final Decision Section */}
-                <div>
-                  <Text className="block mb-1 text-sm font-medium">
-                    Final Decision <span className="text-red-500">*</span>
-                  </Text>
-                  <Select
-                    placeholder="Accept or Reject"
-                    style={{ width: "100%" }}
-                    value={newStatus}
-                    onChange={setNewStatus}
-                    options={[
-                      { value: "accept", label: "Accept" },
-                      { value: "reject", label: "Reject" }
-                    ]}
-                  />
-                </div>
-
-                <div>
-                  <Text className="block mb-1 text-sm font-medium">
-                    Final Comment <span className="text-red-500">*</span>
-                  </Text>
-                  <Input.TextArea
-                    rows={4}
-                    placeholder="Enter your final decision comment..."
-                    value={adminComment}
-                    onChange={(e) => setAdminComment(e.target.value)}
-                  />
-                </div>
-
+            {isPendingReview ? (
+              <div className="space-y-3">
+                <Text className="block mb-3 text-sm text-gray-600">
+                  Review this manuscript and provide your decision with mandatory comment.
+                </Text>
                 <Button
                   type="primary"
                   block
-                  onClick={handleFinalDecision}
-                  loading={updating}
-                  className="bg-[#12b48b] border-[#12b48b] hover:bg-[#0e9470]"
+                  icon={<FaThumbsUp />}
+                  onClick={() => handleReviewClick('accept')}
+                  className="bg-green-600 border-green-600 hover:bg-green-700 h-10"
                 >
-                  Submit Final Decision
+                  Accept Manuscript
+                </Button>
+                <Button
+                  danger
+                  block
+                  icon={<FaThumbsDown />}
+                  onClick={() => handleReviewClick('reject')}
+                  className="h-10"
+                >
+                  Reject Manuscript
                 </Button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex justify-between items-center border-b border-gray-100 pb-3">
-                  <Text type="secondary">Current Status</Text>
+                  <Text type="secondary">Your Decision</Text>
                   <Tag
-                    color={getStatusColor(manuscript.status)}
+                    color={getStatusColor(manuscript.editor_status)}
                     className="m-0 px-3 py-1 text-sm uppercase font-semibold"
                   >
-                    {manuscript.status}
+                    {manuscript.editor_status}
                   </Tag>
                 </div>
-
-                {/* Show Editor Status if available */}
-                {manuscript.editor_status && (
-                  <div className="flex justify-between items-center border-b border-gray-100 pb-3">
-                    <Text type="secondary">Editor Status</Text>
-                    <Tag
-                      color={manuscript.editor_status === 'Rejected by Editor' ? 'red' : 'blue'}
-                      className="m-0 px-3 py-1 text-sm uppercase font-semibold"
-                    >
-                      {manuscript.editor_status}
-                    </Tag>
-                  </div>
-                )}
-
-                {/* Show Assigned Editor if available */}
-                {manuscript.assignedEditor && (
-                  <div className="border-b border-gray-100 pb-3">
-                    <Text type="secondary" className="block mb-1 text-xs uppercase tracking-wide">
-                      Assigned Editor
-                    </Text>
-                    <Text className="text-gray-700">
-                      {manuscript.assignedEditor.name} - {manuscript.assignedEditor.specialization}
-                    </Text>
-                  </div>
-                )}
-
-                {/* Show Editor Comment if available */}
-                {manuscript.editor_comment && (
-                  <div className="border-b border-gray-100 pb-3">
-                    <Text type="secondary" className="block mb-1 text-xs uppercase tracking-wide">
-                      Editor Comment
-                    </Text>
-                    <div className="bg-gray-50 p-3 rounded border border-gray-100 text-gray-700 text-sm">
-                      {manuscript.editor_comment}
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <Text
                     type="secondary"
                     className="block mb-2 text-xs uppercase tracking-wide"
                   >
-                    Admin Comment
+                    Your Comment
                   </Text>
                   <div className="bg-gray-50 p-3 rounded border border-gray-100 text-gray-700 text-sm">
-                    {manuscript.comment || manuscript.admin_final_comment || (
+                    {manuscript.editor_comment || (
                       <span className="italic text-gray-400">
                         No comment provided.
                       </span>
                     )}
                   </div>
                 </div>
-                {(manuscript.status?.toLowerCase() === "awaiting copyright" ||
-                  manuscript.status?.toLowerCase() === "accepted") && (
-                    <Button
-                      type="primary"
-                      block
-                      icon={<FaFileContract />}
-                      onClick={() =>
-                        navigate(
-                          `/dashboard/manuscripts/${manuscript.manuscript_id}/copyright`,
-                        )
-                      }
-                      className="bg-purple-600 border-purple-600 hover:bg-purple-700 h-10"
-                    >
-                      See Copyright
-                    </Button>
-                  )}
+                {manuscript.editor_reviewed_at && (
+                  <div>
+                    <Text type="secondary" className="text-xs">
+                      Reviewed on: {new Date(manuscript.editor_reviewed_at).toLocaleDateString()}
+                    </Text>
+                  </div>
+                )}
               </div>
             )}
           </Card>
         </Col>
       </Row>
+
+      {/* Review Modal */}
+      <Modal
+        title={
+          <span className="text-[#204066] font-semibold">
+            {reviewAction === 'accept' ? 'Accept' : 'Reject'} Manuscript
+          </span>
+        }
+        open={reviewModalVisible}
+        onCancel={() => {
+          setReviewModalVisible(false);
+          setReviewComment("");
+        }}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => {
+              setReviewModalVisible(false);
+              setReviewComment("");
+            }}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={submitting}
+            onClick={handleReviewSubmit}
+            className={reviewAction === 'accept' ?
+              "bg-green-600 border-green-600 hover:bg-green-700" :
+              ""
+            }
+            danger={reviewAction === 'reject'}
+          >
+            Submit {reviewAction === 'accept' ? 'Acceptance' : 'Rejection'}
+          </Button>,
+        ]}
+      >
+        <div className="space-y-4">
+          <div className={`p-3 rounded border ${reviewAction === 'accept' ?
+            'bg-green-50 border-green-200' :
+            'bg-red-50 border-red-200'
+            }`}>
+            <Text className={`block text-sm font-medium ${reviewAction === 'accept' ? 'text-green-800' : 'text-red-800'
+              }`}>
+              {reviewAction === 'accept' ?
+                'You are about to ACCEPT this manuscript. The admin will review your decision for final approval.' :
+                'You are about to REJECT this manuscript. This action will mark the manuscript as finally rejected.'
+              }
+            </Text>
+          </div>
+          <div>
+            <Text className="block mb-2 text-sm font-medium">
+              Comment <span className="text-red-500">*</span>
+            </Text>
+            <Input.TextArea
+              rows={6}
+              placeholder="Enter your detailed review comment (mandatory)..."
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
 
-export default ManuscriptDetails;
+export default EditorManuscriptDetails;

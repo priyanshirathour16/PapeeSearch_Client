@@ -70,6 +70,8 @@ const AllNewsPage = lazy(() => import('./pages/Website/AllNewsPage'));
 const AbstractSubmission = lazy(() => import('./pages/Author/AbstractSubmission'));
 const AbstractManagement = lazy(() => import('./pages/Admin/AbstractManagement'));
 const EditorAbstractReview = lazy(() => import('./pages/Editor/EditorAbstractReview'));
+const EditorManuscriptList = lazy(() => import('./pages/Editor/EditorManuscriptList'));
+const EditorManuscriptDetails = lazy(() => import('./pages/Editor/EditorManuscriptDetails'));
 const FullPaperSubmission = lazy(() => import('./pages/Author/FullPaperSubmission'));
 const JournalEditorApplications = lazy(() => import('./pages/Admin/JournalEditorApplications'));
 const ManageSubadmins = lazy(() => import('./pages/Admin/ManageSubadmins'));
@@ -162,6 +164,9 @@ function App() {
 
               {/* Editor Routes */}
               <Route path="editor/review-abstracts" element={<EditorAbstractReview />} />
+              <Route path="editor/manuscripts" element={<EditorManuscriptList />} />
+              <Route path="editor/manuscripts/:id" element={<EditorManuscriptDetails />} />
+              <Route path="editor/manuscripts/:id/copyright" element={<CopyrightForm viewOnly={true} />} />
             </Route>
           </Route>
 

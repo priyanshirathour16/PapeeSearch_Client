@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaArrowLeft, FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaArrowLeft, FaCheck, FaTimes, FaSpinner, FaPenNib, FaFileContract } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { Formik, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { otpApi, manuscriptApi, authApi } from '../../services/api';
-import { message } from "antd";
+import { otpApi, manuscriptApi, authApi, copyrightApi } from '../../services/api';
+import { message, Modal, Button } from "antd";
 import { numberToWords } from '../../utils/numberToWords';
+import SignatureCanvas from 'react-signature-canvas';
+import FormRenderer from '../DynamicForm/FormRenderer';
+import moment from 'moment';
 
 const countries = [
     "Select Country", "United Kingdom", "United States", "India", "Australia", "Canada", "Germany", "France", "other"
@@ -74,6 +77,14 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     const [authorProfile, setAuthorProfile] = useState(null);
     const [submitterIpAddress, setSubmitterIpAddress] = useState(null);
 
+    // Copyright Form States
+    const [copyrightTemplate, setCopyrightTemplate] = useState(null);
+    const [copyrightSignatures, setCopyrightSignatures] = useState({});
+    const [signModalVisible, setSignModalVisible] = useState(false);
+    const [currentSignIndex, setCurrentSignIndex] = useState(null);
+    const [copyrightLoading, setCopyrightLoading] = useState(false);
+    const sigCanvasRef = useRef(null);
+
     useEffect(() => {
         const checkLoginStatus = async () => {
             const userStr = localStorage.getItem('user');
@@ -133,7 +144,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         fetchIpAddress();
     }, []);
 
-    const totalSteps = 8;
+    const totalSteps = 9;
 
     const getTouchedFromErrors = (errors) => {
         const touched = {};
@@ -370,7 +381,58 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         }
     };
 
+    // Load copyright template when reaching Step 9
+    const loadCopyrightTemplate = async () => {
+        if (copyrightTemplate) return; // Already loaded
+        setCopyrightLoading(true);
+        try {
+            const response = await copyrightApi.getActiveTemplate();
+            if (response.data.success && response.data.data) {
+                const templateData = response.data.data;
+                const schema = typeof templateData.schema === 'string'
+                    ? JSON.parse(templateData.schema)
+                    : templateData.schema;
+                setCopyrightTemplate(schema);
+            }
+        } catch (error) {
+            console.error("Failed to load copyright template:", error);
+            message.error("Failed to load copyright form. Please try again.");
+        } finally {
+            setCopyrightLoading(false);
+        }
+    };
+
+    // Handle copyright signature click
+    const handleSignClick = (index) => {
+        setCurrentSignIndex(index);
+        setSignModalVisible(true);
+    };
+
+    // Handle copyright signature confirm
+    const handleSignConfirm = () => {
+        if (sigCanvasRef.current.isEmpty()) {
+            message.error('Please draw your signature');
+            return;
+        }
+        const signatureImage = sigCanvasRef.current.getCanvas().toDataURL('image/png');
+        setCopyrightSignatures(prev => ({
+            ...prev,
+            [currentSignIndex]: {
+                signatureImage: signatureImage,
+                date: moment().format('DD/MM/YYYY')
+            }
+        }));
+        setSignModalVisible(false);
+        message.success('Signed successfully');
+    };
+
     const handleSubmit = async (values, { resetForm }) => {
+        // Validate copyright signatures before submission
+        if (Object.keys(copyrightSignatures).length === 0) {
+            message.warning('Please sign the copyright form before submitting');
+            return;
+        }
+
         setIsFinalSubmitting(true);
         try {
             const formData = new FormData();
@@ -413,6 +475,12 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
             formData.append('reviewerCity', values.reviewerCity);
             formData.append('reviewerAddress', values.reviewerAddress);
 
+            // Copyright Form Data
+            formData.append('copyrightData', JSON.stringify({
+                templateVersion: copyrightTemplate?.version,
+                signatures: copyrightSignatures
+            }));
+
             const response = await manuscriptApi.submit(formData);
 
             Swal.fire({
@@ -440,6 +508,9 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                 setVerifyOtpError("");
                 setSendOtpError("");
                 setVerificationRequiredError("");
+                // Reset copyright state
+                setCopyrightTemplate(null);
+                setCopyrightSignatures({});
 
                 if (isDashboard && isLoggedIn) {
                     navigate('/dashboard/submit-manuscript');
@@ -456,7 +527,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     };
 
     const StepIndicator = () => {
-        const stepsToRender = isLoggedIn ? [2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 4, 5, 6, 7, 8];
+        const stepsToRender = isLoggedIn ? [2, 3, 4, 5, 6, 7, 8, 9] : [1, 2, 3, 4, 5, 6, 7, 8, 9];
         const displayStep = isLoggedIn ? currentStep - 1 : currentStep;
         const displayTotal = isLoggedIn ? totalSteps - 1 : totalSteps;
 
@@ -471,7 +542,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                     }`}>
                                     {currentStep > step ? <FaCheck /> : label}
                                 </div>
-                                {step < 8 && (
+                                {step < 9 && (
                                     <div className={`flex-1 h-1 mx-2 ${currentStep > step ? 'bg-[#12b48b]' : 'bg-gray-300'}`} />
                                 )}
                             </div>
@@ -1136,6 +1207,85 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                         </div>
                     )}
 
+                    {/* Step 9: Copyright Form */}
+                    {currentStep === 9 && (
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <FaFileContract className="text-2xl text-[#204066]" />
+                                <div>
+                                    <h2 className="text-xl font-semibold text-[#204066]">Copyright Transfer Agreement</h2>
+                                    <p className="text-sm text-gray-600">Please review and sign the copyright agreement</p>
+                                </div>
+                            </div>
+
+                            {copyrightLoading ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <FaSpinner className="animate-spin text-3xl text-[#12b48b]" />
+                                    <span className="ml-3 text-gray-600">Loading copyright form...</span>
+                                </div>
+                            ) : copyrightTemplate ? (
+                                <div className="bg-white border border-gray-300 rounded-lg p-6 md:p-8">
+                                    <FormRenderer
+                                        schema={copyrightTemplate}
+                                        data={{
+                                            paper_title: values.paperTitle,
+                                            journal: {
+                                                title: fetchedJournalOptions?.flatMap(g => g.options).find(o => o.value == values.journalId)?.label || ''
+                                            },
+                                            authors: [values.primaryAuthor, ...values.authors].map((a, index) => ({
+                                                id: index + 1,
+                                                first_name: a.firstName,
+                                                last_name: a.lastName,
+                                                full_name: `${a.firstName} ${a.lastName}`,
+                                                email: a.email,
+                                                phone: a.phone,
+                                                institution: a.institution,
+                                                designation: a.designation || '',
+                                                department: a.department || '',
+                                                city: a.city || '',
+                                                state: a.state || '',
+                                                country: a.country || '',
+                                                address: a.address || '',
+                                                is_corresponding_author: a.isCorrespondingAuthor || false
+                                            })),
+                                            authors_formatted: [values.primaryAuthor, ...values.authors].map(a => `${a.firstName} ${a.lastName}`).join(', ')
+                                        }}
+                                        signatures={copyrightSignatures}
+                                        onSign={handleSignClick}
+                                    />
+
+                                    {/* Signature Status */}
+                                    <div className="mt-6 pt-4 border-t border-gray-200">
+                                        <div className="flex items-center gap-2">
+                                            {Object.keys(copyrightSignatures).length > 0 ? (
+                                                <div className="flex items-center gap-2 text-green-600">
+                                                    <FaCheck />
+                                                    <span className="text-sm font-medium">Copyright form signed ({Object.keys(copyrightSignatures).length} signature(s))</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-amber-600">
+                                                    <FaPenNib />
+                                                    <span className="text-sm font-medium">Please click on the signature boxes above to sign</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 bg-red-50 rounded-lg border border-red-200">
+                                    <p className="text-red-600">Failed to load copyright template. Please go back and try again.</p>
+                                    <button
+                                        type="button"
+                                        onClick={loadCopyrightTemplate}
+                                        className="mt-4 bg-[#12b48b] hover:bg-[#0e9470] text-white px-4 py-2 rounded"
+                                    >
+                                        Retry Loading
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Navigation Buttons */}
                     <div className="flex justify-between mt-8">
                         <button
@@ -1151,11 +1301,18 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                         </button>
 
                         <div className="flex items-center gap-3">
-                            {/* Skip button for optional steps */}
+                            {/* Skip button for optional steps (Step 4: Additional Authors, Step 7: Reviewers) */}
                             {currentStep < totalSteps && (currentStep === 4 || currentStep === 7) && (
                                 <button
                                     type="button"
-                                    onClick={() => setCurrentStep(currentStep + 1)}
+                                    onClick={() => {
+                                        const nextStep = currentStep + 1;
+                                        setCurrentStep(nextStep);
+                                        // Load copyright template when moving to Step 9
+                                        if (nextStep === 9) {
+                                            loadCopyrightTemplate();
+                                        }
+                                    }}
                                     className="flex items-center gap-2 bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded font-bold"
                                 >
                                     Skip <FaLongArrowAltRight />
@@ -1174,7 +1331,12 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         validateForm().then((errors) => {
                                             const hasErrors = Object.keys(errors).length > 0;
                                             if (!hasErrors) {
-                                                setCurrentStep(currentStep + 1);
+                                                const nextStep = currentStep + 1;
+                                                setCurrentStep(nextStep);
+                                                // Load copyright template when moving to Step 9
+                                                if (nextStep === 9) {
+                                                    loadCopyrightTemplate();
+                                                }
                                             } else {
                                                 const errorFields = getTouchedFromErrors(errors);
                                                 setTouched({ ...touched, ...errorFields });
@@ -1189,9 +1351,9 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                             ) : (
                                 <button
                                     type="button"
-                                    disabled={isFinalSubmitting}
+                                    disabled={isFinalSubmitting || Object.keys(copyrightSignatures).length === 0}
                                     onClick={() => handleSubmit(values, { resetForm })}
-                                    className={`flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold ${isFinalSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    className={`flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold ${(isFinalSubmitting || Object.keys(copyrightSignatures).length === 0) ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
                                     {isFinalSubmitting ? (
                                         <>
@@ -1206,6 +1368,49 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                             )}
                         </div>
                     </div>
+
+                    {/* Signature Modal */}
+                    <Modal
+                        title="E-Sign Copyright Form"
+                        open={signModalVisible}
+                        onOk={handleSignConfirm}
+                        onCancel={() => setSignModalVisible(false)}
+                        okText="Sign Document"
+                        okButtonProps={{ className: 'bg-[#12b48b] hover:bg-[#0e9f7a]' }}
+                        centered
+                    >
+                        <div className="py-6">
+                            <div className="bg-blue-50 p-4 rounded-lg mb-4 border border-blue-100 flex items-start gap-3">
+                                <FaFileContract className="text-blue-500 text-xl mt-1" />
+                                <div className="text-sm text-blue-800">
+                                    You are about to digitally sign the copyright transfer agreement for manuscript: <strong>{values.paperTitle}</strong>.
+                                </div>
+                            </div>
+
+                            <p className="mb-2 font-semibold">Draw your signature below:</p>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 mb-3">
+                                <SignatureCanvas
+                                    ref={sigCanvasRef}
+                                    penColor="black"
+                                    canvasProps={{
+                                        width: 450,
+                                        height: 150,
+                                        className: 'signature-canvas w-full'
+                                    }}
+                                />
+                            </div>
+                            <Button
+                                onClick={() => sigCanvasRef.current?.clear()}
+                                size="small"
+                                className="mb-3"
+                            >
+                                Clear Signature
+                            </Button>
+                            <p className="text-xs text-gray-500 text-center">
+                                This signature will be stamped with today's date: {moment().format('DD MMM, YYYY')}
+                            </p>
+                        </div>
+                    </Modal>
                 </div>
             )}
         </Formik>

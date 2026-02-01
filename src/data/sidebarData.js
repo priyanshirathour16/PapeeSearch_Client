@@ -1,4 +1,4 @@
-import { FaBook, FaEye, FaNewspaper, FaFileAlt, FaEnvelope, FaUserShield } from 'react-icons/fa';
+import { FaBook, FaEye, FaNewspaper, FaFileAlt, FaEnvelope, FaUserShield, FaFileContract } from 'react-icons/fa';
 
 export const sidebarData = [
     {
@@ -113,6 +113,12 @@ export const sidebarData = [
         title: 'Review Abstractions',
         icon: FaFileAlt,
         path: '/dashboard/editor/review-abstracts',
+        access: ["editor"]
+    },
+    {
+        title: 'Assigned Manuscripts',
+        icon: FaFileContract,
+        path: '/dashboard/editor/manuscripts',
         access: ["editor"]
     }
 ];

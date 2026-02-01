@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, message, Space, Tooltip } from 'antd';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Table, Button, message, Space, Tooltip, Tag } from 'antd';
 import { FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { manuscriptApi } from '../../services/api';
@@ -11,24 +11,41 @@ const ManuscriptList = () => {
     const [manuscripts, setManuscripts] = useState([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const pollingIntervalRef = useRef(null);
 
-    const fetchManuscripts = async () => {
-        setLoading(true);
+    const fetchManuscripts = useCallback(async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         try {
             const response = await manuscriptApi.getAll();
             // Expected response structure: { message: "...", data: [...] }
             setManuscripts(response.data.data);
         } catch (error) {
             console.error("Failed to fetch manuscripts:", error);
-            message.error("Failed to load manuscripts.");
+            if (showLoading) message.error("Failed to load manuscripts.");
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
-    };
+    }, []);
 
+    // Initial fetch
     useEffect(() => {
         fetchManuscripts();
-    }, []);
+    }, [fetchManuscripts]);
+
+    // Polling for live data updates (every 10 seconds)
+    useEffect(() => {
+        if (loading) return;
+
+        pollingIntervalRef.current = setInterval(() => {
+            fetchManuscripts(false); // Silent fetch without loading state
+        }, 10000); // Poll every 10 seconds
+
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+        };
+    }, [loading, fetchManuscripts]);
 
     const columns = [
         {
@@ -41,38 +58,99 @@ const ManuscriptList = () => {
             title: 'Ref ID',
             dataIndex: 'manuscript_id',
             key: 'manuscript_id',
-            ellipsis: true,
+            width: 120,
+            ellipsis: {
+                showTitle: false,
+            },
+            render: (id) => (
+                <Tooltip placement="topLeft" title={id}>
+                    {id}
+                </Tooltip>
+            ),
         },
         {
             title: 'Submitter Name',
             dataIndex: 'submitter_name',
             key: 'submitter_name',
+            width: 150,
+            ellipsis: {
+                showTitle: false,
+            },
+            render: (name) => (
+                <Tooltip placement="topLeft" title={name}>
+                    {name}
+                </Tooltip>
+            ),
         },
         {
             title: 'Email',
             dataIndex: 'submitter_email',
             key: 'submitter_email',
+            width: 200,
+            ellipsis: {
+                showTitle: false,
+            },
+            render: (email) => (
+                <Tooltip placement="topLeft" title={email}>
+                    {email}
+                </Tooltip>
+            ),
         },
         {
             title: 'Journal',
             dataIndex: 'journal',
             key: 'journal',
-            render: (journal) => journal?.title || 'N/A',
+            width: 150,
+            ellipsis: {
+                showTitle: false,
+            },
+            render: (journal) => {
+                const title = journal?.title || 'N/A';
+                return (
+                    <Tooltip placement="topLeft" title={title}>
+                        {title}
+                    </Tooltip>
+                );
+            },
         },
         {
             title: 'Submitted At',
             dataIndex: 'createdAt',
             key: 'createdAt',
+            width: 120,
             render: (text) => new Date(text).toLocaleDateString(),
         },
         {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            width: 150,
+            render: (status) => {
+                // Define color mapping for different statuses
+                const getStatusColor = (status) => {
+                    const statusLower = status?.toLowerCase() || '';
+                    if (statusLower === 'accepted') return 'green';
+                    if (statusLower === 'rejected') return 'red';
+                    if (statusLower === 'pending') return 'gold';
+                    if (statusLower === 'under_review' || statusLower === 'under review') return 'blue';
+                    if (statusLower === 'revision_requested' || statusLower === 'revision requested') return 'orange';
+                    if (statusLower === 'assigned to editor' || statusLower === 'assigned_to_editor') return 'purple';
+                    if (statusLower === 'accepted by editor' || statusLower === 'accepted_by_editor') return 'cyan';
+                    return 'default';
+                };
+
+                return (
+                    <Tag color={getStatusColor(status)}>
+                        {status?.toUpperCase() || 'N/A'}
+                    </Tag>
+                );
+            },
         },
         {
             title: 'Action',
             key: 'action',
+            width: 80,
+            // fixed: 'right',
             render: (text, record) => (
                 <Space size="middle">
                     <Tooltip title="View Details">
@@ -101,6 +179,7 @@ const ManuscriptList = () => {
                     loading={loading}
                     pagination={{ pageSize: 10 }}
                     bordered
+                    scroll={{ x: 1100 }}
                 />
             </div>
         </div>
