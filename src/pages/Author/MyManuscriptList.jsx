@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Table, Button, Space, Card, Tag, message } from 'antd';
 import { FaEye, FaFileAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -9,17 +9,14 @@ const MyManuscriptList = () => {
     const [manuscripts, setManuscripts] = useState([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const pollingIntervalRef = useRef(null);
 
-    useEffect(() => {
-        fetchManuscripts();
-    }, []);
-
-    const fetchManuscripts = async () => {
-        setLoading(true);
+    const fetchManuscripts = useCallback(async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         try {
             const userStr = localStorage.getItem('user');
             if (!userStr) {
-                message.error('User information not found. Please login again.');
+                if (showLoading) message.error('User information not found. Please login again.');
                 return;
             }
             const user = JSON.parse(userStr);
@@ -27,7 +24,7 @@ const MyManuscriptList = () => {
             const userId = user.id || user.userId;
 
             if (!userId) {
-                message.error('Invalid user data.');
+                if (showLoading) message.error('Invalid user data.');
                 return;
             }
 
@@ -35,11 +32,31 @@ const MyManuscriptList = () => {
             setManuscripts(response.data);
         } catch (error) {
             console.error('Error fetching manuscripts:', error);
-            message.error('Failed to fetch manuscripts');
+            if (showLoading) message.error('Failed to fetch manuscripts');
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
-    };
+    }, []);
+
+    // Initial fetch
+    useEffect(() => {
+        fetchManuscripts();
+    }, [fetchManuscripts]);
+
+    // Polling for live data updates (every 10 seconds)
+    useEffect(() => {
+        if (loading) return;
+
+        pollingIntervalRef.current = setInterval(() => {
+            fetchManuscripts(false); // Silent fetch without loading state
+        }, 10000); // Poll every 10 seconds
+
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+        };
+    }, [loading, fetchManuscripts]);
 
     const columns = [
         {
@@ -65,13 +82,19 @@ const MyManuscriptList = () => {
             key: 'status',
             render: (status) => {
                 let color = 'default';
+                const statusLower = status?.toLowerCase() || '';
+
                 if (status === 'Submitted') color = 'blue';
                 if (status === 'Under Review') color = 'orange';
                 if (status === 'Accepted') color = 'green';
                 if (status === 'Rejected') color = 'red';
+                if (statusLower === 'pending') color = 'gold';
+                if (statusLower === 'assigned to editor' || statusLower === 'assigned_to_editor') color = 'purple';
+                if (statusLower === 'accepted by editor' || statusLower === 'accepted_by_editor') color = 'cyan';
+
                 return (
                     <Tag color={color} key={status}>
-                        {status.toUpperCase()}
+                        {status?.toUpperCase() || 'N/A'}
                     </Tag>
                 );
             }

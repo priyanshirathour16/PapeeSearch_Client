@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaArrowLeft, FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaUniversity, FaBuilding, FaFile, FaKeyboard, FaPencilAlt, FaCheckSquare, FaPlus, FaLongArrowAltRight, FaCity, FaTrash, FaCloudUploadAlt, FaArrowLeft, FaCheck, FaTimes, FaSpinner, FaPenNib, FaFileContract } from "react-icons/fa";
 import { MdSchool, MdLocationOn } from "react-icons/md";
 import { Formik, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { otpApi, manuscriptApi } from '../../services/api';
-import { message } from "antd";
+import { otpApi, manuscriptApi, authApi, copyrightApi } from '../../services/api';
+import { message, Modal, Button } from "antd";
 import { numberToWords } from '../../utils/numberToWords';
+import SignatureCanvas from 'react-signature-canvas';
+import FormRenderer from '../DynamicForm/FormRenderer';
+import moment from 'moment';
 
 const countries = [
     "Select Country", "United Kingdom", "United States", "India", "Australia", "Canada", "Germany", "France", "other"
@@ -23,15 +26,16 @@ const manuscriptTypes = [
     "Invited article"
 ];
 
-const IconInput = ({ icon: Icon, ...props }) => (
+const IconInput = ({ icon: Icon, disabled, ...props }) => (
     <div className="flex flex-col">
-        <div className={`flex bg-gray-100 border border-gray-300 rounded overflow-hidden ${props.className}`}>
+        <div className={`flex border border-gray-300 rounded overflow-hidden ${disabled ? 'bg-gray-200' : 'bg-gray-100'} ${props.className}`}>
             <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
                 <Icon className="text-sm" />
             </div>
             <Field
                 {...props}
-                className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700 placeholder-gray-500"
+                disabled={disabled}
+                className={`flex-1 px-3 py-2 focus:outline-none text-sm placeholder-gray-500 ${disabled ? 'bg-gray-200 text-gray-600 cursor-not-allowed' : 'bg-gray-100 focus:bg-white text-gray-700'}`}
             />
         </div>
         <ErrorMessage name={props.name} component="div" className="text-red-500 text-xs mt-1" />
@@ -58,6 +62,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     const [keywordInput, setKeywordInput] = useState("");
     const [wordCountText, setWordCountText] = useState("");
     const [abstractWordCount, setAbstractWordCount] = useState(0);
+    const [titleWordCount, setTitleWordCount] = useState(0);
     const [otpTimer, setOtpTimer] = useState(0);
     const [verifyOtpError, setVerifyOtpError] = useState("");
     const [sendOtpError, setSendOtpError] = useState("");
@@ -69,9 +74,19 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [authorProfile, setAuthorProfile] = useState(null);
+    const [submitterIpAddress, setSubmitterIpAddress] = useState(null);
+
+    // Copyright Form States
+    const [copyrightTemplate, setCopyrightTemplate] = useState(null);
+    const [copyrightSignatures, setCopyrightSignatures] = useState({});
+    const [signModalVisible, setSignModalVisible] = useState(false);
+    const [currentSignIndex, setCurrentSignIndex] = useState(null);
+    const [copyrightLoading, setCopyrightLoading] = useState(false);
+    const sigCanvasRef = useRef(null);
 
     useEffect(() => {
-        const checkLoginStatus = () => {
+        const checkLoginStatus = async () => {
             const userStr = localStorage.getItem('user');
             const token = localStorage.getItem('token');
             if (isDashboard && userStr && token) {
@@ -86,6 +101,16 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                     setOtpSent(true);
                     setCurrentStep(2);
                     setIsLoggedIn(true);
+
+                    // Fetch full author profile for auto-filling Step 3
+                    try {
+                        const response = await authApi.getProfile();
+                        if (response.data?.success && response.data?.profile) {
+                            setAuthorProfile(response.data.profile);
+                        }
+                    } catch (profileError) {
+                        console.error("Error fetching author profile", profileError);
+                    }
                 } catch (e) {
                     console.error("Error parsing user data", e);
                 }
@@ -104,7 +129,22 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         return () => clearInterval(interval);
     }, [otpTimer]);
 
-    const totalSteps = 8;
+    // Fetch IP address when component mounts
+    useEffect(() => {
+        const fetchIpAddress = async () => {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                setSubmitterIpAddress(data.ip);
+            } catch (error) {
+                console.error('Error fetching IP address:', error);
+                setSubmitterIpAddress('Unable to detect');
+            }
+        };
+        fetchIpAddress();
+    }, []);
+
+    const totalSteps = 9;
 
     const getTouchedFromErrors = (errors) => {
         const touched = {};
@@ -133,7 +173,13 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                 return Yup.object().shape({
                     journalId: Yup.string().required('Journal selection is required'),
                     manuscriptType: Yup.string().required('Manuscript type is required'),
-                    paperTitle: Yup.string().required('Manuscript title is required'),
+                    paperTitle: Yup.string()
+                        .required('Manuscript title is required')
+                        .test('word-count', 'Title must not exceed 50 words', function (value) {
+                            if (!value) return true;
+                            const wordCount = value.trim().split(/\s+/).filter(word => word.length > 0).length;
+                            return wordCount <= 50;
+                        }),
                     abstract: Yup.string().required('Abstract is required'),
                     wordCount: Yup.number().required('Word count is required').positive('Must be positive'),
                 });
@@ -193,26 +239,17 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                     manuscriptFile: Yup.mixed().required('Manuscript file is required'),
                 });
             case 7:
+                // Step 7 is optional - no required fields
                 return Yup.object().shape({
-                    reviewerFirstName: Yup.string().required('First name is required'),
-                    reviewerLastName: Yup.string().required('Last name is required'),
-                    reviewerEmail: Yup.string().email('Invalid email').required('Email is required'),
-                    reviewerPhone: Yup.string().matches(/^[0-9]+$/, "Must be only digits").required('Phone is required'),
-                    reviewerCountry: Yup.string().required('Country is required').notOneOf(['Select Country'], 'Please select a country'),
-                    reviewerInstitution: Yup.string().required('Institution is required'),
-                    reviewerDesignation: Yup.string().required('Designation is required'),
-                    reviewerSpecialisation: Yup.string().required('Specialisation is required'),
-                    reviewerDepartment: Yup.string().required('Department is required'),
-                    reviewerState: Yup.string().required('State is required'),
-                    reviewerCity: Yup.string().required('City is required'),
-                    reviewerAddress: Yup.string().required('Address is required'),
+                    reviewerEmail: Yup.string().email('Invalid email format'),
+                    reviewerPhone: Yup.string().matches(/^[0-9]*$/, "Must be only digits"),
                 });
             default:
                 return Yup.object().shape({});
         }
     };
 
-    const initialValues = {
+    const initialValues = useMemo(() => ({
         // Step 1: Personal Details
         name: personalDetails?.name || "",
         email: personalDetails?.email || "",
@@ -225,20 +262,20 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         abstract: "",
         wordCount: "",
 
-        // Step 3: Primary Author
+        // Step 3: Primary Author (auto-filled from author profile when logged in)
         primaryAuthor: {
-            firstName: "",
-            lastName: "",
-            email: "",
-            confirmEmail: "",
-            phone: "",
-            country: "",
-            institution: "",
+            firstName: authorProfile?.firstName || "",
+            lastName: authorProfile?.lastName || "",
+            email: authorProfile?.email || "",
+            confirmEmail: authorProfile?.email || "",
+            phone: authorProfile?.contactNumber || "",
+            country: authorProfile?.country || "",
+            institution: authorProfile?.institute || "",
             department: "",
             designation: "",
-            state: "",
-            city: "",
-            address: "",
+            state: authorProfile?.state || "",
+            city: authorProfile?.city || "",
+            address: authorProfile?.address || "",
             isCorrespondingAuthor: true
         },
 
@@ -273,7 +310,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         reviewerState: "",
         reviewerCity: "",
         reviewerAddress: "",
-    };
+    }), [personalDetails, authorProfile]);
 
     const [currentOtp, setCurrentOtp] = useState(
         ""
@@ -344,7 +381,58 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
         }
     };
 
+    // Load copyright template when reaching Step 9
+    const loadCopyrightTemplate = async () => {
+        if (copyrightTemplate) return; // Already loaded
+        setCopyrightLoading(true);
+        try {
+            const response = await copyrightApi.getActiveTemplate();
+            if (response.data.success && response.data.data) {
+                const templateData = response.data.data;
+                const schema = typeof templateData.schema === 'string'
+                    ? JSON.parse(templateData.schema)
+                    : templateData.schema;
+                setCopyrightTemplate(schema);
+            }
+        } catch (error) {
+            console.error("Failed to load copyright template:", error);
+            message.error("Failed to load copyright form. Please try again.");
+        } finally {
+            setCopyrightLoading(false);
+        }
+    };
+
+    // Handle copyright signature click
+    const handleSignClick = (index) => {
+        setCurrentSignIndex(index);
+        setSignModalVisible(true);
+    };
+
+    // Handle copyright signature confirm
+    const handleSignConfirm = () => {
+        if (sigCanvasRef.current.isEmpty()) {
+            message.error('Please draw your signature');
+            return;
+        }
+        const signatureImage = sigCanvasRef.current.getCanvas().toDataURL('image/png');
+        setCopyrightSignatures(prev => ({
+            ...prev,
+            [currentSignIndex]: {
+                signatureImage: signatureImage,
+                date: moment().format('DD/MM/YYYY')
+            }
+        }));
+        setSignModalVisible(false);
+        message.success('Signed successfully');
+    };
+
     const handleSubmit = async (values, { resetForm }) => {
+        // Validate copyright signatures before submission
+        if (Object.keys(copyrightSignatures).length === 0) {
+            message.warning('Please sign the copyright form before submitting');
+            return;
+        }
+
         setIsFinalSubmitting(true);
         try {
             const formData = new FormData();
@@ -387,6 +475,12 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
             formData.append('reviewerCity', values.reviewerCity);
             formData.append('reviewerAddress', values.reviewerAddress);
 
+            // Copyright Form Data
+            formData.append('copyrightData', JSON.stringify({
+                templateVersion: copyrightTemplate?.version,
+                signatures: copyrightSignatures
+            }));
+
             const response = await manuscriptApi.submit(formData);
 
             Swal.fire({
@@ -414,6 +508,9 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                 setVerifyOtpError("");
                 setSendOtpError("");
                 setVerificationRequiredError("");
+                // Reset copyright state
+                setCopyrightTemplate(null);
+                setCopyrightSignatures({});
 
                 if (isDashboard && isLoggedIn) {
                     navigate('/dashboard/submit-manuscript');
@@ -430,7 +527,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
     };
 
     const StepIndicator = () => {
-        const stepsToRender = isLoggedIn ? [2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 4, 5, 6, 7, 8];
+        const stepsToRender = isLoggedIn ? [2, 3, 4, 5, 6, 7, 8, 9] : [1, 2, 3, 4, 5, 6, 7, 8, 9];
         const displayStep = isLoggedIn ? currentStep - 1 : currentStep;
         const displayTotal = isLoggedIn ? totalSteps - 1 : totalSteps;
 
@@ -445,7 +542,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                     }`}>
                                     {currentStep > step ? <FaCheck /> : label}
                                 </div>
-                                {step < 8 && (
+                                {step < 9 && (
                                     <div className={`flex-1 h-1 mx-2 ${currentStep > step ? 'bg-[#12b48b]' : 'bg-gray-300'}`} />
                                 )}
                             </div>
@@ -626,7 +723,36 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                 </div>
 
                                 {/* Manuscript Title */}
-                                <IconInput icon={FaPencilAlt} type="text" name="paperTitle" placeholder="Manuscript Title *" />
+                                <div className="flex flex-col">
+                                    <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                                        <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                            <FaPencilAlt className="text-sm" />
+                                        </div>
+                                        <Field
+                                            type="text"
+                                            name="paperTitle"
+                                            placeholder="Manuscript Title *"
+                                            onChange={(e) => {
+                                                const text = e.target.value;
+                                                const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+
+                                                if (words <= 50) {
+                                                    setFieldValue('paperTitle', text);
+                                                    setTitleWordCount(words);
+                                                } else {
+                                                    message.warning("Manuscript title cannot exceed 50 words");
+                                                }
+                                            }}
+                                            className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700"
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <ErrorMessage name="paperTitle" component="div" className="text-red-500 text-xs" />
+                                        <span className={`text-xs ${titleWordCount > 50 ? 'text-red-500' : 'text-gray-500'}`}>
+                                            {titleWordCount} / 50 words
+                                        </span>
+                                    </div>
+                                </div>
 
                                 {/* Abstract */}
                                 <div className="flex flex-col">
@@ -719,32 +845,45 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                     {/* Step 3: Primary Author */}
                     {currentStep === 3 && (
                         <FormSection legend="Primary Author Information">
+                            {authorProfile && (
+                                <p className="text-sm text-gray-500 mb-4 italic">
+                                    Fields pre-filled from your profile are locked. Missing fields can be edited.
+                                </p>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <IconInput icon={FaUser} type="text" name="primaryAuthor.firstName" placeholder="First Name *" />
-                                <IconInput icon={FaUser} type="text" name="primaryAuthor.lastName" placeholder="Last Name *" />
-                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.email" placeholder="Email ID *" />
-                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.confirmEmail" placeholder="Confirm Email ID *" />
-                                <IconInput icon={FaPhone} type="text" name="primaryAuthor.phone" placeholder="Phone No *" />
+                                <IconInput icon={FaUser} type="text" name="primaryAuthor.firstName" placeholder="First Name *" disabled={!!authorProfile?.firstName} />
+                                <IconInput icon={FaUser} type="text" name="primaryAuthor.lastName" placeholder="Last Name *" disabled={!!authorProfile?.lastName} />
+                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.email" placeholder="Email ID *" disabled={!!authorProfile?.email} />
+                                <IconInput icon={FaEnvelope} type="email" name="primaryAuthor.confirmEmail" placeholder="Confirm Email ID *" disabled={!!authorProfile?.email} />
+                                <IconInput icon={FaPhone} type="text" name="primaryAuthor.phone" placeholder="Phone No *" disabled={!!authorProfile?.contactNumber} />
 
-                                <div className="flex flex-col">
-                                    <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
-                                        <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
-                                            <MdLocationOn className="text-sm" />
+                                {authorProfile?.country ? (
+                                    <IconInput icon={MdLocationOn} type="text" name="primaryAuthor.country" placeholder="Country *" disabled={true} />
+                                ) : (
+                                    <div className="flex flex-col">
+                                        <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                                            <div className="w-10 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
+                                                <MdLocationOn className="text-sm" />
+                                            </div>
+                                            <Field
+                                                as="select"
+                                                name="primaryAuthor.country"
+                                                className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700"
+                                            >
+                                                {countries.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                                            </Field>
                                         </div>
-                                        <Field as="select" name="primaryAuthor.country" className="flex-1 px-3 py-2 bg-gray-100 focus:bg-white focus:outline-none text-sm text-gray-700">
-                                            {countries.map((c, i) => <option key={i} value={c}>{c}</option>)}
-                                        </Field>
+                                        <ErrorMessage name="primaryAuthor.country" component="div" className="text-red-500 text-xs mt-1" />
                                     </div>
-                                    <ErrorMessage name="primaryAuthor.country" component="div" className="text-red-500 text-xs mt-1" />
-                                </div>
+                                )}
 
-                                <IconInput icon={MdSchool} type="text" name="primaryAuthor.institution" placeholder="Institution *" />
+                                <IconInput icon={MdSchool} type="text" name="primaryAuthor.institution" placeholder="Institution *" disabled={!!authorProfile?.institute} />
                                 <IconInput icon={FaBuilding} type="text" name="primaryAuthor.department" placeholder="Department *" />
-                                <IconInput icon={FaUniversity} type="text" name="primaryAuthor.state" placeholder="State *" />
-                                <IconInput icon={FaCity} type="text" name="primaryAuthor.city" placeholder="City *" />
+                                <IconInput icon={FaUniversity} type="text" name="primaryAuthor.state" placeholder="State *" disabled={!!authorProfile?.state} />
+                                <IconInput icon={FaCity} type="text" name="primaryAuthor.city" placeholder="City *" disabled={!!authorProfile?.city} />
 
                                 <div className="md:col-span-2">
-                                    <IconInput icon={FaMapMarkerAlt} type="text" name="primaryAuthor.address" placeholder="Address *" />
+                                    <IconInput icon={FaMapMarkerAlt} type="text" name="primaryAuthor.address" placeholder="Address *" disabled={!!authorProfile?.address} />
                                 </div>
                             </div>
                         </FormSection>
@@ -801,10 +940,10 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                                             <IconInput icon={FaMapMarkerAlt} type="text" name={`authors.${index}.address`} placeholder="Address *" />
                                                         </div>
 
-                                                        <div className="md:col-span-2 flex items-center gap-2">
+                                                        {/* <div className="md:col-span-2 flex items-center gap-2">
                                                             <Field type="checkbox" name={`authors.${index}.isCorrespondingAuthor`} className="h-4 w-4" />
                                                             <span className="text-xs text-gray-700">Corresponding Author</span>
-                                                        </div>
+                                                        </div> */}
                                                     </div>
                                                 </div>
                                             ))}
@@ -850,6 +989,26 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Display IP Address */}
+                            {submitterIpAddress && (
+                                <div className="mt-6 pt-4 border-t border-gray-200">
+                                    <div className="flex items-center justify-between bg-blue-50 px-4 py-3 rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <MdLocationOn className="text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700">Your IP Address</p>
+                                                <p className="text-xs text-gray-500">Recorded for submission tracking</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm font-mono font-semibold text-blue-700 bg-white px-3 py-1.5 rounded border border-blue-200">
+                                            {submitterIpAddress}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </FormSection>
                     )}
 
@@ -859,7 +1018,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-sm text-gray-700 mb-2 block">
-                                        Manuscript (without author details) * <span className="text-xs text-gray-500">(.doc, .docx, .pdf)</span>
+                                        Manuscript (without author details) * <span className="text-xs text-gray-500">(.doc, .docx only)</span>
                                     </label>
                                     <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
                                         <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
@@ -867,7 +1026,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         </div>
                                         <input
                                             type="file"
-                                            accept=".doc,.docx,.pdf"
+                                            accept=".doc,.docx"
                                             onChange={(e) => setFieldValue('manuscriptFile', e.currentTarget.files[0])}
                                             className="flex-1 px-3 py-2 bg-gray-100 text-sm"
                                         />
@@ -882,7 +1041,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
 
                                 <div>
                                     <label className="text-sm text-gray-700 mb-2 block">
-                                        Cover Letter for Manuscript (Optional) <span className="text-xs text-gray-500">(.doc, .docx, .pdf)</span>
+                                        Cover Letter for Manuscript (Optional) <span className="text-xs text-gray-500">(.doc, .docx only)</span>
                                     </label>
                                     <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
                                         <div className="w-14 flex items-center justify-center bg-gray-200 text-gray-500 border-r border-gray-300">
@@ -890,7 +1049,7 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                         </div>
                                         <input
                                             type="file"
-                                            accept=".doc,.docx,.pdf"
+                                            accept=".doc,.docx"
                                             onChange={(e) => setFieldValue('coverLetter', e.currentTarget.files[0])}
                                             className="flex-1 px-3 py-2 bg-gray-100 text-sm"
                                         />
@@ -905,16 +1064,16 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                         </FormSection>
                     )}
 
-                    {/* Step 7: Suggested Reviewers */}
+                    {/* Step 7: Suggested Reviewers (Optional) */}
                     {currentStep === 7 && (
-                        <FormSection legend="Suggest Reviewers">
-                            <p className="text-sm text-gray-600 mb-4">Suggest a reviewer belonging to a similar research background</p>
+                        <FormSection legend="Suggest Reviewers (Optional)">
+                            <p className="text-sm text-gray-600 mb-4">Optionally suggest a reviewer belonging to a similar research background</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <IconInput icon={FaUser} type="text" name="reviewerFirstName" placeholder="First Name *" />
-                                <IconInput icon={FaUser} type="text" name="reviewerLastName" placeholder="Last Name *" />
-                                <IconInput icon={FaEnvelope} type="email" name="reviewerEmail" placeholder="Email ID *" />
-                                <IconInput icon={FaPhone} type="text" name="reviewerPhone" placeholder="Phone No *" />
-                                <IconInput icon={FaKeyboard} type="text" name="reviewerSpecialisation" placeholder="Specialisation *" />
+                                <IconInput icon={FaUser} type="text" name="reviewerFirstName" placeholder="First Name" />
+                                <IconInput icon={FaUser} type="text" name="reviewerLastName" placeholder="Last Name" />
+                                <IconInput icon={FaEnvelope} type="email" name="reviewerEmail" placeholder="Email ID" />
+                                <IconInput icon={FaPhone} type="text" name="reviewerPhone" placeholder="Phone No" />
+                                <IconInput icon={FaKeyboard} type="text" name="reviewerSpecialisation" placeholder="Specialisation" />
 
                                 <div className="flex flex-col">
                                     <div className="flex bg-gray-100 border border-gray-300 rounded overflow-hidden">
@@ -928,14 +1087,14 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                     <ErrorMessage name="reviewerCountry" component="div" className="text-red-500 text-xs mt-1" />
                                 </div>
 
-                                <IconInput icon={MdSchool} type="text" name="reviewerInstitution" placeholder="Institution *" />
-                                <IconInput icon={FaUser} type="text" name="reviewerDesignation" placeholder="Designation *" />
-                                <IconInput icon={FaBuilding} type="text" name="reviewerDepartment" placeholder="Department *" />
-                                <IconInput icon={FaUniversity} type="text" name="reviewerState" placeholder="State *" />
-                                <IconInput icon={FaCity} type="text" name="reviewerCity" placeholder="City *" />
+                                <IconInput icon={MdSchool} type="text" name="reviewerInstitution" placeholder="Institution" />
+                                <IconInput icon={FaUser} type="text" name="reviewerDesignation" placeholder="Designation" />
+                                <IconInput icon={FaBuilding} type="text" name="reviewerDepartment" placeholder="Department" />
+                                <IconInput icon={FaUniversity} type="text" name="reviewerState" placeholder="State" />
+                                <IconInput icon={FaCity} type="text" name="reviewerCity" placeholder="City" />
 
                                 <div className="md:col-span-2">
-                                    <IconInput icon={FaMapMarkerAlt} type="text" name="reviewerAddress" placeholder="Address *" />
+                                    <IconInput icon={FaMapMarkerAlt} type="text" name="reviewerAddress" placeholder="Address" />
                                 </div>
                             </div>
                         </FormSection>
@@ -1016,23 +1175,114 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                                 </div>
                             </div>
 
-                            {/* Reviewer */}
-                            <div className="border border-gray-300 rounded p-4">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className="font-semibold text-[#204066]">Suggested Reviewer</h3>
-                                    <button type="button" onClick={() => setCurrentStep(7)} className="text-[#12b48b] text-sm hover:underline">Edit</button>
+                            {/* Reviewer (Optional) */}
+                            {(values.reviewerFirstName || values.reviewerLastName || values.reviewerEmail) ? (
+                                <div className="border border-gray-300 rounded p-4">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-semibold text-[#204066]">Suggested Reviewer</h3>
+                                        <button type="button" onClick={() => setCurrentStep(7)} className="text-[#12b48b] text-sm hover:underline">Edit</button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        {(values.reviewerFirstName || values.reviewerLastName) && <p><strong>Name:</strong> {values.reviewerFirstName} {values.reviewerLastName}</p>}
+                                        {values.reviewerEmail && <p><strong>Email:</strong> {values.reviewerEmail}</p>}
+                                        {values.reviewerPhone && <p><strong>Phone:</strong> {values.reviewerPhone}</p>}
+                                        {values.reviewerDesignation && <p><strong>Designation:</strong> {values.reviewerDesignation}</p>}
+                                        {values.reviewerInstitution && <p><strong>Institution:</strong> {values.reviewerInstitution}</p>}
+                                        {values.reviewerDepartment && <p><strong>Department:</strong> {values.reviewerDepartment}</p>}
+                                        {values.reviewerSpecialisation && <p><strong>Specialisation:</strong> {values.reviewerSpecialisation}</p>}
+                                        {(values.reviewerAddress || values.reviewerCity || values.reviewerState || values.reviewerCountry) && (
+                                            <p><strong>Address:</strong> {[values.reviewerAddress, values.reviewerCity, values.reviewerState, values.reviewerCountry].filter(Boolean).join(', ')}</p>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <p><strong>Name:</strong> {values.reviewerFirstName} {values.reviewerLastName}</p>
-                                    <p><strong>Email:</strong> {values.reviewerEmail}</p>
-                                    <p><strong>Phone:</strong> {values.reviewerPhone}</p>
-                                    <p><strong>Designation:</strong> {values.reviewerDesignation}</p>
-                                    <p><strong>Institution:</strong> {values.reviewerInstitution}</p>
-                                    <p><strong>Department:</strong> {values.reviewerDepartment}</p>
-                                    <p><strong>Specialisation:</strong> {values.reviewerSpecialisation}</p>
-                                    <p><strong>Address:</strong> {values.reviewerAddress}, {values.reviewerCity}, {values.reviewerState}, {values.reviewerCountry}</p>
+                            ) : (
+                                <div className="border border-gray-300 rounded p-4">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-semibold text-[#204066]">Suggested Reviewer (Optional)</h3>
+                                        <button type="button" onClick={() => setCurrentStep(7)} className="text-[#12b48b] text-sm hover:underline">Add</button>
+                                    </div>
+                                    <p className="text-sm text-gray-500 italic">No reviewer suggested</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Step 9: Copyright Form */}
+                    {currentStep === 9 && (
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <FaFileContract className="text-2xl text-[#204066]" />
+                                <div>
+                                    <h2 className="text-xl font-semibold text-[#204066]">Copyright Transfer Agreement</h2>
+                                    <p className="text-sm text-gray-600">Please review and sign the copyright agreement</p>
                                 </div>
                             </div>
+
+                            {copyrightLoading ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <FaSpinner className="animate-spin text-3xl text-[#12b48b]" />
+                                    <span className="ml-3 text-gray-600">Loading copyright form...</span>
+                                </div>
+                            ) : copyrightTemplate ? (
+                                <div className="bg-white border border-gray-300 rounded-lg p-6 md:p-8">
+                                    <FormRenderer
+                                        schema={copyrightTemplate}
+                                        data={{
+                                            paper_title: values.paperTitle,
+                                            journal: {
+                                                title: fetchedJournalOptions?.flatMap(g => g.options).find(o => o.value == values.journalId)?.label || ''
+                                            },
+                                            authors: [values.primaryAuthor, ...values.authors].map((a, index) => ({
+                                                id: index + 1,
+                                                first_name: a.firstName,
+                                                last_name: a.lastName,
+                                                full_name: `${a.firstName} ${a.lastName}`,
+                                                email: a.email,
+                                                phone: a.phone,
+                                                institution: a.institution,
+                                                designation: a.designation || '',
+                                                department: a.department || '',
+                                                city: a.city || '',
+                                                state: a.state || '',
+                                                country: a.country || '',
+                                                address: a.address || '',
+                                                is_corresponding_author: a.isCorrespondingAuthor || false
+                                            })),
+                                            authors_formatted: [values.primaryAuthor, ...values.authors].map(a => `${a.firstName} ${a.lastName}`).join(', ')
+                                        }}
+                                        signatures={copyrightSignatures}
+                                        onSign={handleSignClick}
+                                    />
+
+                                    {/* Signature Status */}
+                                    <div className="mt-6 pt-4 border-t border-gray-200">
+                                        <div className="flex items-center gap-2">
+                                            {Object.keys(copyrightSignatures).length > 0 ? (
+                                                <div className="flex items-center gap-2 text-green-600">
+                                                    <FaCheck />
+                                                    <span className="text-sm font-medium">Copyright form signed ({Object.keys(copyrightSignatures).length} signature(s))</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-amber-600">
+                                                    <FaPenNib />
+                                                    <span className="text-sm font-medium">Please click on the signature boxes above to sign</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 bg-red-50 rounded-lg border border-red-200">
+                                    <p className="text-red-600">Failed to load copyright template. Please go back and try again.</p>
+                                    <button
+                                        type="button"
+                                        onClick={loadCopyrightTemplate}
+                                        className="mt-4 bg-[#12b48b] hover:bg-[#0e9470] text-white px-4 py-2 rounded"
+                                    >
+                                        Retry Loading
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -1050,49 +1300,117 @@ const ManuscriptFormSteps = ({ fetchedJournalOptions, isDashboard }) => {
                             <FaArrowLeft /> Previous
                         </button>
 
-                        {currentStep < totalSteps ? (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (currentStep === 1 && !otpVerified) {
-                                        setVerificationRequiredError("Please verify your email with OTP before proceeding");
-                                        return;
-                                    }
-
-                                    validateForm().then((errors) => {
-                                        const hasErrors = Object.keys(errors).length > 0;
-                                        if (!hasErrors) {
-                                            setCurrentStep(currentStep + 1);
-                                        } else {
-                                            const errorFields = getTouchedFromErrors(errors);
-                                            setTouched({ ...touched, ...errorFields });
-                                            // message.error("Please fill all required fields correctly");
+                        <div className="flex items-center gap-3">
+                            {/* Skip button for optional steps (Step 4: Additional Authors, Step 7: Reviewers) */}
+                            {currentStep < totalSteps && (currentStep === 4 || currentStep === 7) && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const nextStep = currentStep + 1;
+                                        setCurrentStep(nextStep);
+                                        // Load copyright template when moving to Step 9
+                                        if (nextStep === 9) {
+                                            loadCopyrightTemplate();
                                         }
-                                    });
-                                }}
-                                className="flex items-center gap-2 bg-[#12b48b] hover:bg-[#0e9470] text-white px-6 py-2 rounded font-bold"
-                            >
-                                Next <FaLongArrowAltRight />
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                disabled={isFinalSubmitting}
-                                onClick={() => handleSubmit(values, { resetForm })}
-                                className={`flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold ${isFinalSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            >
-                                {isFinalSubmitting ? (
-                                    <>
-                                        <FaSpinner className="animate-spin" /> Submitting...
-                                    </>
-                                ) : (
-                                    <>
-                                        Submit Manuscript <FaLongArrowAltRight />
-                                    </>
-                                )}
-                            </button>
-                        )}
+                                    }}
+                                    className="flex items-center gap-2 bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded font-bold"
+                                >
+                                    Skip <FaLongArrowAltRight />
+                                </button>
+                            )}
+
+                            {currentStep < totalSteps ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (currentStep === 1 && !otpVerified) {
+                                            setVerificationRequiredError("Please verify your email with OTP before proceeding");
+                                            return;
+                                        }
+
+                                        validateForm().then((errors) => {
+                                            const hasErrors = Object.keys(errors).length > 0;
+                                            if (!hasErrors) {
+                                                const nextStep = currentStep + 1;
+                                                setCurrentStep(nextStep);
+                                                // Load copyright template when moving to Step 9
+                                                if (nextStep === 9) {
+                                                    loadCopyrightTemplate();
+                                                }
+                                            } else {
+                                                const errorFields = getTouchedFromErrors(errors);
+                                                setTouched({ ...touched, ...errorFields });
+                                                // message.error("Please fill all required fields correctly");
+                                            }
+                                        });
+                                    }}
+                                    className="flex items-center gap-2 bg-[#12b48b] hover:bg-[#0e9470] text-white px-6 py-2 rounded font-bold"
+                                >
+                                    Next <FaLongArrowAltRight />
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    disabled={isFinalSubmitting || Object.keys(copyrightSignatures).length === 0}
+                                    onClick={() => handleSubmit(values, { resetForm })}
+                                    className={`flex items-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-2 rounded font-bold ${(isFinalSubmitting || Object.keys(copyrightSignatures).length === 0) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                >
+                                    {isFinalSubmitting ? (
+                                        <>
+                                            <FaSpinner className="animate-spin" /> Submitting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Submit Manuscript <FaLongArrowAltRight />
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Signature Modal */}
+                    <Modal
+                        title="E-Sign Copyright Form"
+                        open={signModalVisible}
+                        onOk={handleSignConfirm}
+                        onCancel={() => setSignModalVisible(false)}
+                        okText="Sign Document"
+                        okButtonProps={{ className: 'bg-[#12b48b] hover:bg-[#0e9f7a]' }}
+                        centered
+                    >
+                        <div className="py-6">
+                            <div className="bg-blue-50 p-4 rounded-lg mb-4 border border-blue-100 flex items-start gap-3">
+                                <FaFileContract className="text-blue-500 text-xl mt-1" />
+                                <div className="text-sm text-blue-800">
+                                    You are about to digitally sign the copyright transfer agreement for manuscript: <strong>{values.paperTitle}</strong>.
+                                </div>
+                            </div>
+
+                            <p className="mb-2 font-semibold">Draw your signature below:</p>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 mb-3">
+                                <SignatureCanvas
+                                    ref={sigCanvasRef}
+                                    penColor="black"
+                                    canvasProps={{
+                                        width: 450,
+                                        height: 150,
+                                        className: 'signature-canvas w-full'
+                                    }}
+                                />
+                            </div>
+                            <Button
+                                onClick={() => sigCanvasRef.current?.clear()}
+                                size="small"
+                                className="mb-3"
+                            >
+                                Clear Signature
+                            </Button>
+                            <p className="text-xs text-gray-500 text-center">
+                                This signature will be stamped with today's date: {moment().format('DD MMM, YYYY')}
+                            </p>
+                        </div>
+                    </Modal>
                 </div>
             )}
         </Formik>

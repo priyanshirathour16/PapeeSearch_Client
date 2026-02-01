@@ -236,15 +236,18 @@ const Header = () => {
             {/* Top Menu */}
             <div className="flex justify-end mb-2">
               <ul className="flex space-x-4 text-sm">
-                <li>
-                  <Link
-                    to="/become-an-editor"
-                    className="bg-teal-500 hover:bg-teal-600 hover:text-white text-white px-4 py-1 rounded flex items-center gap-1 transition-colors"
-                  >
-                    Become An Editor{" "}
-                    <FaChevronCircleRight className="text-xs" />
-                  </Link>
-                </li>
+                {/* Hide 'Become An Editor' if any user is logged in */}
+                {!isLoggedIn && (
+                  <li>
+                    <Link
+                      to="/become-an-editor"
+                      className="bg-teal-500 hover:bg-teal-600 hover:text-white text-white px-4 py-1 rounded flex items-center gap-1 transition-colors"
+                    >
+                      Become An Editor{" "}
+                      <FaChevronCircleRight className="text-xs" />
+                    </Link>
+                  </li>
+                )}
                 <li>
                   {isLoggedIn ? (
                     <Link

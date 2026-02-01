@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../services/api";
 import "../styles/Login.css";
-import { setRole } from "../utils/secureStorage";
+import { setRole, setPermissions } from "../utils/secureStorage";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -37,6 +37,10 @@ const Login = () => {
           localStorage.setItem("email_trigger", JSON.stringify(!!emailTrigger));
         }
         setRole(response.data.role);
+        // Save permissions for subadmin users
+        if (response.data.user?.permissions) {
+          setPermissions(response.data.user.permissions);
+        }
 
         Swal.fire({
           title: "Login Successful",

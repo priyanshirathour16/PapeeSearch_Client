@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Tooltip, Breadcrumb } from 'antd';
-import { EyeOutlined, PlusOutlined, HomeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EyeOutlined, PlusOutlined, HomeOutlined, EditOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { conferenceTemplateApi, conferenceApi } from '../../services/api';
 import { encryptId } from '../../utils/crypto';
+import SubmittedAbstractsModal from '../../components/SubmittedAbstractsModal';
 import Swal from 'sweetalert2';
 
 const ConferenceTemplateList = () => {
     const [templates, setTemplates] = useState([]);
     const [conferences, setConferences] = useState({});
     const [loading, setLoading] = useState(false);
+    const [abstractsModal, setAbstractsModal] = useState({ open: false, conferenceId: null, conferenceName: '' });
     const navigate = useNavigate();
 
     const fetchTemplates = async () => {
@@ -106,7 +108,7 @@ const ConferenceTemplateList = () => {
         {
             title: 'Actions',
             key: 'actions',
-            width: 150,
+            width: 200,
             render: (_, record) => (
                 <Space size="middle">
                     <Tooltip title="View Details">
@@ -115,6 +117,15 @@ const ConferenceTemplateList = () => {
                             shape="circle"
                             icon={<EyeOutlined />}
                             onClick={() => navigate(`/dashboard/conference-templates/${encryptId(record.conference_id)}`)}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Submitted Abstracts">
+                        <Button
+                            type="default"
+                            shape="circle"
+                            icon={<FileTextOutlined />}
+                            className="text-[#12b48b] border-[#12b48b] hover:text-[#0e9a77] hover:border-[#0e9a77]"
+                            onClick={() => setAbstractsModal({ open: true, conferenceId: record.conference_id, conferenceName: record.conference?.name || '' })}
                         />
                     </Tooltip>
                     <Tooltip title="Edit">
@@ -174,6 +185,14 @@ const ConferenceTemplateList = () => {
                     pagination={{ pageSize: 10 }}
                 />
             </div>
+
+            {/* Submitted Abstracts Modal */}
+            <SubmittedAbstractsModal
+                open={abstractsModal.open}
+                onCancel={() => setAbstractsModal({ open: false, conferenceId: null, conferenceName: '' })}
+                conferenceId={abstractsModal.conferenceId}
+                conferenceName={abstractsModal.conferenceName}
+            />
         </div>
     );
 };

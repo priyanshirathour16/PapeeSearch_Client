@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Card,
@@ -30,9 +30,12 @@ import {
   FaEye,
   FaCheckCircle,
   FaDownload,
+  FaGlobe,
+  FaFileContract,
 } from "react-icons/fa";
 import { manuscriptApi } from "../../services/api";
 import { scriptUrl } from "../../services/serviceApi";
+import StatusTimeline from "../../components/StatusTimeline";
 import moment from "moment";
 
 const { Title, Text, Paragraph } = Typography;
@@ -44,24 +47,52 @@ const MyManuscriptDetails = () => {
   const [loading, setLoading] = useState(true);
   const [authorModalVisible, setAuthorModalVisible] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState(null);
+  const previousStatusRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
 
-  useEffect(() => {
-    fetchDetails();
-  }, [id]);
-
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async (showLoading = true) => {
     try {
+      if (showLoading) setLoading(true);
       const response = await manuscriptApi.getById(id);
       // Handle both structure types { data: { ... } } or { ... }
       const data = response.data.data ? response.data.data : response.data;
+
+      // Check if status changed (for polling updates)
+      if (previousStatusRef.current && previousStatusRef.current !== data.status) {
+        message.info(`Manuscript status updated to "${data.status}"`);
+      }
+      previousStatusRef.current = data.status;
+
       setManuscript(data);
     } catch (error) {
       console.error("Error fetching manuscript details:", error);
-      message.error("Failed to load manuscript details");
+      if (showLoading) message.error("Failed to load manuscript details");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  };
+  }, [id]);
+
+  // Initial fetch
+  useEffect(() => {
+    if (id) {
+      fetchDetails();
+    }
+  }, [id, fetchDetails]);
+
+  // Polling for status updates (every 10 seconds)
+  useEffect(() => {
+    if (!id || loading) return;
+
+    pollingIntervalRef.current = setInterval(() => {
+      fetchDetails(false); // Silent fetch without loading state
+    }, 10000); // Poll every 10 seconds
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [id, loading, fetchDetails]);
 
   if (loading)
     return (
@@ -323,7 +354,7 @@ const MyManuscriptDetails = () => {
                 <div className="text-right">
                   <Text
                     strong
-                    className="block truncate max-w-[150px]"
+                    className="block max-w-[150px]"
                     title={manuscript.journal?.title}
                   >
                     {manuscript.journal?.title}
@@ -370,6 +401,21 @@ const MyManuscriptDetails = () => {
                   </Text>
                 </div>
               </div>
+              {manuscript.submitter_ip_address && (
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <FaGlobe size={12} />
+                  </div>
+                  <div className="overflow-hidden">
+                    <Text className="block text-sm font-medium font-mono">
+                      {manuscript.submitter_ip_address}
+                    </Text>
+                    <Text type="secondary" className="text-xs">
+                      IP Address at Submission
+                    </Text>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -406,6 +452,16 @@ const MyManuscriptDetails = () => {
                   Cover Letter
                 </Button>
               )}
+              <Button
+                block
+                icon={<FaFileContract />}
+                onClick={() =>
+                  navigate(`/dashboard/submit-manuscript/${id}/copyright`)
+                }
+                className="h-10 border-[#12b48b] text-[#12b48b] hover:bg-[#12b48b] hover:text-white"
+              >
+                View Copyright Form
+              </Button>
               {!manuscript.manuscript_file_path && (
                 <Text type="secondary" className="text-center block italic">
                   No manuscript file.
@@ -431,6 +487,11 @@ const MyManuscriptDetails = () => {
               </div>
             )}
           </Card>
+
+          {/* Status Timeline */}
+          <div className="mt-6">
+            <StatusTimeline manuscript={manuscript} />
+          </div>
 
           {/* Status Overview Card */}
           <Card
@@ -471,25 +532,6 @@ const MyManuscriptDetails = () => {
                   </Paragraph>
                 </div>
               )}
-
-            {(manuscript.status?.trim().toLowerCase() ===
-              "awaiting copyright" ||
-              manuscript.status?.trim().toLowerCase() === "accepted") && (
-              <div className="mt-4">
-                <Button
-                  type="primary"
-                  block
-                  className="bg-[#12b48b] hover:bg-[#0e9f7a]"
-                  onClick={() =>
-                    navigate(`/dashboard/submit-manuscript/${id}/copyright`)
-                  }
-                >
-                  {manuscript.status?.trim().toLowerCase() === "accepted"
-                    ? "See Copyright"
-                    : "Write Copyright"}
-                </Button>
-              </div>
-            )}
           </Card>
         </Col>
       </Row>

@@ -17,6 +17,9 @@ const Journals = () => {
         const fetchJournalData = async () => {
             try {
                 const response = await journalApi.getDetailsByCategory(route);
+                console.log("Received journal data:", response.data);
+                console.log("Areas Covered:", response.data.areasCovered);
+                console.log("Is areasCovered an array?", Array.isArray(response.data.areasCovered));
                 setJournalData(response.data);
                 setLoading(false);
             } catch (err) {

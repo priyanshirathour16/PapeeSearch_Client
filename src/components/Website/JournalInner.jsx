@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUnlockAlt, FaCheck, FaCalendarAlt, FaBookOpen, FaUserTie, FaTwitter, FaPrint, FaGlobe, FaEnvelope } from 'react-icons/fa';
 import NewsWidget from './NewsWidget';
+import { getSubmitManuscriptUrl } from '../../utils/navigationHelpers';
 
 import Image1 from "../../assets/images/6.png";
 import Image2 from "../../assets/images/11.png";
@@ -127,14 +128,21 @@ const JournalInner = ({ journalData }) => {
                             {activeTab === 'areas' && (
                                 <div>
                                     <p className="font-bold text-[#204066] mb-4">The subject areas covered under the scope of the journal include:</p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {Array.isArray(journalData.areasCovered) && journalData.areasCovered.map((area, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 border-l-2 border-[#12b48b] hover:bg-gray-100 transition-colors">
-                                                <FaBookOpen className="text-gray-400 text-xs" />
-                                                <span className="text-sm font-medium text-gray-700">{area}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    {Array.isArray(journalData.areasCovered) && journalData.areasCovered.length > 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {journalData.areasCovered.map((area, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 border-l-2 border-[#12b48b] hover:bg-gray-100 transition-colors">
+                                                    <FaBookOpen className="text-gray-400 text-xs" />
+                                                    <span className="text-sm font-medium text-gray-700">{area}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-600">
+                                            <FaBookOpen className="text-4xl text-gray-300 mx-auto mb-2" />
+                                            <p>No subject areas have been defined for this journal yet.</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -227,7 +235,7 @@ const JournalInner = ({ journalData }) => {
                             </div>  </>}
 
                         {/* Submit Manuscript Button */}
-                        <Link to="/submit-manuscript" className="block w-full bg-gradient-to-r from-[#204066] to-[#1a3352] hover:from-[#12b48b] hover:to-[#0e9673] text-white hover:text-white font-bold py-5 px-4 text-center uppercase tracking-wider transition-all duration-300 shadow-xl hover:shadow-2xl rounded-lg transform hover:scale-105">
+                        <Link to={getSubmitManuscriptUrl()} className="block w-full bg-gradient-to-r from-[#204066] to-[#1a3352] hover:from-[#12b48b] hover:to-[#0e9673] text-white hover:text-white font-bold py-5 px-4 text-center uppercase tracking-wider transition-all duration-300 shadow-xl hover:shadow-2xl rounded-lg transform hover:scale-105">
                             Submit Your Manuscript →
                         </Link>
 

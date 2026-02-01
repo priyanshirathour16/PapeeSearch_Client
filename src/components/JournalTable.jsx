@@ -5,27 +5,17 @@ import {
   Space,
   Tooltip,
   Modal,
-  List,
-  Avatar,
   message,
 } from "antd";
-import { FaEye, FaUserTie, FaTrash } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { FaEye, FaTrash } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
 import { journalApi } from "../services/api";
 
 const JournalTable = ({ journals, onDelete }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentApps, setCurrentApps] = useState([]);
-  const [modalTitle, setModalTitle] = useState("Editor Applications");
+  const navigate = useNavigate();
   const [loadingDeleteId, setLoadingDeleteId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const showApplications = (applications, journalTitle) => {
-    setCurrentApps(applications || []);
-    setModalTitle(`Applications for ${journalTitle}`);
-    setIsModalOpen(true);
-  };
 
   const openDeleteConfirm = (journalId) => {
     setDeleteConfirmId(journalId);
@@ -61,12 +51,8 @@ const JournalTable = ({ journals, onDelete }) => {
     }
   };
 
-  const handleOk = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
+  const handleViewEditorApplications = (journalEncryptedId) => {
+    navigate(`/dashboard/journal-editor-applications/${journalEncryptedId}`);
   };
 
   const columns = [
@@ -110,15 +96,13 @@ const JournalTable = ({ journals, onDelete }) => {
             {record.editorApplications?.length || 0}
           </span>
           {record.editorApplications?.length > 0 && (
-            <Tooltip title="View Applicants">
+            <Tooltip title="View Editor Applications">
               <Button
                 type="text"
                 icon={<FaEye className="text-blue-500" />}
                 shape="circle"
                 className="hover:bg-blue-50"
-                onClick={() =>
-                  showApplications(record.editorApplications, record.title)
-                }
+                onClick={() => handleViewEditorApplications(record.encryptedId)}
               />
             </Tooltip>
           )}
@@ -166,47 +150,6 @@ const JournalTable = ({ journals, onDelete }) => {
         rowKey="id"
         pagination={{ pageSize: 10 }}
       />
-
-      <Modal
-        title={modalTitle}
-        open={isModalOpen}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        footer={[
-          <Button key="close" onClick={handleCancel}>
-            Close
-          </Button>,
-        ]}
-      >
-        {currentApps.length > 0 ? (
-          <List
-            itemLayout="horizontal"
-            dataSource={currentApps}
-            renderItem={(item) => (
-              <List.Item>
-                <List.Item.Meta
-                  avatar={
-                    <Avatar
-                      icon={<FaUserTie />}
-                      style={{ backgroundColor: "#12b48b" }}
-                    />
-                  }
-                  title={
-                    <span className="capitalize">
-                      {item.firstName} {item.lastName}
-                    </span>
-                  }
-                  description="Applicant"
-                />
-              </List.Item>
-            )}
-          />
-        ) : (
-          <div className="text-center py-4 text-gray-500">
-            No applications found.
-          </div>
-        )}
-      </Modal>
 
       <Modal
         title="Delete Journal"

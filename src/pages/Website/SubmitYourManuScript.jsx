@@ -34,11 +34,11 @@ const SubmitYourManuScript = ({ isDashboard }) => {
     return (
         <div className="bg-white py-8">
             <div className="container mx-auto px-4">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className={`grid grid-cols-1 ${!isDashboard ? 'lg:grid-cols-4' : ''} gap-8`}>
 
                     {/* LEFT COLUMN - Form */}
-                    <div className="lg:col-span-3">
-                        <div className="content-inner form-panel">
+                    <div className={!isDashboard ? 'lg:col-span-3' : 'w-full max-w-4xl'}>
+                        <div className="content-inner form-panel overflow-hidden">
                             <h1 className="text-2xl text-[#12b48b] font-normal mb-6 relative inline-block">
                                 Submit a Manuscript
                             </h1>
@@ -47,10 +47,12 @@ const SubmitYourManuScript = ({ isDashboard }) => {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN - Sidebar */}
-                    <div className="lg:col-span-1">
-                        <NewsWidget />
-                    </div>
+                    {/* RIGHT COLUMN - Sidebar (hidden in dashboard) */}
+                    {!isDashboard && (
+                        <div className="lg:col-span-1">
+                            <NewsWidget />
+                        </div>
+                    )}
 
                 </div>
             </div>

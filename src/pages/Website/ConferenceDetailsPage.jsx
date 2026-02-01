@@ -86,8 +86,23 @@ const ConferenceDetailsPage = () => {
     const [isAbstractModalOpen, setIsAbstractModalOpen] = useState(false);
     const [submittingAbstract, setSubmittingAbstract] = useState(false);
     const [error, setError] = useState(null);
+    const [loggedInUser, setLoggedInUser] = useState(null);
 
     const id = decryptId(encryptedId);
+
+    // Check for logged-in user
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        if (token && userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                setLoggedInUser(user);
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+            }
+        }
+    }, []);
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -102,7 +117,7 @@ const ConferenceDetailsPage = () => {
                 if (response.data && response.data.success) {
                     const confData = response.data.success;
                     setConferenceData(confData);
-                    
+
                     // Fetch journal details if journal_id exists
                     if (confData.conference?.journal_id) {
                         try {
@@ -287,18 +302,30 @@ const ConferenceDetailsPage = () => {
 
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
-                        <div className="lg:w-3/4">
-                            {/* Breadcrumbs */}
-                            <div className="flex items-center gap-2 text-orange-400 text-sm mb-4">
-                                <Link to="/" className="hover:underline">Home</Link>
-                                <span>&gt;</span>
-                                {journal && (
-                                    <>
-                                        <span className="truncate max-w-md">{journal.journal_name}</span>
-                                        <span>&gt;</span>
-                                    </>
+                        <div className="w-full">
+                            {/* Breadcrumbs and Welcome Message Row */}
+                            <div className="flex items-center justify-between mb-4">
+                                {/* Breadcrumbs */}
+                                <div className="flex items-center gap-2 text-orange-400 text-sm">
+                                    <Link to="/" className="hover:underline">Home</Link>
+                                    <span>&gt;</span>
+                                    {journal && (
+                                        <>
+                                            <span className="truncate max-w-md">{journal.journal_name}</span>
+                                            <span>&gt;</span>
+                                        </>
+                                    )}
+                                    <span className="truncate max-w-md">{conference?.name}</span>
+                                </div>
+
+                                {/* Welcome Message for Logged-in Users - Simple Text */}
+                                {loggedInUser && (loggedInUser.firstName || loggedInUser.username) && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <UserOutlined className="text-orange-400" />
+                                        <span className="text-gray-300">Welcome,</span>
+                                        <span className="text-white font-medium">{loggedInUser.firstName || loggedInUser.username}</span>
+                                    </div>
                                 )}
-                                <span className="truncate max-w-md">{conference?.name}</span>
                             </div>
 
                             {/* Organized By Badge */}
@@ -322,14 +349,14 @@ const ConferenceDetailsPage = () => {
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-4 mt-6">
-                                <Button
+                                {/* <Button
                                     type="primary"
                                     size="large"
                                     className="bg-[#204066] hover:bg-[#0b1c2e] border-none px-8 h-12 text-lg font-semibold rounded-md flex items-center gap-2"
                                     onClick={() => setIsRegistrationModalOpen(true)}
                                 >
                                     Register Now <ArrowRightOutlined />
-                                </Button>
+                                </Button> */}
 
                                 {/* Submit Abstract Button for Logged-in Users */}
                                 {localStorage.getItem('token') && getRole() === 'author' && (
