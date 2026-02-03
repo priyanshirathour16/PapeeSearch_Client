@@ -25,7 +25,7 @@ export const useAbstractsQuery = (conferenceId, enabled = true) => {
 };
 
 /**
- * Custom hook for fetching editors list
+ * Custom hook for fetching editors list (Legacy - all approved editors)
  */
 export const useEditorsQuery = (enabled = true) => {
     return useQuery({
@@ -39,6 +39,44 @@ export const useEditorsQuery = (enabled = true) => {
         },
         enabled,
         staleTime: 5 * 60 * 1000, // Editors list is stable, cache for 5 minutes
+    });
+};
+
+/**
+ * Custom hook for fetching general editors (Stage 1 abstract assignment)
+ * These are approved, active editors NOT linked to any conference
+ */
+export const useGeneralEditorsQuery = (enabled = true) => {
+    return useQuery({
+        queryKey: ['generalEditors'],
+        queryFn: async () => {
+            const response = await editorApi.getGeneralEditors();
+            if (response.data && response.data.success) {
+                return response.data.data;
+            }
+            return [];
+        },
+        enabled,
+        staleTime: 5 * 60 * 1000,
+    });
+};
+
+/**
+ * Custom hook for fetching conference-specific editors (Stage 2 abstract assignment)
+ * These are approved, active editors linked to the specific conference
+ */
+export const useConferenceEditorsQuery = (conferenceId, enabled = true) => {
+    return useQuery({
+        queryKey: ['conferenceEditors', conferenceId],
+        queryFn: async () => {
+            const response = await editorApi.getConferenceEditors(conferenceId);
+            if (response.data && response.data.success) {
+                return response.data.data;
+            }
+            return [];
+        },
+        enabled: enabled && !!conferenceId,
+        staleTime: 5 * 60 * 1000,
     });
 };
 

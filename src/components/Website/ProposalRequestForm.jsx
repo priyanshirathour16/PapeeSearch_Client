@@ -457,9 +457,9 @@ const ProposalRequestForm = () => {
                     icon: 'success',
                     title: 'Submitted Successfully!',
                     html: `
-                        <p>Your proposal request has been submitted.</p>
-                        <p class="mt-2"><strong>Proposal ID:</strong> ${response.data.proposalId}</p>
-                        <p class="text-sm text-gray-600 mt-2">Our team will reach out to you at the earliest.</p>
+                        <p class="text-center">Your proposal request has been submitted.</p>
+                        <p class="mt-2 text-center"><strong>Proposal ID:</strong> ${response.data.proposalId}</p>
+                        <p class="text-sm text-gray-600 mt-2 text-center">Our team will reach out to you at the earliest.</p>
                     `,
                     confirmButtonColor: '#12b48b',
                 });
@@ -775,13 +775,9 @@ const ProposalRequestForm = () => {
                             </div>
                             <FileInput
                                 accept=".pdf,.jpg,.jpeg,.png"
-                                helpText="Allowed: PDF, JPG, PNG | Maximum: 5 MB"
-                                onChange={handleFileChange}
-                                file={attachmentFile}
-                                error={fileError}
-                                onRemove={handleFileRemove}
-                                onView={handleFileView}
-                                fileInputRef={fileInputRef}
+                                helpText="Allowed only PDF/JPG/PNG [ Maximum 5 Mb ]*"
+                                onChange={(e) => setAttachmentFile(e.target.files[0])}
+                                fileName={attachmentFile?.name}
                             />
                         </div>
                     </div>

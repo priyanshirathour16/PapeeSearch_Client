@@ -13,7 +13,7 @@ const SubmitAbstractModal = ({ isOpen, onClose, conferenceId }) => {
     const handleSubmit = async (values) => {
         // values.abstractFile is now an array of files due to getValueFromEvent
         if (!values.abstractFile || values.abstractFile.length === 0) {
-            message.error("Please upload your abstract file (PDF).");
+            message.error("Please upload your abstract file (DOC/DOCX).");
             return;
         }
 
@@ -61,7 +61,7 @@ const SubmitAbstractModal = ({ isOpen, onClose, conferenceId }) => {
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        navigate('/dashboard/abstract-submission');
+                        navigate('/dashboard/conference/full-paper-submission');
                     });
                 }, 300);
             } else {
@@ -101,7 +101,7 @@ const SubmitAbstractModal = ({ isOpen, onClose, conferenceId }) => {
                 onFinish={handleSubmit}
             >
                 <Form.Item
-                    label="Upload Abstract (PDF)"
+                    label="Upload Abstract (DOC/DOCX)"
                     name="abstractFile"
                     getValueFromEvent={(e) => {
                         if (Array.isArray(e)) {
@@ -109,18 +109,19 @@ const SubmitAbstractModal = ({ isOpen, onClose, conferenceId }) => {
                         }
                         return e && e.fileList;
                     }}
-                    rules={[{ required: true, message: 'Please upload a PDF file' }]}
+                    rules={[{ required: true, message: 'Please upload a DOC or DOCX file' }]}
                 >
                     <Upload
                         beforeUpload={(file) => {
-                            const isPdf = file.type === 'application/pdf';
-                            if (!isPdf) {
-                                message.error('You can only upload PDF files!');
+                            const isDoc = file.type === 'application/msword' ||
+                                file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                            if (!isDoc) {
+                                message.error('You can only upload DOC or DOCX files!');
                             }
                             return false; // Prevent auto upload
                         }}
                         maxCount={1}
-                        accept=".pdf"
+                        accept=".doc,.docx"
                     >
                         <Button icon={<UploadOutlined />}>Click to Upload</Button>
                     </Upload>

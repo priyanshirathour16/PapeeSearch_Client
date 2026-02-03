@@ -75,6 +75,8 @@ const EditorManuscriptDetails = lazy(() => import('./pages/Editor/EditorManuscri
 const FullPaperSubmission = lazy(() => import('./pages/Author/FullPaperSubmission'));
 const JournalEditorApplications = lazy(() => import('./pages/Admin/JournalEditorApplications'));
 const ManageSubadmins = lazy(() => import('./pages/Admin/ManageSubadmins'));
+const ProposalRequestList = lazy(() => import('./pages/Admin/ProposalRequestList'));
+const ProposalRequestDetails = lazy(() => import('./pages/Admin/ProposalRequestDetails'));
 function App() {
   return (
     <Router>
@@ -144,6 +146,8 @@ function App() {
               <Route path="manuscripts/:id" element={<ManuscriptDetails />} />
               <Route path="manuscripts/:id/copyright" element={<CopyrightForm viewOnly={true} />} />
               <Route path="contact-us" element={<AdminContactList />} />
+              <Route path="proposal-requests" element={<ProposalRequestList />} />
+              <Route path="proposal-requests/:id" element={<ProposalRequestDetails />} />
               <Route path="add-conference" element={<AddConference />} />
               <Route path="view-submitter-publications" element={<ViewSubmitterPublications />} />
               <Route path="view-submitter-publications/:id" element={<SubmitterPublicationDetails />} />

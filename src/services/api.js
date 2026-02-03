@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
-  // baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
+  // baseURL: "http://localhost:5000/api",
+  baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
 });
 
 // Only push visitors to /unauthorized when they are on a protected area (dashboard/admin)
@@ -212,6 +212,33 @@ export const conferenceTemplateApi = {
   delete: (id) => api.delete(`/conferences/template/${id}`),
 };
 
+// Editor-Conference Relationship API
+export const editorConferenceApi = {
+  // Get all editors for a specific conference
+  getEditorsByConference: (conferenceId) =>
+    api.get(`/conferences/${conferenceId}/editors`),
+
+  // Get primary editor for a conference
+  getPrimaryEditor: (conferenceId) =>
+    api.get(`/conferences/${conferenceId}/editors/primary`),
+
+  // Get all conferences for a specific editor
+  getConferencesByEditor: (editorId) =>
+    api.get(`/conferences/editor/${editorId}/conferences`),
+
+  // Manually assign editor to conference (admin)
+  assignEditor: (conferenceId, editorId, data) =>
+    api.post(`/conferences/${conferenceId}/editors/${editorId}`, data),
+
+  // Update editor role/primary status (admin)
+  updateEditorRole: (conferenceId, editorId, data) =>
+    api.patch(`/conferences/${conferenceId}/editors/${editorId}`, data),
+
+  // Remove editor from conference (admin)
+  removeEditor: (conferenceId, editorId) =>
+    api.delete(`/conferences/${conferenceId}/editors/${editorId}`),
+};
+
 export const copyrightApi = {
   getActiveTemplate: () => api.get("/copyright/template/active"),
   getManuscript: (manuscriptId) =>
@@ -289,6 +316,38 @@ export const abstractSubmissionApi = {
 // API 2: Get available editors (Admin)
 export const editorApi = {
   getEditors: () => api.get("/editor-applications/editors"),
+  // Stage 1: Get general editors (not linked to any conference)
+  getGeneralEditors: () => api.get("/editor-manuscripts/editors/general"),
+  // Stage 2: Get conference-specific editors
+  getConferenceEditors: (conferenceId) => api.get(`/editor-manuscripts/editors/conference/${conferenceId}`),
+};
+
+// Full Paper Copyright API
+export const fullPaperCopyrightApi = {
+  // Get active copyright template
+  getActiveTemplate: () => api.get("/full-paper-copyright/template/active"),
+
+  // Get abstract details for copyright form
+  getAbstract: (abstractId) => api.get(`/full-paper-copyright/abstract/${abstractId}`),
+
+  // Submit full paper with copyright
+  submitWithCopyright: (abstractId, formData) => {
+    const headers = { "Content-Type": "multipart/form-data" };
+    return api.post(`/full-paper-copyright/submit/${abstractId}`, formData, { headers });
+  },
+
+  // Submit copyright only (when full paper file already exists)
+  submitCopyrightOnly: (abstractId, fullPaperFileId, copyrightData) =>
+    api.post(`/full-paper-copyright/submit-copyright-only/${abstractId}`, {
+      fullPaperFileId,
+      copyrightData
+    }),
+
+  // Get copyright submission for an abstract
+  getSubmission: (abstractId) => api.get(`/full-paper-copyright/submission/${abstractId}`),
+
+  // Check if copyright exists for an abstract
+  checkExists: (abstractId) => api.get(`/full-paper-copyright/check/${abstractId}`),
 };
 
 // Proposal Request API
