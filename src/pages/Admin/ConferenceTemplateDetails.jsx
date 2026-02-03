@@ -12,6 +12,7 @@ import { conferenceTemplateApi } from '../../services/api';
 import { ImageURl } from '../../services/serviceApi';
 import { decryptId } from '../../utils/crypto';
 import SubmittedAbstractsModal from '../../components/SubmittedAbstractsModal';
+import ConferenceEditors from '../../components/Conference/ConferenceEditors';
 import moment from 'moment';
 
 const { Title, Text, Paragraph } = Typography;
@@ -311,6 +312,15 @@ const ConferenceTemplateDetails = () => {
 
                     {/* Right Column */}
                     <Col xs={24} lg={7}>
+                        {/* Conference Editors */}
+                        <Card
+                            title={<Space><TeamOutlined className="text-indigo-500" />Assigned Editors</Space>}
+                            size="small"
+                            className="mb-4 shadow-sm border-t-2 border-indigo-500"
+                        >
+                            <ConferenceEditors conferenceId={id} />
+                        </Card>
+
                         {/* Gallery */}
                         <Card title="Gallery" size="small" className="mb-4 shadow-sm">
                             <div className="grid grid-cols-2 gap-2">

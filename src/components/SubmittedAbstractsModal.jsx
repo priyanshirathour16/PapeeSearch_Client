@@ -8,7 +8,8 @@ import FormRenderer from './DynamicForm/FormRenderer';
 import { useReactToPrint } from 'react-to-print';
 import {
     useAbstractsQuery,
-    useEditorsQuery,
+    useGeneralEditorsQuery,
+    useConferenceEditorsQuery,
     useAssignEditorMutation,
     useAssignConferenceEditorMutation,
     useAdminDecisionMutation
@@ -27,14 +28,13 @@ const STATUS_COLORS = {
     'Rejected': 'red',
 };
 
-// Status stages for timeline
+// Status stages for timeline (simplified - conference editor acceptance is final)
 const STATUS_STAGES = [
     { key: 'Submitted', label: 'Submitted', icon: <FileTextOutlined /> },
     { key: 'Assigned to Editor', label: 'Assigned to Editor', icon: <UserOutlined /> },
     { key: 'Reviewed by Editor', label: 'Reviewed by Editor', icon: <CheckCircleOutlined /> },
     { key: 'Assigned to Conference Editor', label: 'Assigned to Conf. Editor', icon: <UserOutlined /> },
-    { key: 'Reviewed by Conference Editor', label: 'Reviewed by Conf. Editor', icon: <CheckCircleOutlined /> },
-    { key: 'Accepted', label: 'Accepted', icon: <CheckCircleOutlined /> },
+    { key: 'Accepted', label: 'Accepted (Final)', icon: <CheckCircleOutlined /> },
 ];
 
 const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName }) => {
@@ -46,7 +46,10 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
         isFetching
     } = useAbstractsQuery(conferenceId, open);
 
-    const { data: editors = [] } = useEditorsQuery(open);
+    // Stage 1: General editors (not linked to any conference)
+    const { data: generalEditors = [] } = useGeneralEditorsQuery(open);
+    // Stage 2: Conference-specific editors (linked to this conference)
+    const { data: conferenceEditors = [] } = useConferenceEditorsQuery(conferenceId, open);
 
     // Mutation hooks
     const assignEditorMutation = useAssignEditorMutation(conferenceId);
@@ -142,9 +145,16 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
         }
     };
 
-    const editorOptions = editors.map((editor) => ({
+    // Stage 1: General editors options (not linked to any conference)
+    const generalEditorOptions = generalEditors.map((editor) => ({
         value: editor.id,
-        label: `${editor.name} (${editor.specialization})`,
+        label: `${editor.name} (${editor.specialization || 'N/A'})`,
+    }));
+
+    // Stage 2: Conference-specific editor options
+    const conferenceEditorOptions = conferenceEditors.map((editor) => ({
+        value: editor.id,
+        label: `${editor.name} - ${editor.role}${editor.is_primary ? ' ★' : ''} (${editor.specialization || 'N/A'})`,
     }));
 
     const renderComments = (record) => {
@@ -198,7 +208,7 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
                         size="small"
                         value={selectedEditor[record.id] || undefined}
                         onChange={(value) => setSelectedEditor((prev) => ({ ...prev, [record.id]: value }))}
-                        options={editorOptions}
+                        options={generalEditorOptions}
                         allowClear
                     />
                     <Popconfirm
@@ -244,7 +254,7 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
                         size="small"
                         value={selectedConfEditor[record.id] || undefined}
                         onChange={(value) => setSelectedConfEditor((prev) => ({ ...prev, [record.id]: value }))}
-                        options={editorOptions}
+                        options={conferenceEditorOptions}
                         allowClear
                     />
                     <Popconfirm
@@ -280,32 +290,8 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
             );
         }
 
-        // Stage 3: Reviewed by Conference Editor → Admin Final Decision
-        if (status === 'Reviewed by Conference Editor') {
-            return (
-                <Space size="small">
-                    <Button
-                        type="primary"
-                        size="small"
-                        icon={<FaCheck />}
-                        onClick={() => openFinalDecisionModal(record.id, 'accept', record)}
-                        className="bg-green-600 hover:bg-green-700 border-none flex items-center gap-1"
-                    >
-                        Accept
-                    </Button>
-                    <Button
-                        type="primary"
-                        danger
-                        size="small"
-                        icon={<FaTimes />}
-                        onClick={() => openFinalDecisionModal(record.id, 'reject', record)}
-                        className="flex items-center gap-1"
-                    >
-                        Reject
-                    </Button>
-                </Space>
-            );
-        }
+        // Note: 'Reviewed by Conference Editor' status is no longer used
+        // Conference editor acceptance now directly sets status to 'Accepted'
 
         return null;
     };
@@ -456,16 +442,27 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
 
     // Render timeline for abstract status progress
     const renderStatusTimeline = (record) => {
-        const currentIndex = getStageIndex(record.status);
         const isRejected = record.status === 'Rejected';
         const statusTimestamps = record.status_timestamps || {};
+
+        // Determine if conference editor step was skipped
+        // This happens when: status is 'Accepted' AND no conference editor was ever assigned
+        const wasConfEditorSkipped = record.status === 'Accepted' && !record.assigned_conference_editor;
+
+        // Filter STATUS_STAGES based on whether conference editor step was skipped
+        const effectiveStages = wasConfEditorSkipped
+            ? STATUS_STAGES.filter(stage => stage.key !== 'Assigned to Conference Editor')
+            : STATUS_STAGES;
+
+        // Get current stage index from the effective stages array
+        const currentIndex = effectiveStages.findIndex(s => s.key === record.status);
 
         // Statuses where current step is complete and waiting for next assignment
         const completionStatuses = ['Submitted', 'Reviewed by Editor', 'Reviewed by Conference Editor', 'Accepted'];
         // Statuses where someone is assigned and we're waiting for their action
         const waitingForActionStatuses = ['Assigned to Editor', 'Assigned to Conference Editor'];
 
-        const timelineItems = STATUS_STAGES.map((stage, index) => {
+        const timelineItems = effectiveStages.map((stage, index) => {
             let color = 'gray';
             let dot = <ClockCircleOutlined style={{ fontSize: 16, color: '#9ca3af' }} />;
 
@@ -1183,7 +1180,7 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
                                 <Card
                                     title={
                                         <span className="flex items-center gap-2 text-sm">
-                                            
+
                                             Review Progress & Comments
                                         </span>
                                     }
