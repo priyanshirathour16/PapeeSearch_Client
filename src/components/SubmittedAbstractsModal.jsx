@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Modal, Table, Tag, Button, Space, Select, Input, message, Tooltip, Popconfirm, Divider, Timeline, Descriptions, Card } from 'antd';
 import { FaDownload, FaUserEdit, FaCheck, FaTimes, FaFilePdf, FaUser, FaCalendarAlt, FaFileAlt, FaClipboardList } from 'react-icons/fa';
-import { FileTextOutlined, UserOutlined, CommentOutlined, PaperClipOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, SyncOutlined, InfoCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import { FileTextOutlined, UserOutlined, CommentOutlined, PaperClipOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, SyncOutlined, InfoCircleOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { ImageURl } from '../services/serviceApi';
+import { fullPaperCopyrightApi } from '../services/api';
+import FormRenderer from './DynamicForm/FormRenderer';
+import { useReactToPrint } from 'react-to-print';
 import {
     useAbstractsQuery,
     useEditorsQuery,
@@ -57,6 +60,8 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
     const [adminComment, setAdminComment] = useState('');
     const [adminCommentError, setAdminCommentError] = useState('');
     const [detailModal, setDetailModal] = useState({ open: false, record: null });
+    const [copyrightModal, setCopyrightModal] = useState({ open: false, data: null, loading: false });
+    const copyrightPrintRef = React.useRef(null);
 
     // Stage 1: Assign Editor
     const handleAssignEditor = async (abstractId) => {
@@ -314,16 +319,146 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
         setDetailModal({ open: false, record: null });
     };
 
+    // Copyright Modal Functions
+    const openCopyrightModal = async (record) => {
+        setCopyrightModal({ open: true, data: null, loading: true });
+        try {
+            const response = await fullPaperCopyrightApi.getSubmission(record.id);
+            if (response.data && response.data.success) {
+                const { submission, template } = response.data.data;
+
+                // Parse schema if it's a string (backend might return stringified JSON)
+                const schema = typeof template.schema === 'string'
+                    ? JSON.parse(template.schema)
+                    : template.schema;
+
+                // Parse submission_data if it's a string
+                const submissionData = typeof submission.submission_data === 'string'
+                    ? JSON.parse(submission.submission_data)
+                    : submission.submission_data;
+
+                // Extract signatures from submission data
+                const signatures = submissionData?.signatures || {};
+
+                // Ensure authors array has proper structure
+                let authorsArray = submissionData?.authors || [];
+
+                // If authors array is empty or doesn't have proper structure, create from root-level data
+                if (!authorsArray || authorsArray.length === 0) {
+                    authorsArray = [{
+                        full_name: submission.author_name,
+                        name: submission.author_name,
+                        first_name: submission.author_name?.split(' ')[0] || '',
+                        last_name: submission.author_name?.split(' ').slice(1).join(' ') || '',
+                        email: submission.author_email,
+                        designation: submission.author_designation,
+                        institution: submission.author_institution,
+                        address: submission.author_address,
+                        phone: submission.author_phone,
+                        city: '',
+                        state: '',
+                        country: '',
+                        is_corresponding_author: true
+                    }];
+                } else {
+                    // Ensure each author has all required fields
+                    authorsArray = authorsArray.map((author, idx) => ({
+                        full_name: author.full_name || author.name || `Author ${idx + 1}`,
+                        name: author.name || author.full_name || `Author ${idx + 1}`,
+                        first_name: author.first_name || author.full_name?.split(' ')[0] || author.name?.split(' ')[0] || '',
+                        last_name: author.last_name || author.full_name?.split(' ').slice(1).join(' ') || author.name?.split(' ').slice(1).join(' ') || '',
+                        email: author.email || '',
+                        designation: author.designation || '',
+                        institution: author.institution || '',
+                        address: author.address || '',
+                        phone: author.phone || '',
+                        city: author.city || '',
+                        state: author.state || '',
+                        country: author.country || '',
+                        is_corresponding_author: author.is_corresponding_author || idx === 0
+                    }));
+                }
+
+                // Merge root-level submission fields with submission_data for FormRenderer
+                const mergedData = {
+                    ...submissionData, // Fields from submission_data (manuscriptTitle, journalId)
+                    paper_title: submission.paper_title,
+                    conference_name: submission.conference_name,
+                    author_name: submission.author_name,
+                    author_email: submission.author_email,
+                    author_designation: submission.author_designation,
+                    author_institution: submission.author_institution,
+                    author_address: submission.author_address,
+                    author_phone: submission.author_phone,
+                    // Override authors array with proper structure
+                    authors: authorsArray,
+                    // Also provide journal object format if journalId exists
+                    journal: submissionData?.journal || {
+                        id: submissionData?.journalId,
+                        title: submission.conference_name || 'Unknown Journal'
+                    },
+                    // Ensure authors_formatted for display
+                    authors_formatted: authorsArray.map(a => a.name || a.full_name).join(', ')
+                };
+
+                setCopyrightModal({
+                    open: true,
+                    data: {
+                        ...response.data.data,
+                        template: { ...template, schema },
+                        submission: { ...submission, submission_data: submissionData },
+                        mergedData, // Add merged data for FormRenderer
+                        signatures
+                    },
+                    loading: false
+                });
+            } else {
+                message.error('Failed to fetch copyright details');
+                setCopyrightModal({ open: false, data: null, loading: false });
+            }
+        } catch (error) {
+            console.error('Error fetching copyright:', error);
+            message.error(error?.response?.data?.message || 'Failed to fetch copyright details');
+            setCopyrightModal({ open: false, data: null, loading: false });
+        }
+    };
+
+    const closeCopyrightModal = () => {
+        setCopyrightModal({ open: false, data: null, loading: false });
+    };
+
     // Get current stage index for timeline
     const getStageIndex = (status) => {
         if (status === 'Rejected') return -1;
         return STATUS_STAGES.findIndex(s => s.key === status);
     };
 
+    // Helper to render decision badge
+    const renderDecisionBadge = (decision) => {
+        if (!decision) return null;
+        const isAccepted = decision === 'accepted';
+        return (
+            <Tag
+                color={isAccepted ? 'success' : 'error'}
+                className="ml-2 text-xs"
+                style={{ fontSize: '10px', padding: '0 4px', lineHeight: '16px' }}
+            >
+                {isAccepted ? 'ACCEPTED' : 'REJECTED'}
+            </Tag>
+        );
+    };
+
+    // Helper to format timestamp
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return null;
+        return moment(timestamp).format('DD MMM YYYY, hh:mm A');
+    };
+
     // Render timeline for abstract status progress
     const renderStatusTimeline = (record) => {
         const currentIndex = getStageIndex(record.status);
         const isRejected = record.status === 'Rejected';
+        const statusTimestamps = record.status_timestamps || {};
 
         // Statuses where current step is complete and waiting for next assignment
         const completionStatuses = ['Submitted', 'Reviewed by Editor', 'Reviewed by Conference Editor', 'Accepted'];
@@ -367,57 +502,123 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
 
             // Build content for each stage
             let content = null;
+            let decisionBadge = null;
+            let timestamp = null;
+
+            // Stage 0: Submitted
             if (index === 0) {
+                timestamp = record.createdAt;
                 content = (
-                    <div className="text-xs text-gray-500">
-                        {moment(record.createdAt).format('DD MMM YYYY, hh:mm A')}
+                    <div className="text-xs text-gray-500 mt-1">
+                        <FaCalendarAlt className="inline mr-1" style={{ fontSize: '10px' }} />
+                        {formatTimestamp(timestamp)}
                     </div>
                 );
             }
+
+            // Stage 1: Assigned to Editor
             if (index === 1 && record.assigned_editor) {
+                timestamp = record.assigned_editor.assigned_at || statusTimestamps['Assigned to Editor'];
                 content = (
-                    <div className="text-xs text-gray-600">
-                        <span className="font-medium">Editor:</span> {record.assigned_editor.name}
+                    <div className="text-xs text-gray-600 mt-1">
+                        <div><span className="font-medium">Editor:</span> {record.assigned_editor.name}</div>
+                        {timestamp && (
+                            <div className="text-gray-500 mt-0.5">
+                                <FaCalendarAlt className="inline mr-1" style={{ fontSize: '10px' }} />
+                                {formatTimestamp(timestamp)}
+                            </div>
+                        )}
                     </div>
                 );
             }
-            if (index === 2 && record.editor_comment) {
+
+            // Stage 2: Reviewed by Editor
+            if (index === 2 && (record.editor_comment || record.editor_decision)) {
+                decisionBadge = renderDecisionBadge(record.editor_decision);
+                timestamp = record.editor_reviewed_at || statusTimestamps['Reviewed by Editor'];
                 content = (
-                    <div className="mt-1 p-2 bg-blue-50 rounded border border-blue-100 text-xs">
-                        <div className="font-medium text-blue-700 mb-1">
-                            <CommentOutlined className="mr-1" />
-                            Editor Comment:
-                        </div>
-                        <div className="text-gray-700">{record.editor_comment}</div>
+                    <div className="mt-1">
+                        {timestamp && (
+                            <div className="text-xs text-gray-500 mb-1">
+                                <FaCalendarAlt className="inline mr-1" style={{ fontSize: '10px' }} />
+                                {formatTimestamp(timestamp)}
+                            </div>
+                        )}
+                        {record.editor_comment && (
+                            <div className="p-2 bg-blue-50 rounded border border-blue-100 text-xs">
+                                <div className="font-medium text-blue-700 mb-1">
+                                    <CommentOutlined className="mr-1" />
+                                    Editor Comment:
+                                </div>
+                                <div className="text-gray-700">{record.editor_comment}</div>
+                            </div>
+                        )}
                     </div>
                 );
             }
+
+            // Stage 3: Assigned to Conference Editor
             if (index === 3 && record.assigned_conference_editor) {
+                timestamp = record.assigned_conference_editor.assigned_at || statusTimestamps['Assigned to Conference Editor'];
                 content = (
-                    <div className="text-xs text-gray-600">
-                        <span className="font-medium">Conf. Editor:</span> {record.assigned_conference_editor.name}
+                    <div className="text-xs text-gray-600 mt-1">
+                        <div><span className="font-medium">Conf. Editor:</span> {record.assigned_conference_editor.name}</div>
+                        {timestamp && (
+                            <div className="text-gray-500 mt-0.5">
+                                <FaCalendarAlt className="inline mr-1" style={{ fontSize: '10px' }} />
+                                {formatTimestamp(timestamp)}
+                            </div>
+                        )}
                     </div>
                 );
             }
-            if (index === 4 && record.conference_editor_comment) {
+
+            // Stage 4: Reviewed by Conference Editor
+            if (index === 4 && (record.conference_editor_comment || record.conference_editor_decision)) {
+                decisionBadge = renderDecisionBadge(record.conference_editor_decision);
+                timestamp = record.conference_editor_reviewed_at || statusTimestamps['Reviewed by Conference Editor'];
                 content = (
-                    <div className="mt-1 p-2 bg-purple-50 rounded border border-purple-100 text-xs">
-                        <div className="font-medium text-purple-700 mb-1">
-                            <CommentOutlined className="mr-1" />
-                            Conference Editor Comment:
-                        </div>
-                        <div className="text-gray-700">{record.conference_editor_comment}</div>
+                    <div className="mt-1">
+                        {timestamp && (
+                            <div className="text-xs text-gray-500 mb-1">
+                                <FaCalendarAlt className="inline mr-1" style={{ fontSize: '10px' }} />
+                                {formatTimestamp(timestamp)}
+                            </div>
+                        )}
+                        {record.conference_editor_comment && (
+                            <div className="p-2 bg-purple-50 rounded border border-purple-100 text-xs">
+                                <div className="font-medium text-purple-700 mb-1">
+                                    <CommentOutlined className="mr-1" />
+                                    Conference Editor Comment:
+                                </div>
+                                <div className="text-gray-700">{record.conference_editor_comment}</div>
+                            </div>
+                        )}
                     </div>
                 );
             }
-            if (index === 5 && record.admin_final_comment) {
+
+            // Stage 5: Accepted (Admin Final Decision)
+            if (index === 5 && (record.admin_final_comment || record.admin_decision)) {
+                decisionBadge = renderDecisionBadge(record.admin_decision);
+                timestamp = record.admin_reviewed_at || statusTimestamps['Accepted'];
                 content = (
-                    <div className="mt-1 p-2 bg-green-50 rounded border border-green-100 text-xs">
-                        <div className="font-medium text-green-700 mb-1">
-                            <CommentOutlined className="mr-1" />
-                            Admin Final Comment:
-                        </div>
-                        <div className="text-gray-700">{record.admin_final_comment}</div>
+                    <div className="mt-1">
+                        {timestamp && (
+                            <div className="text-xs text-gray-500 mb-1">
+                                <FaCalendarAlt className="inline mr-1" style={{ fontSize: '10px' }} />
+                                {formatTimestamp(timestamp)}
+                            </div>
+                        )}
+                        {record.admin_final_comment && (
+                            <div className="p-2 bg-green-50 rounded border border-green-100 text-xs">
+                                <div className="font-medium text-green-700 mb-1">
+                                    <CommentOutlined className="mr-1" />
+                                    Admin Final Comment:
+                                </div>
+                                <div className="text-gray-700">{record.admin_final_comment}</div>
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -439,8 +640,9 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
                 dot,
                 children: (
                     <div className="pb-2">
-                        <div className={`font-medium ${textClass}`}>
+                        <div className={`font-medium ${textClass} flex items-center flex-wrap`}>
                             {stage.label}
+                            {decisionBadge}
                         </div>
                         {content}
                     </div>
@@ -450,13 +652,37 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
 
         // Add rejection item if rejected
         if (isRejected) {
-            // Find at which stage it was rejected based on comments
-            let rejectionComment = record.admin_final_comment || record.conference_editor_comment || record.editor_comment;
+            // Find at which stage it was rejected based on decisions
+            let rejectionComment = null;
             let rejectedBy = 'Admin';
-            if (record.conference_editor_comment && !record.admin_final_comment) {
+            let rejectionTimestamp = null;
+
+            // Check who rejected it based on the decision field
+            if (record.admin_decision === 'rejected') {
+                rejectionComment = record.admin_final_comment;
+                rejectedBy = 'Admin';
+                rejectionTimestamp = record.admin_reviewed_at;
+            } else if (record.conference_editor_decision === 'rejected') {
+                rejectionComment = record.conference_editor_comment;
                 rejectedBy = record.assigned_conference_editor?.name || 'Conference Editor';
-            } else if (record.editor_comment && !record.conference_editor_comment) {
+                rejectionTimestamp = record.conference_editor_reviewed_at;
+            } else if (record.editor_decision === 'rejected') {
+                rejectionComment = record.editor_comment;
                 rejectedBy = record.assigned_editor?.name || 'Editor';
+                rejectionTimestamp = record.editor_reviewed_at;
+            } else {
+                // Fallback to old logic if decisions not available
+                rejectionComment = record.admin_final_comment || record.conference_editor_comment || record.editor_comment;
+                if (record.conference_editor_comment && !record.admin_final_comment) {
+                    rejectedBy = record.assigned_conference_editor?.name || 'Conference Editor';
+                } else if (record.editor_comment && !record.conference_editor_comment) {
+                    rejectedBy = record.assigned_editor?.name || 'Editor';
+                }
+            }
+
+            // Get rejection timestamp from status history if not found
+            if (!rejectionTimestamp && statusTimestamps['Rejected']) {
+                rejectionTimestamp = statusTimestamps['Rejected'];
             }
 
             timelineItems.push({
@@ -465,6 +691,12 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
                 children: (
                     <div className="pb-2">
                         <div className="font-medium text-red-600">Rejected</div>
+                        {rejectionTimestamp && (
+                            <div className="text-xs text-gray-500 mt-1">
+                                <FaCalendarAlt className="inline mr-1" style={{ fontSize: '10px' }} />
+                                {formatTimestamp(rejectionTimestamp)}
+                            </div>
+                        )}
                         {rejectionComment && (
                             <div className="mt-1 p-2 bg-red-50 rounded border border-red-100 text-xs">
                                 <div className="font-medium text-red-700 mb-1">
@@ -590,6 +822,32 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
             },
         },
         {
+            title: 'Copyright',
+            key: 'copyright',
+            width: 120,
+            render: (_, record) => {
+                if (record.copyright_submitted) {
+                    return (
+                        <Tooltip title={`Signed by: ${record.copyright_submission?.author_name || 'Author'}`}>
+                            <Button
+                                size="small"
+                                type="primary"
+                                icon={<SafetyCertificateOutlined />}
+                                onClick={() => openCopyrightModal(record)}
+                                className="bg-[#12b48b] hover:bg-[#0e9a77] border-none text-xs"
+                            >
+                                View
+                            </Button>
+                        </Tooltip>
+                    );
+                }
+                if (record.status === 'Accepted') {
+                    return <Tag color="warning" className="text-xs">Pending</Tag>;
+                }
+                return <span className="text-gray-400 text-xs">N/A</span>;
+            },
+        },
+        {
             title: 'Admin Action',
             key: 'action',
             width: 230,
@@ -647,7 +905,7 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
                     pagination={{ pageSize: 5 }}
                     locale={{ emptyText: 'No abstract submissions found for this conference' }}
                     size="small"
-                    scroll={{ x: 1200 }}
+                    scroll={{ x: 1320 }}
                 />
             </Modal>
 
@@ -938,6 +1196,81 @@ const SubmittedAbstractsModal = ({ open, onCancel, conferenceId, conferenceName 
                                 </Card>
                             </div>
                         </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Copyright View Modal */}
+            <Modal
+                title={
+                    <div className="flex items-center gap-2">
+                        <SafetyCertificateOutlined className="text-[#12b48b]" />
+                        <span>Copyright Agreement</span>
+                    </div>
+                }
+                open={copyrightModal.open}
+                onCancel={closeCopyrightModal}
+                footer={[
+                    <Button
+                        key="print"
+                        onClick={useReactToPrint({
+                            contentRef: copyrightPrintRef,
+                            documentTitle: `Copyright_Abstract_${copyrightModal.data?.submission?.abstract_id || 'Agreement'}`,
+                        })}
+                        disabled={!copyrightModal.data}
+                    >
+                        Print / Save as PDF
+                    </Button>,
+                    <Button key="close" onClick={closeCopyrightModal}>
+                        Close
+                    </Button>
+                ]}
+                width={1100}
+                centered={false}
+                style={{ top: 10, paddingBottom: 10 }}
+                destroyOnClose
+                zIndex={1100}
+                styles={{ body: { overflowY: 'auto', padding: '24px' } }}
+            >
+                {copyrightModal.loading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="text-gray-500">Loading copyright details...</div>
+                    </div>
+                ) : copyrightModal.data ? (
+                    <div>
+                        {/* Copyright Information - Not printed */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg no-print">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <span className="text-xs text-gray-500 block mb-1">Submission Date</span>
+                                    <span className="text-sm font-medium">
+                                        {moment(copyrightModal.data.submission.createdAt).format('DD MMM YYYY, hh:mm A')}
+                                    </span>
+                                </div>
+                                {copyrightModal.data.submitter && (
+                                    <div>
+                                        <span className="text-xs text-gray-500 block mb-1">Submitted By</span>
+                                        <span className="text-sm font-medium">
+                                            {copyrightModal.data.submitter.name} ({copyrightModal.data.submitter.email})
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Render Copyright Form - This will be printed */}
+                        <div ref={copyrightPrintRef} className="bg-white p-8 print:p-12 font-calibri text-black leading-relaxed">
+                            <FormRenderer
+                                schema={copyrightModal.data.template.schema}
+                                data={copyrightModal.data.mergedData}
+                                signatures={copyrightModal.data.signatures}
+                                onSign={null}
+                            />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="text-gray-500">No copyright data available</div>
                     </div>
                 )}
             </Modal>

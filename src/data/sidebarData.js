@@ -1,4 +1,4 @@
-import { FaBook, FaEye, FaNewspaper, FaFileAlt, FaEnvelope, FaUserShield, FaFileContract } from 'react-icons/fa';
+import { FaBook, FaEye, FaNewspaper, FaFileAlt, FaEnvelope, FaUserShield, FaFileContract, FaClipboardList } from 'react-icons/fa';
 
 export const sidebarData = [
     {
@@ -38,12 +38,6 @@ export const sidebarData = [
         title: 'Manage User',
         icon: FaBook,
         path: '/dashboard/manage-users',
-        access: ["admin", "subadmin"]
-    },
-    {
-        title: 'Submitted Manuscript',
-        icon: FaFileAlt,
-        path: '/dashboard/manuscripts',
         access: ["admin", "subadmin"]
     },
     {
@@ -94,6 +88,12 @@ export const sidebarData = [
         title: 'Contact Us Inquiries',
         icon: FaEnvelope,
         path: '/dashboard/contact-us',
+        access: ["admin", "subadmin"]
+    },
+    {
+        title: 'Proposal Requests',
+        icon: FaClipboardList,
+        path: '/dashboard/proposal-requests',
         access: ["admin", "subadmin"]
     },
 

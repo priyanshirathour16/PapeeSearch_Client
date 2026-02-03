@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Table, Button, message, Space, Tooltip, Tag } from 'antd';
-import { FaEye } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { FaEye, FaArrowLeft } from 'react-icons/fa';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { manuscriptApi } from '../../services/api';
 
 
@@ -10,22 +10,32 @@ import { manuscriptApi } from '../../services/api';
 const ManuscriptList = () => {
     const [manuscripts, setManuscripts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [journalName, setJournalName] = useState('');
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const journalId = searchParams.get('journalId');
     const pollingIntervalRef = useRef(null);
 
     const fetchManuscripts = useCallback(async (showLoading = true) => {
         if (showLoading) setLoading(true);
         try {
-            const response = await manuscriptApi.getAll();
+            const params = journalId ? { journalId } : {};
+            const response = await manuscriptApi.getAll(params);
             // Expected response structure: { message: "...", data: [...] }
-            setManuscripts(response.data.data);
+            const manuscriptsData = response.data.data;
+            setManuscripts(manuscriptsData);
+
+            // Set journal name from first manuscript if filtering by journal
+            if (journalId && manuscriptsData.length > 0 && manuscriptsData[0].journal?.title) {
+                setJournalName(manuscriptsData[0].journal.title);
+            }
         } catch (error) {
             console.error("Failed to fetch manuscripts:", error);
             if (showLoading) message.error("Failed to load manuscripts.");
         } finally {
             if (showLoading) setLoading(false);
         }
-    }, []);
+    }, [journalId]);
 
     // Initial fetch
     useEffect(() => {
@@ -157,7 +167,9 @@ const ManuscriptList = () => {
                         <Button
                             type="text"
                             icon={<FaEye className="text-gray-600 text-lg" />}
-                            onClick={() => navigate(`/dashboard/manuscripts/${record.manuscript_id}`)}
+                            onClick={() => navigate(`/dashboard/manuscripts/${record.manuscript_id}`, {
+                                state: { journalId }
+                            })}
                         />
                     </Tooltip>
                 </Space>
@@ -169,7 +181,23 @@ const ManuscriptList = () => {
 
 
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">Manage Manuscripts </h1>
+            <div className="flex items-center gap-4 mb-6">
+                {journalId && (
+                    <Button
+                        type="text"
+                        icon={<FaArrowLeft />}
+                        onClick={() => navigate('/dashboard/view-journal')}
+                        className="flex items-center"
+                    >
+                        Back to Journals
+                    </Button>
+                )}
+                <h1 className="text-2xl font-bold text-gray-800">
+                    {journalId && journalName
+                        ? `Manuscripts for ${journalName}`
+                        : 'Manage Manuscripts'}
+                </h1>
+            </div>
 
             <div className="bg-white rounded-lg shadow overflow-hidden p-4">
                 <Table

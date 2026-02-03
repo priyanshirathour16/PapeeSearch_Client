@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
-  // baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
+  // baseURL: "http://localhost:5000/api",
+  baseURL: "https://rapidcollaborate.in/elkjournals_backend/api",
 });
 
 // Only push visitors to /unauthorized when they are on a protected area (dashboard/admin)
@@ -289,6 +289,34 @@ export const abstractSubmissionApi = {
 // API 2: Get available editors (Admin)
 export const editorApi = {
   getEditors: () => api.get("/editor-applications/editors"),
+};
+
+// Full Paper Copyright API
+export const fullPaperCopyrightApi = {
+  // Get active copyright template
+  getActiveTemplate: () => api.get("/full-paper-copyright/template/active"),
+
+  // Get abstract details for copyright form
+  getAbstract: (abstractId) => api.get(`/full-paper-copyright/abstract/${abstractId}`),
+
+  // Submit full paper with copyright
+  submitWithCopyright: (abstractId, formData) => {
+    const headers = { "Content-Type": "multipart/form-data" };
+    return api.post(`/full-paper-copyright/submit/${abstractId}`, formData, { headers });
+  },
+
+  // Submit copyright only (when full paper file already exists)
+  submitCopyrightOnly: (abstractId, fullPaperFileId, copyrightData) =>
+    api.post(`/full-paper-copyright/submit-copyright-only/${abstractId}`, {
+      fullPaperFileId,
+      copyrightData
+    }),
+
+  // Get copyright submission for an abstract
+  getSubmission: (abstractId) => api.get(`/full-paper-copyright/submission/${abstractId}`),
+
+  // Check if copyright exists for an abstract
+  checkExists: (abstractId) => api.get(`/full-paper-copyright/check/${abstractId}`),
 };
 
 // Proposal Request API

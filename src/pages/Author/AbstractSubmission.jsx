@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Table, Button, Space, Card, Tag, message } from 'antd';
 import { FaFileAlt, FaDownload } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -10,24 +10,21 @@ const AbstractSubmission = () => {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const pollingIntervalRef = useRef(null);
 
-    useEffect(() => {
-        fetchSubmissions();
-    }, []);
-
-    const fetchSubmissions = async () => {
-        setLoading(true);
+    const fetchSubmissions = useCallback(async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         try {
             const userStr = localStorage.getItem('user');
             if (!userStr) {
-                message.error('User information not found. Please login again.');
+                if (showLoading) message.error('User information not found. Please login again.');
                 return;
             }
             const user = JSON.parse(userStr);
             const userId = user.id || user.userId;
 
             if (!userId) {
-                message.error('Invalid user data.');
+                if (showLoading) message.error('Invalid user data.');
                 return;
             }
 
@@ -41,11 +38,31 @@ const AbstractSubmission = () => {
             }
         } catch (error) {
             console.error('Error fetching submissions:', error);
-            message.error('Failed to fetch abstract submissions');
+            if (showLoading) message.error('Failed to fetch abstract submissions');
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
-    };
+    }, []);
+
+    // Initial fetch
+    useEffect(() => {
+        fetchSubmissions();
+    }, [fetchSubmissions]);
+
+    // Polling for live data updates (every 10 seconds)
+    useEffect(() => {
+        if (loading) return;
+
+        pollingIntervalRef.current = setInterval(() => {
+            fetchSubmissions(false); // Silent fetch without loading state
+        }, 10000); // Poll every 10 seconds
+
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+        };
+    }, [loading, fetchSubmissions]);
 
     const columns = [
         {
@@ -102,7 +119,7 @@ const AbstractSubmission = () => {
                 <Button
                     type="primary"
                     disabled={record.status !== 'Approved'}
-                    onClick={() => navigate('/dashboard/submit-manuscript/new')}
+                    onClick={() => navigate('/dashboard/conference/full-paper-submission')}
                     className={record.status === 'Approved' ? 'bg-[#12b48b] hover:bg-[#0f9d76]' : ''}
                 >
                     Submit Full Paper

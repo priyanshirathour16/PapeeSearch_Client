@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Spin,
   Descriptions,
@@ -39,6 +39,8 @@ const { Title, Text, Paragraph } = Typography;
 const ManuscriptDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const journalId = location.state?.journalId;
   const [manuscript, setManuscript] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -193,7 +195,7 @@ const ManuscriptDetails = () => {
     return (
       <div className="p-12 text-center bg-gray-50 min-h-screen">
         <Title level={4}>Manuscript not found</Title>
-        <Button onClick={() => navigate("/dashboard/manuscripts")}>
+        <Button onClick={() => navigate(journalId ? `/dashboard/manuscripts?journalId=${journalId}` : "/dashboard/manuscripts")}>
           Back to List
         </Button>
       </div>
@@ -303,7 +305,7 @@ const ManuscriptDetails = () => {
       <div className="mb-6 flex justify-between items-center">
         <Button
           icon={<FaArrowLeft />}
-          onClick={() => navigate("/dashboard/manuscripts")}
+          onClick={() => navigate(journalId ? `/dashboard/manuscripts?journalId=${journalId}` : "/dashboard/manuscripts")}
           type="text"
           className="hover:bg-gray-200"
         >
